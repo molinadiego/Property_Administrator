@@ -37,6 +37,16 @@ export function configureApp(app: INestApplication): void {
 }
 
 export function setupSwagger(app: INestApplication): void {
+  const document = buildOpenApiDocument(app);
+  SwaggerModule.setup(SWAGGER_PATH, app, document, {
+    customSiteTitle: 'Home Management API',
+  });
+
+  protectSwaggerInProduction(app);
+}
+
+/** Builds the OpenAPI document (shared by Swagger UI and the contract test). */
+export function buildOpenApiDocument(app: INestApplication) {
   const config = new DocumentBuilder()
     .setTitle('Home Management API')
     .setDescription(
@@ -46,12 +56,7 @@ export function setupSwagger(app: INestApplication): void {
     .addCookieAuth(SESSION_COOKIE)
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup(SWAGGER_PATH, app, document, {
-    customSiteTitle: 'Home Management API',
-  });
-
-  protectSwaggerInProduction(app);
+  return SwaggerModule.createDocument(app, config);
 }
 
 /**

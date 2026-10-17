@@ -1,0 +1,869 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Servicio y base de datos disponibles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "status": "ok",
+                    "database": "up",
+                    "timestamp": "2026-10-17T15:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Base de datos no disponible (respuesta problem+json)"
+          }
+        },
+        "summary": "Comprobación de vida y conexión a la base de datos",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cuenta creada"
+          },
+          "409": {
+            "description": "Email ya registrado (409)"
+          }
+        },
+        "summary": "Crea la cuenta personal (no crea espacio)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sesión iniciada"
+          },
+          "401": {
+            "description": "Credenciales inválidas (401 genérico)"
+          },
+          "429": {
+            "description": "Demasiados intentos (429 con Retry-After)"
+          }
+        },
+        "summary": "Inicia sesión y setea la cookie mh_session",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Sesión revocada"
+          }
+        },
+        "summary": "Revoca la sesión actual",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Datos del usuario"
+          }
+        },
+        "summary": "Usuario actual y sus membresías activas con rol",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/password/forgot": {
+      "post": {
+        "operationId": "AuthController_forgot",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Procesado (siempre)"
+          }
+        },
+        "summary": "Envía link de recuperación (siempre 202, no revela existencia)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/password/reset": {
+      "post": {
+        "operationId": "AuthController_reset",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Contraseña actualizada"
+          },
+          "404": {
+            "description": "Token inválido (404)"
+          },
+          "410": {
+            "description": "Token expirado o ya usado (410)"
+          }
+        },
+        "summary": "Cambia la contraseña con token y revoca todas las sesiones",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/companies": {
+      "post": {
+        "operationId": "CompaniesController_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Espacio creado"
+          }
+        },
+        "summary": "Crea un espacio; el creador queda como owner",
+        "tags": [
+          "companies"
+        ]
+      },
+      "get": {
+        "operationId": "CompaniesController_listMine",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de espacios con rol"
+          }
+        },
+        "summary": "Espacios del usuario (membresías activas)",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}": {
+      "get": {
+        "operationId": "CompaniesController_getDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle"
+          },
+          "404": {
+            "description": "Inexistente o no eres miembro (404)"
+          }
+        },
+        "summary": "Detalle del espacio (miembro activo)",
+        "tags": [
+          "companies"
+        ]
+      },
+      "patch": {
+        "operationId": "CompaniesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actualizado"
+          },
+          "403": {
+            "description": "Rol insuficiente (403)"
+          }
+        },
+        "summary": "Edita el nombre del espacio (owner)",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/members": {
+      "get": {
+        "operationId": "CompaniesController_listMembers",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de miembros"
+          }
+        },
+        "summary": "Miembros activos del espacio con rol",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/members/{membershipId}": {
+      "patch": {
+        "operationId": "CompaniesController_changeMemberRole",
+        "parameters": [
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rol actualizado"
+          },
+          "409": {
+            "description": "Intento sobre la última owner (409)"
+          }
+        },
+        "summary": "Cambia el rol de un miembro (owner)",
+        "tags": [
+          "companies"
+        ]
+      },
+      "delete": {
+        "operationId": "CompaniesController_revokeMember",
+        "parameters": [
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Acceso revocado"
+          },
+          "404": {
+            "description": "Miembro inexistente (404)"
+          },
+          "409": {
+            "description": "Intento sobre la última owner (409)"
+          }
+        },
+        "summary": "Revoca el acceso de un miembro (no borra su cuenta)",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/invitations": {
+      "post": {
+        "operationId": "InvitationsController_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvitationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invitación creada y email enviado"
+          },
+          "403": {
+            "description": "Rol insuficiente (403)"
+          },
+          "409": {
+            "description": "Ya miembro o invitación pendiente (409)"
+          }
+        },
+        "summary": "Crea una invitación y envía el email con el token (owner)",
+        "tags": [
+          "invitations"
+        ]
+      },
+      "get": {
+        "operationId": "InvitationsController_list",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad máxima de elementos (1-100)",
+            "schema": {
+              "default": 50,
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Cursor opaco devuelto en nextCursor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filtra por estado",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "accepted",
+                "revoked",
+                "expired"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista paginada"
+          }
+        },
+        "summary": "Lista de invitaciones del espacio, paginada por cursor (owner)",
+        "tags": [
+          "invitations"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/invitations/{invId}": {
+      "delete": {
+        "operationId": "InvitationsController_revoke",
+        "parameters": [
+          {
+            "name": "invId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Invitación revocada"
+          },
+          "404": {
+            "description": "No encontrada o no pendiente (404)"
+          }
+        },
+        "summary": "Revoca una invitación pendiente (owner)",
+        "tags": [
+          "invitations"
+        ]
+      }
+    },
+    "/api/v1/invitations/{token}": {
+      "get": {
+        "operationId": "InvitationsController_preview",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos públicos de la invitación"
+          },
+          "404": {
+            "description": "Token inválido o revocado (404)"
+          },
+          "410": {
+            "description": "Invitación expirada (410)"
+          }
+        },
+        "summary": "Previsualización pública: empresa y email enmascarado",
+        "tags": [
+          "invitations"
+        ]
+      }
+    },
+    "/api/v1/invitations/{token}/accept": {
+      "post": {
+        "operationId": "InvitationsController_accept",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInvitationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Invitación aceptada"
+          },
+          "404": {
+            "description": "Token inválido o revocado (404)"
+          },
+          "409": {
+            "description": "Ya miembro o invitación ya aceptada (409)"
+          },
+          "410": {
+            "description": "Invitación expirada (410)"
+          }
+        },
+        "summary": "Acepta la invitación: con sesión une esa cuenta; sin sesión crea la cuenta con {name, password}",
+        "tags": [
+          "invitations"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/audit-log": {
+      "get": {
+        "operationId": "AuditController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad máxima de elementos (1-100)",
+            "schema": {
+              "default": 50,
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Cursor opaco devuelto en nextCursor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "description": "Filtra por acción exacta, p. ej. member.invited",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entity_type",
+            "required": false,
+            "in": "query",
+            "description": "Filtra por tipo de entidad, p. ej. membership",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Fecha inicial inclusive (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Fecha final inclusive (ISO 8601)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eventos ordenados por created_at descendente"
+          },
+          "404": {
+            "description": "Espacio inexistente o no eres miembro"
+          }
+        },
+        "summary": "Historial de acciones del espacio (solo lectura, paginado por cursor)",
+        "tags": [
+          "audit-log"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Home Management API",
+    "description": "Backend de la plataforma de administración de propiedades y trabajos de reparación.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "mh_session"
+      }
+    },
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "ana@example.com"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ana García"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "example": "contraseña-segura"
+          }
+        },
+        "required": [
+          "email",
+          "name",
+          "password"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "ana@example.com"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "ForgotPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "ana@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token enviado por email (no se almacena en claro)"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "example": "nueva-contraseña-segura"
+          }
+        },
+        "required": [
+          "token",
+          "password"
+        ]
+      },
+      "CreateCompanyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Propiedades del Sur"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "property_management",
+              "contractor",
+              "profesional"
+            ],
+            "example": "property_management"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ]
+      },
+      "UpdateCompanyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Propiedades del Sur SRL"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ChangeMemberRoleDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "member"
+            ],
+            "example": "member"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "CreateInvitationDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "colaborador@example.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "member"
+            ],
+            "example": "member"
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ]
+      },
+      "AcceptInvitationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Requerido solo sin sesión activa",
+            "example": "Rosa Díaz"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "description": "Requerido solo sin sesión activa"
+          }
+        }
+      }
+    }
+  }
+}
