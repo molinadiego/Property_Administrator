@@ -15,18 +15,10 @@ services:
       timeout: 3s
       retries: 10
 
-  minio:
-    image: minio/minio:latest
-    command: server /data
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    ports:
-      - '9000:9000'
-      - '9001:9001'
-    volumes:
-      - miniodata:/data
+  # MinIO / S3-compatible entra en la Etapa 3 (docs/stack.md §3, fotos y
+  # documentos). Ojo: desde septiembre 2026 MinIO ya no distribuye imágenes
+  # (Docker Hub borrado, Quay exige login) — decidir la alternativa al
+  # llegar la Etapa 3 (ver MEMORY.md §5).
 
 volumes:
   pgdata:
-  miniodata:
