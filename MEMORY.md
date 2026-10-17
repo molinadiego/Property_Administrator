@@ -7,7 +7,7 @@ Contexto que no vive en los otros documentos. `AGENTS.md` son reglas de trabajo,
 - Requisitos funcionales **aprobados v1.0 (17/10/2026)** y cerrados: intocables sin aprobación expresa.
 - Documentación completa: `README.md`, `AGENTS.md`, `docs/stack.md`, `docs/plan.md`, `docs/especificacion/etapa-1.md`.
 - Skills creadas en `.opencode/skills/`: `consistency-check` y `new-stage-spec` (ambas registradas en sesiones OpenCode del repo).
-- **Etapa 0: COMPLETADA (17/10/2026)** — scaffold en `backend/` con todo verde: lint ✓, 7 unit tests ✓, build ✓, e2e 3/3 con Testcontainers + PostgreSQL 16 real ✓, health `200 {"status":"ok","database":"up"}` contra la BD de desarrollo ✓. Falta solo el push a GitHub para ver la CI correr.
+- **Etapa 0: COMPLETADA (17/10/2026)** — scaffold en `backend/` con todo verde: lint ✓, 7 unit tests ✓, build ✓, e2e 3/3 con Testcontainers + PostgreSQL 16 real ✓, health `200 {"status":"ok","database":"up"}` contra la BD de desarrollo ✓. Gate de salida: `npm run check` (sin CI remota).
 - **Siguiente paso: Etapa 1** (spec ya redactada en `docs/especificacion/etapa-1.md`; la primera migración real de Prisma viene con la tabla `users`). Decisión pendiente al empezar: proveedor de email (Resend vs SES, stack.md §3).
 
 ## 2. Preferencias de trabajo del dueño
@@ -30,6 +30,7 @@ Contexto que no vive en los otros documentos. `AGENTS.md` son reglas de trabajo,
   - Jurisdicción EE.UU., facturas en PDF, sin facturación electrónica.
   - Quien tiene negocio propio y participa en espacios ajenos paga solo su plan.
 - **Spec-driven development adoptado por etapa/feature**: la spec se aprueba antes de implementar y sus criterios de aceptación se convierten en tests (regla en `AGENTS.md`). Se decidió **mantener `docs/especificacion/`** y no renombrar el directorio a `specs/` — no crear un árbol paralelo de especificaciones ni duplicar reglas de negocio que viven en `proyect.md`.
+- **Sin GitHub ni CI remota** (decisión del dueño, 17/10/2026): el repo es **git local** y la condición de salida de etapa es el gate local `npm run check`. El workflow de GitHub Actions se dejó en `.github/workflows/ci.yml` por si cambia de opinión, pero **no volver a proponer** subirlo a ningún servicio remoto sin que él lo pida. Recomendarle backup del directorio de vez en cuando.
 - **§18 — sigue abierto** (preguntar, nunca inventar): precios/planes, límites de uso, funciones por categoría, requisitos fiscales por estado, tratamiento de impuestos, procedimiento de autorización telefónica, y todo el §18.4 (se resuelve al diseñar).
 
 ## 4. Gotchas del repo

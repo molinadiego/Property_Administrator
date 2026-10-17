@@ -18,7 +18,7 @@ Regla: los documentos se referencian entre sí, no se copian. Si un requisito ca
 ## Estado
 
 - Requisitos funcionales: **aprobados el 17/10/2026 (v1.0)**.
-- Etapa 0 (scaffolding del backend): **completada el 17/10/2026** — lint, tests unitarios, build, e2e con Testcontainers + PostgreSQL real y arranque con BD, todo verde. CI lista (corre en el primer push a GitHub).
+- Etapa 0 (scaffolding del backend): **completada el 17/10/2026** — lint, tests unitarios, build, e2e con Testcontainers + PostgreSQL real y arranque con BD, todo verde (gate: `npm run check`). Sin CI remota: sin GitHub, por decisión del dueño.
 
 ## Entorno
 
@@ -40,4 +40,5 @@ Swagger UI: `http://localhost:3000/api/docs`.
 npm run lint                # ESLint
 npm test                    # tests unitarios (Jest)
 npm run test:e2e            # tests de integración (Testcontainers + PostgreSQL real)
+npm run check               # gate de etapa: lint + build + tests + e2e en secuencia
 ```

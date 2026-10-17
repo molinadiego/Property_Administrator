@@ -18,9 +18,9 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 - Setup de pruebas: Jest + supertest + Testcontainers (Postgres real).
 - Tenant guard base (`company_id` en el contexto de request).
 - Swagger (`/api/docs`).
-- CI: lint + tests en cada PR.
+- Gate de chequeo local: `npm run check` (lint + build + tests + e2e). Sin CI remota (ver decisión en `docs/stack.md`); el workflow de GitHub queda en `.github/` por si se decide activar.
 
-**Criterio de salida:** `docker compose up` levanta el entorno; un endpoint health-check documentado en Swagger responde; CI verde con un primer test de integración contra Postgres real.
+**Criterio de salida:** `docker compose up` levanta el entorno; un endpoint health-check documentado en Swagger responde; `npm run check` verde, con un test de integración contra Postgres real.
 
 ---
 

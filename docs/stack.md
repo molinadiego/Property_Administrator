@@ -16,7 +16,7 @@ Decisión cerrada para la primera versión del backend. Corresponde a la Etapa 0
 | Autenticación | Sesiones server-side en Postgres + hash Argon2 | `proyect.md` §16.6 exige revocar el acceso operativo cuando termina una asignación o relación, y §3.3 revocar el acceso al espacio. Un JWT autocontenido no se revoca sin una tabla de sesiones: terminaríamos implementando sesiones igual, pero más complicadas. Cookies `HttpOnly` + `Secure` + `SameSite`. |
 | Pruebas | Jest + supertest + Testcontainers (Postgres real) | La matriz de permisos (§16.1) se prueba contra la base real. SQLite miente sobre enums, `Decimal` y `JSONB`. |
 | Logging / configuración | pino + ConfigModule con esquema validado | Fallar temprano si falta una variable de entorno. Logs estructurados desde el día 1. |
-| Infra de desarrollo | Docker compose (Postgres + MinIO), Git + GitHub, CI con lint + tests | Entornos reproducibles; el CI bloquea merges sin tests verdes. |
+| Infra de desarrollo | Docker compose (Postgres; MinIO en la Etapa 3), **Git local + gate de chequeo local** (`npm run check`: lint + build + tests + e2e) | Entornos reproducibles; el gate local bloquea el avance de etapa sin todo verde. Sin CI remota: decisión del dueño de no usar GitHub — el workflow de Actions queda en `.github/` por si se decide subirlo después. |
 
 ## 2. Decisiones transversales del modelo
 

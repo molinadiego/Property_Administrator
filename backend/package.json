@@ -13,7 +13,8 @@
     "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config test/jest-e2e.json --runInBand",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy"
+    "prisma:deploy": "prisma migrate deploy",
+    "check": "npm run lint && npm run build && npm test && npm run test:e2e"
   },
   "license": "UNLICENSED",
   "private": true,
