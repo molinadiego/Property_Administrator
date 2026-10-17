@@ -8,6 +8,8 @@ export interface Env {
   EMAIL_TRANSPORT: 'console' | 'resend';
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
+  /** Base URL used to build email links (invitations, password reset). */
+  FRONTEND_URL: string;
 }
 
 const NODE_ENV_VALUES = ['development', 'test', 'production'] as const;
@@ -78,6 +80,11 @@ export function validateEnv(config: Record<string, unknown>): Env {
     if (!emailFrom) errors.push('EMAIL_FROM is required when EMAIL_TRANSPORT=resend');
   }
 
+  const frontendUrl =
+    typeof config.FRONTEND_URL === 'string' && config.FRONTEND_URL.trim() !== ''
+      ? config.FRONTEND_URL.replace(/\/+$/, '')
+      : 'http://localhost:3000';
+
   if (errors.length > 0) {
     throw new Error(`Invalid environment configuration:\n- ${errors.join('\n- ')}`);
   }
@@ -88,6 +95,7 @@ export function validateEnv(config: Record<string, unknown>): Env {
     DATABASE_URL: databaseUrl as string,
     APP_DATABASE_URL: appDatabaseUrl as string,
     EMAIL_TRANSPORT: emailTransport as Env['EMAIL_TRANSPORT'],
+    FRONTEND_URL: frontendUrl,
     ...(resendApiKey ? { RESEND_API_KEY: resendApiKey } : {}),
     ...(emailFrom ? { EMAIL_FROM: emailFrom } : {}),
   };

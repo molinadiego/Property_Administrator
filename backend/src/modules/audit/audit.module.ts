@@ -1,8 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
+import { AuditController } from './audit.controller';
+import { AuditService } from './audit.service';
 
 /**
  * Audit log: append-only history of relevant actions (§12 of proyect.md).
- * Implemented in Etapa 1 (docs/especificacion/etapa-1.md).
+ * No write endpoints exist beyond internal recording; DB grants block
+ * UPDATE/DELETE (spec etapa-1.md §2.6, AC-4.3).
  */
-@Module({})
+@Global()
+@Module({
+  controllers: [AuditController],
+  providers: [AuditService],
+  exports: [AuditService],
+})
 export class AuditModule {}

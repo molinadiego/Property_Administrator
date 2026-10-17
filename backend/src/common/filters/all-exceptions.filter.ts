@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { STATUS_CODES } from 'node:http';
+import { TooManyAttemptsException } from '../exceptions/too-many-attempts.exception';
 
 const ERROR_BASE_URL = 'https://api.home-management.dev/errors';
 
@@ -65,6 +66,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
       instance: request.originalUrl ?? request.url ?? '/',
       requestId: request.id,
     };
+
+    // Rate limit answers carry Retry-After (spec etapa-1.md §3, §11).
+    if (exception instanceof TooManyAttemptsException) {
+      response.setHeader('Retry-After', String(exception.retryAfterSeconds));
+    }
 
     response.status(status).json(problem);
   }

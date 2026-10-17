@@ -15,7 +15,15 @@ describe('validateEnv', () => {
       DATABASE_URL: valid.DATABASE_URL,
       APP_DATABASE_URL: valid.APP_DATABASE_URL,
       EMAIL_TRANSPORT: 'console',
+      FRONTEND_URL: 'http://localhost:3000',
     });
+  });
+
+  it('defaults FRONTEND_URL and strips trailing slashes', () => {
+    expect(validateEnv(valid).FRONTEND_URL).toBe('http://localhost:3000');
+    expect(
+      validateEnv({ ...valid, FRONTEND_URL: 'https://app.example.com/' }).FRONTEND_URL,
+    ).toBe('https://app.example.com');
   });
 
   it('defaults PORT to 3000 when missing or empty', () => {
