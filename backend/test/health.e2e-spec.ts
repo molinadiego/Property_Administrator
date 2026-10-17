@@ -42,6 +42,7 @@ suite('health (e2e)', () => {
     process.env.NODE_ENV = 'test';
     process.env.LOG_LEVEL = 'error';
     process.env.DATABASE_URL = `postgresql://test:test@${container.getHost()}:${container.getMappedPort(5432)}/test`;
+    process.env.APP_DATABASE_URL = process.env.DATABASE_URL;
 
     const { AppModule } = await import('../src/app.module');
     const { configureApp } = await import('../src/app.setup');

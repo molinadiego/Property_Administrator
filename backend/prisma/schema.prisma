@@ -6,3 +6,177 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// ---------------------------------------------------------------------------
+// Enums (docs/especificacion/etapa-1.md §2)
+// ---------------------------------------------------------------------------
+
+enum UserStatus {
+  active
+}
+
+enum CompanyType {
+  property_management
+  contractor
+  profesional
+}
+
+enum MembershipRole {
+  owner
+  member
+}
+
+enum MembershipStatus {
+  active
+  revoked
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  revoked
+  expired
+}
+
+enum ActorType {
+  user
+  system
+}
+
+// ---------------------------------------------------------------------------
+// Identity tables (no company_id: a person belongs to several companies)
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  name         String
+  phone        String?
+  locale       String     @default("es")
+  status       UserStatus @default(active)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
+
+  memberships          Membership[]
+  membershipsInvited   Membership[]           @relation("MembershipInvitedBy")
+  sessions             Session[]
+  passwordResetTokens  PasswordResetToken[]
+  companiesCreated     Company[]              @relation("CompanyCreatedBy")
+  invitationsSent      Invitation[]           @relation("InvitationSentBy")
+  invitationsAccepted  Invitation[]           @relation("InvitationAcceptedBy")
+  auditEntries         AuditLog[]             @relation("AuditActor")
+
+  @@map("users")
+}
+
+model Company {
+  id        String      @id @default(uuid()) @db.Uuid
+  name      String
+  type      CompanyType
+  createdBy String      @map("created_by") @db.Uuid
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
+
+  createdByUser User        @relation("CompanyCreatedBy", fields: [createdBy], references: [id])
+  memberships   Membership[]
+  invitations   Invitation[]
+  auditEntries  AuditLog[]   @relation("AuditCompany")
+
+  @@map("companies")
+}
+
+model Membership {
+  id        String           @id @default(uuid()) @db.Uuid
+  companyId String           @map("company_id") @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  role      MembershipRole
+  status    MembershipStatus @default(active)
+  invitedBy String?          @map("invited_by") @db.Uuid
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  revokedAt DateTime?        @map("revoked_at") @db.Timestamptz()
+
+  company       Company @relation(fields: [companyId], references: [id])
+  user          User    @relation(fields: [userId], references: [id])
+  invitedByUser User?   @relation("MembershipInvitedBy", fields: [invitedBy], references: [id])
+
+  @@unique([companyId, userId])
+  @@index([companyId])
+  @@index([userId])
+  @@map("memberships")
+}
+
+model Invitation {
+  id         String           @id @default(uuid()) @db.Uuid
+  companyId  String           @map("company_id") @db.Uuid
+  email      String
+  role       MembershipRole
+  tokenHash  String           @unique @map("token_hash")
+  status     InvitationStatus @default(pending)
+  invitedBy  String           @map("invited_by") @db.Uuid
+  expiresAt  DateTime         @map("expires_at") @db.Timestamptz()
+  acceptedAt DateTime?        @map("accepted_at") @db.Timestamptz()
+  acceptedBy String?          @map("accepted_by") @db.Uuid
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+
+  company        Company @relation(fields: [companyId], references: [id])
+  invitedByUser  User    @relation("InvitationSentBy", fields: [invitedBy], references: [id])
+  acceptedByUser User?   @relation("InvitationAcceptedBy", fields: [acceptedBy], references: [id])
+
+  @@index([companyId, status])
+  @@map("invitations")
+}
+
+model Session {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz()
+  lastSeenAt DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz()
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz()
+  ip         String?
+  userAgent  String?   @map("user_agent")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz()
+  usedAt    DateTime? @map("used_at") @db.Timestamptz()
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+// Append-only: the application role has no UPDATE/DELETE grants on this
+// table (enforced in migration etapa1_audit_grants, spec §2.6 / test #23).
+model AuditLog {
+  id          String    @id @default(uuid()) @db.Uuid
+  companyId   String?   @map("company_id") @db.Uuid
+  actorType   ActorType @map("actor_type")
+  actorUserId String?   @map("actor_user_id") @db.Uuid
+  action      String
+  entityType  String    @map("entity_type")
+  entityId    String    @map("entity_id") @db.Uuid
+  payload     Json?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  company   Company? @relation("AuditCompany", fields: [companyId], references: [id])
+  actorUser User?    @relation("AuditActor", fields: [actorUserId], references: [id])
+
+  @@index([companyId, createdAt(sort: Desc)])
+  @@index([entityType, entityId])
+  @@map("audit_log")
+}

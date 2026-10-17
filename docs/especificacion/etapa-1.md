@@ -9,14 +9,14 @@ Documento de implementación de la **Etapa 0 (fundamentos)** y la **Etapa 1 (bas
 ## 1. Etapa 0 — checklist de arranque
 
 - [ ] Proyecto NestJS + TypeScript (Node LTS), ESLint + Prettier.
-- [ ] Docker compose: PostgreSQL 16 + MinIO (MinIO queda preparado, sin usar hasta Etapa 3).
+- [ ] Docker compose: PostgreSQL 16 (MinIO queda para la Etapa 3: su distribución oficial de imágenes se discontinuó en 2026, ver `MEMORY.md`).
 - [ ] Prisma: `schema.prisma` inicial, migración base, seed de desarrollo.
 - [ ] ConfigModule con esquema de variables validado al arrancar (fallar si falta algo).
 - [ ] pino + interceptor de logging con `requestId` por request.
 - [ ] Exception filter global con formato RFC 7807 (ver §4).
 - [ ] Jest + supertest + Testcontainers: los tests de integración levantan PostgreSQL real.
 - [ ] Swagger en `/api/docs` (en producción: protegido con login).
-- [ ] CI (GitHub Actions): lint + tests en cada PR.
+- [ ] Gate local `npm run check` (lint + build + tests + e2e); sin CI remota — decisión del dueño, ver `docs/stack.md` (el workflow de GitHub queda archivado en `.github/`).
 - [ ] Estructura de módulos: `auth`, `users`, `companies`, `memberships`, `invitations`, `audit`.
 
 **Criterio de salida:** `docker compose up` + `npm run start:dev` levantan la API; `/api/docs` muestra el endpoint health-check; CI verde con un test de integración real.
@@ -119,7 +119,21 @@ Todo espacio es "una empresa" para efectos del modelo. El negocio propio de un p
 - `memberships(user_id)`, `memberships(company_id)`
 - `invitations(token_hash)` unique, `invitations(company_id, status)`
 - `sessions(user_id)`, `sessions(expires_at)` (para purga de expiradas)
+- `password_reset_tokens(user_id)`, `password_reset_tokens(expires_at)`
 - `audit_log(company_id, created_at DESC)`, `audit_log(entity_type, entity_id)`
+
+### 2.8 `password_reset_tokens` *(enmienda 17/10/2026 — la sección 2 original no incluía la tabla que exige el flujo de §4.1)*
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | uuid PK | |
+| user_id | uuid FK → users | índice |
+| token_hash | text unique | mismo patrón que §2.5: en DB solo el hash |
+| expires_at | timestamptz | 1 hora |
+| used_at | timestamptz null | un solo uso |
+| created_at | timestamptz | |
+
+El reset consume el token (marca `used_at`) y revoca todas las sesiones del usuario en la misma transacción (§4.1, AC-1.6). Solicitar forgot con email inexistente no revela existencia (AC-1.7).
 
 ---
 
@@ -286,13 +300,13 @@ Eventos de etapas siguientes (órdenes, costos, facturas) se agregan cuando corr
 
 - **Unitarias (Jest):** reglas de rol (último owner, transiciones de invitación), normalización de email, generación/hashing de tokens.
 - **Integración (Testcontainers + Postgres):** la matriz completa de §6, contra la API real con HTTP.
-- **Contrato:** el OpenAPI exportado del código se guarda en CI y se compara para detectar cambios no revisados.
+- **Contrato:** el OpenAPI exportado del código se guarda en el repo y se compara con el gate local para detectar cambios no revisados.
 
 ## 9. Definición de hecho (Etapa 1)
 
 Igual que el criterio de salida de la Etapa 1 en `docs/plan.md`:
 
-1. Matriz de §6 completa y verde en CI.
+1. Matriz de §6 completa y verde en el gate local (`npm run check`).
 2. Revocación de acceso efecto inmediato y no destructiva (§3.3).
 3. Audit log append-only con los eventos de §7.
 4. Invitaciones de punta a punta con email real (Resend).
