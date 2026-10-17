@@ -35,7 +35,7 @@ No se instala todo el primer día. Cada pieza entra cuando hay una necesidad con
 
 | Necesidad | Tecnología | Etapa |
 |---|---|---|
-| Email transaccional (invitaciones) | Resend o AWS SES | 1 |
+| Email transaccional (invitaciones) | Resend | 1 |
 | Fotos, documentos y comprobantes | S3-compatible (MinIO en desarrollo) | 3 |
 | Colas de trabajo (PDFs, emails pesados) | Redis + BullMQ | 5 (aprox.) |
 | Generación de PDF de factura | pdfmake | 5 |
@@ -76,4 +76,5 @@ Cada módulo tiene controlador (HTTP + DTOs), servicio (reglas de negocio y perm
 | SQLite en los tests | Miente sobre enums, `Decimal` y `JSONB`. Tests con Testcontainers + PostgreSQL real. |
 | RLS en la v1 | Costo de integración con Prisma alto; la capa principal (verificación en el servidor) es la exigida por §16.1. Se evalúa después como defensa extra. |
 | Auth0 / Clerk (auth gestionado) | Ahorra login básico, pero el modelo de membresías multi-empresa con roles y cuentas limitadas hay que escribirlo igual en la app. Se puede reconsiderar si el tiempo aprieta. |
+| AWS SES para el email (decidido 17/10/2026) | Sin free tier para cuentas nuevas desde julio 2026 (solo créditos AWS temporales), sandbox que exige pedir production access (revisión manual) y más fricción operativa (IAM, región, SNS de bounces). El volumen de la Etapa 1 entra holgado en el free de Resend; si algún día escala a cientos de miles de emails/mes, se evalúa migrar la implementación. |
 | Microservicios | El §17 avanza por etapas; un monolito modular bien estructurado gana hasta que exista una razón real de escala. |

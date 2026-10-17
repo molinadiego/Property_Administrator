@@ -295,7 +295,7 @@ Igual que el criterio de salida de la Etapa 1 en `docs/plan.md`:
 1. Matriz de §6 completa y verde en CI.
 2. Revocación de acceso efecto inmediato y no destructiva (§3.3).
 3. Audit log append-only con los eventos de §7.
-4. Invitaciones de punta a punta con email real (Resend o SES — proveedor a elegir al arrancar la etapa).
+4. Invitaciones de punta a punta con email real (Resend).
 5. `/api/docs` completo y protegido en producción.
 
 ---

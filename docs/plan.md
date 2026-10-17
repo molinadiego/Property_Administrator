@@ -41,7 +41,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 - La matriz de permisos de la especificación está implementada como tests de integración y todos pasan.
 - Revocar el acceso de una persona a un espacio surte efecto inmediato sin borrar su cuenta ni los registros (§3.3).
 - Toda acción relevante queda en el audit log con quién y cuándo (§12).
-- Invitaciones funcionando de punta a punta con email real (Resend o SES).
+- Invitaciones funcionando de punta a punta con email real (Resend).
 
 ---
 
@@ -114,7 +114,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 ## Dependencias y decisiones pendientes
 
-- **Etapa 1** necesita email transaccional (Resend/SES) — decidir proveedor al arrancarla.
+- **Etapa 1 — proveedor de email decidido: Resend** (17/10/2026). Pendiente operativo al implementar: crear la cuenta y verificar el dominio por DNS (la API key vive solo en variable de entorno).
 - **Etapa 5** puede avanzar sin resolver todo el §18.2: la jurisdicción (EE.UU., solo PDF) ya está decidida; los requisitos fiscales por estado y el tratamiento de impuestos quedan abiertos y se tocan cuando se cierren.
 - **Etapa 6** depende de decisiones de negocio abiertas: precios y planes (§18.3), alcance de emergencias y políticas (§18.4).
 - El **§18.1** (procedimiento de autorización por teléfono) se resuelve en la Etapa 4, al diseñar el registro de autorizaciones.
