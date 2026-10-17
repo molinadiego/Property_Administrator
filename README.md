@@ -19,6 +19,7 @@ Regla: los documentos se referencian entre sí, no se copian. Si un requisito ca
 
 - Requisitos funcionales: **aprobados el 17/10/2026 (v1.0)**.
 - Etapa 0 (scaffolding del backend): **completada el 17/10/2026** — lint, tests unitarios, build, e2e con Testcontainers + PostgreSQL real y arranque con BD, todo verde (gate: `npm run check`). Sin CI remota: sin GitHub, por decisión del dueño.
+- Etapa 1 (auth, empresas, invitaciones, roles, audit log): **implementada el 17/10/2026** — gate `npm run check` en verde (unit 29 ✓, e2e 37 ✓ con matriz de permisos + contrato OpenAPI snapshot). Pendiente: email real con Resend (crear cuenta y verificar dominio DNS) y seed de desarrollo.
 
 ## Entorno
 

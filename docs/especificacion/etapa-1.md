@@ -8,18 +8,18 @@ Documento de implementación de la **Etapa 0 (fundamentos)** y la **Etapa 1 (bas
 
 ## 1. Etapa 0 — checklist de arranque
 
-- [ ] Proyecto NestJS + TypeScript (Node LTS), ESLint + Prettier.
-- [ ] Docker compose: PostgreSQL 16 (MinIO queda para la Etapa 3: su distribución oficial de imágenes se discontinuó en 2026, ver `MEMORY.md`).
-- [ ] Prisma: `schema.prisma` inicial, migración base, seed de desarrollo.
-- [ ] ConfigModule con esquema de variables validado al arrancar (fallar si falta algo).
-- [ ] pino + interceptor de logging con `requestId` por request.
-- [ ] Exception filter global con formato RFC 7807 (ver §4).
-- [ ] Jest + supertest + Testcontainers: los tests de integración levantan PostgreSQL real.
-- [ ] Swagger en `/api/docs` (en producción: protegido con login).
-- [ ] Gate local `npm run check` (lint + build + tests + e2e); sin CI remota — decisión del dueño, ver `docs/stack.md` (el workflow de GitHub queda archivado en `.github/`).
-- [ ] Estructura de módulos: `auth`, `users`, `companies`, `memberships`, `invitations`, `audit`.
+- [x] Proyecto NestJS + TypeScript (Node LTS), ESLint + Prettier.
+- [x] Docker compose: PostgreSQL 16 (MinIO queda para la Etapa 3: su distribución oficial de imágenes se discontinuó en 2026, ver `MEMORY.md`).
+- [x] Prisma: `schema.prisma` inicial, migración base. ~~seed de desarrollo~~ *(seed pendiente: fuera del alcance de Etapa 1, requiere decisión de runner)*.
+- [x] ConfigModule con esquema de variables validado al arrancar (fallar si falta algo).
+- [x] pino + interceptor de logging con `requestId` por request.
+- [x] Exception filter global con formato RFC 7807 (ver §4).
+- [x] Jest + supertest + Testcontainers: los tests de integración levantan PostgreSQL real.
+- [x] Swagger en `/api/docs` (en producción: protegido con login).
+- [x] Gate local `npm run check` (lint + build + tests + e2e); sin CI remota — decisión del dueño, ver `docs/stack.md` (el workflow de GitHub queda archivado en `.github/`).
+- [x] Estructura de módulos: `auth`, `users`, `companies`, `memberships`, `invitations`, `audit`.
 
-**Criterio de salida:** `docker compose up` + `npm run start:dev` levantan la API; `/api/docs` muestra el endpoint health-check; CI verde con un test de integración real.
+**Estado (17/10/2026):** `docker compose up` + `npm run start:dev` levantan la API y `/api/docs` muestra el health-check; gate local verde (unit 29 ✓, e2e 37 ✓ con PostgreSQL real vía Testcontainers). "CI verde" aplica al gate local (sin CI remota, decisión del dueño).
 
 ---
 

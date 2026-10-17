@@ -8,7 +8,9 @@ Contexto que no vive en los otros documentos. `AGENTS.md` son reglas de trabajo,
 - Documentación completa: `README.md`, `AGENTS.md`, `docs/stack.md`, `docs/plan.md`, `docs/especificacion/etapa-1.md`.
 - Skills creadas en `.opencode/skills/`: `consistency-check` y `new-stage-spec` (ambas registradas en sesiones OpenCode del repo).
 - **Etapa 0: COMPLETADA (17/10/2026)** — scaffold en `backend/` con todo verde: lint ✓, 7 unit tests ✓, build ✓, e2e 3/3 con Testcontainers + PostgreSQL 16 real ✓, health `200 {"status":"ok","database":"up"}` contra la BD de desarrollo ✓. Gate de salida: `npm run check` (sin CI remota).
-- **Siguiente paso: Etapa 1** (spec ya redactada en `docs/especificacion/etapa-1.md`; la primera migración real de Prisma viene con la tabla `users`). Proveedor de email **decidido: Resend** — pendiente operativo: crear la cuenta y verificar el dominio por DNS.
+- **Etapa 1: IMPLEMENTADA Y VERDE (17/10/2026)** — auth, companies, memberships, invitations, audit log, roles y cookie de sesión. Gate local `npm run check` en verde y determinista: lint ✓, build ✓, unit 29 ✓, e2e 37 ✓ (matriz de permisos de la spec + contrato OpenAPI snapshot). Contrato del API versionado en `backend/openapi/openapi.json`; regenerar con `npm run openapi:update`.
+- **Pendientes de la Etapa 1**: cuenta Resend + verificación DNS del dominio (emails transaccionales); seed de desarrollo (`prisma/seed.ts`) queda para una etapa posterior por decisión.
+- **Siguiente paso: Etapa 2** — pendiente de spec (`docs/especificacion/etapa-2.md`) y de tu aprobación antes de implementar.
 
 ## 2. Preferencias de trabajo del dueño
 
@@ -52,7 +54,8 @@ Contexto que no vive en los otros documentos. `AGENTS.md` son reglas de trabajo,
 
 ## 6. Gotchas del stack (aprendidos en la Etapa 0)
 
-- **NestJS 12 es ESM puro** (`"type": "module"` en todos los paquetes `@nestjs/*`). Jest (30) solo consume ESM con `NODE_OPTIONS=--experimental-vm-modules` **y** Node ≥ 24.9 (detecta `vm.SourceTextModule.prototype.hasAsyncGraph`). Los scripts `test` y `test:e2e` ya lo llevan configurado; no quitarlos.
+- **NestJS 12 es ESM puro** (`"type": "module"` en todos los paquetes `@nestjs/*`). Jest (30) solo consume ESM con `NODE_OPTIONS=--experimental-vm-modules` **y** Node ≥ 24.9: su loader ESM depende de `vm.SourceTextModule.prototype.moduleRequests` (Node 24.10+) y gatea por `hasAsyncGraph` (24.9+). Con Node más viejo revienta con mensajes confusos ("Must use import to load ES Module" o "moduleRequests unavailable").
+- **El runner `backend/scripts/jest.mjs` aplica un guard de versión**: si el proceso corre en un Node < 24.9 se re-ejecuta solo bajo `~/.local/node24/bin/node` (override con `NODE_BINARY`). Esto es porque `/usr/local/bin/node` (22.17) **puede sombrear** al Node 24 si el `PATH` queda mal ordenado (p. ej. `Docker:$PATH:node24`); un `export PATH="$HOME/.local/node24/bin:..."` antes que el resto evita el problema a mano. No quitar el guard.
 - **Prisma 7 cambió el modelo**: el `url` del datasource ya **no va en `schema.prisma`** → vive en `prisma7.config.ts` (solo lo usa el CLI). El generator es `prisma-client` y emite **TypeScript** a `src/generated/prisma` (gitignoreado): correr `npx prisma generate` antes de lint/build/tests/CI. El cliente se construye con el adapter `new PrismaClient({ adapter: new PrismaPg({ connectionString }) })` — `DATABASE_URL` ya no la lee él.
 - **`@nestjs/pino` no existe en el registry**: el paquete mantenido es **`nestjs-pino`**.
 - TS 6: `baseUrl` está deprecado (lo quitamos), `types` no se auto-incluye (hay que declarar `"types": ["node", "jest"]`) y `nest build` exige `rootDir` explícito en `tsconfig.build.json`.
