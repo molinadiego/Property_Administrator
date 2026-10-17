@@ -5,3 +5,4 @@ src/generated/
 .env
 *.log
 .DS_Store
+*.tsbuildinfo
