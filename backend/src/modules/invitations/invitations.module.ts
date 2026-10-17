@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
 import { InvitationsController } from './invitations.controller';
 import { InvitationsService } from './invitations.service';
 
@@ -7,6 +8,7 @@ import { InvitationsService } from './invitations.service';
  * Implemented in Etapa 1 (docs/especificacion/etapa-1.md).
  */
 @Module({
+  imports: [AuthModule],
   controllers: [InvitationsController],
   providers: [InvitationsService],
 })

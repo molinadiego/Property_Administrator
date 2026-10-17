@@ -30,6 +30,20 @@ export default tseslint.config(
         __dirname: 'readonly',
       },
     },
+    rules: {
+      // CommonJS runtime scripts legitimately use require().
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
+    files: ['**/*.mjs'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+      },
+    },
   },
   prettier,
 );

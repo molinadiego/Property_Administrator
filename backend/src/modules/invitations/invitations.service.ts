@@ -202,13 +202,9 @@ export class InvitationsService {
     auth: AuthContext | null,
     dto: { name?: string; password?: string } | null,
   ): Promise<AcceptResult> {
-    if (!auth && (!dto?.name || !dto?.password)) {
-      throw new UnprocessableEntityException(
-        'Se requieren nombre y contraseña para crear la cuenta.',
-      );
-    }
-
     return this.prisma.$transaction(async (tx) => {
+      // Token first: invalid/revoked → 404, expired → 410, accepted → 409,
+      // regardless of the body (spec AC-3.4, AC-3.5).
       const invitation = await this.findValidByTokenInTx(tx, token);
       const now = new Date();
 
@@ -217,6 +213,11 @@ export class InvitationsService {
       if (auth) {
         userId = auth.userId;
       } else {
+        if (!dto?.name || !dto?.password) {
+          throw new UnprocessableEntityException(
+            'Se requieren nombre y contraseña para crear la cuenta.',
+          );
+        }
         const existing = await tx.user.findUnique({ where: { email: invitation.email } });
         if (existing) {
           throw new ConflictException(
