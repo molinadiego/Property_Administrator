@@ -18,7 +18,7 @@ Regla: los documentos se referencian entre sí, no se copian. Si un requisito ca
 ## Estado
 
 - Requisitos funcionales: **aprobados el 17/10/2026 (v1.0)**.
-- Etapa 0 (scaffolding del backend): **código completo en `backend/`** — lint, tests unitarios, build y arranque verdes localmente; pruebas e2e (Testcontainers) y CI (GitHub Actions) listas para el primer push.
+- Etapa 0 (scaffolding del backend): **completada el 17/10/2026** — lint, tests unitarios, build, e2e con Testcontainers + PostgreSQL real y arranque con BD, todo verde. CI lista (corre en el primer push a GitHub).
 
 ## Entorno
 

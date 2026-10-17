@@ -7,8 +7,8 @@ Contexto que no vive en los otros documentos. `AGENTS.md` son reglas de trabajo,
 - Requisitos funcionales **aprobados v1.0 (17/10/2026)** y cerrados: intocables sin aprobación expresa.
 - Documentación completa: `README.md`, `AGENTS.md`, `docs/stack.md`, `docs/plan.md`, `docs/especificacion/etapa-1.md`.
 - Skills creadas en `.opencode/skills/`: `consistency-check` y `new-stage-spec` (ambas registradas en sesiones OpenCode del repo).
-- **Etapa 0: scaffold completo en `backend/`** — NestJS 12 + TS 6 + Prisma 7; lint, unit tests (7), build y arranque verificados localmente. Falta cerrar: e2e con Docker, migración inicial y CI en GitHub (esperando push).
-- **Siguiente paso tras Etapa 0: Etapa 1** (spec ya redactada en `docs/especificacion/etapa-1.md`).
+- **Etapa 0: COMPLETADA (17/10/2026)** — scaffold en `backend/` con todo verde: lint ✓, 7 unit tests ✓, build ✓, e2e 3/3 con Testcontainers + PostgreSQL 16 real ✓, health `200 {"status":"ok","database":"up"}` contra la BD de desarrollo ✓. Falta solo el push a GitHub para ver la CI correr.
+- **Siguiente paso: Etapa 1** (spec ya redactada en `docs/especificacion/etapa-1.md`; la primera migración real de Prisma viene con la tabla `users`). Decisión pendiente al empezar: proveedor de email (Resend vs SES, stack.md §3).
 
 ## 2. Preferencias de trabajo del dueño
 
@@ -44,8 +44,9 @@ Contexto que no vive en los otros documentos. `AGENTS.md` son reglas de trabajo,
 
 - Máquina **Intel (x86_64) con macOS 12.7.6 (Monterey)**: Homebrew ya **no publica fórmulas precompiladas** para Monterey → cualquier `brew install` compila desde fuente (tardaba 30-60 min en cancelarse). Evitar brew para herramientas grandes.
 - **Node 24 LTS instalado manualmente**: binario oficial de nodejs.org extraído en `~/.local/node24`, agregado al inicio del PATH en `~/.zshrc`. El Node del sistema (`/usr/local/bin/node`, 22.17) queda por detrás. Usar `export PATH="$HOME/.local/node24/bin:$PATH"` en shells viejos.
-- **Docker Desktop 4.48.0** instalada desde el DMG oficial (`desktop.docker.com/mac/main/amd64/207573/Docker.dmg`, sha256 verificado). Es la **última versión que soporta Monterey**: 4.49+ exige macOS 14 y 4.63+ exige macOS 15+. No actualizar sin cambiar de máquina/OS.
-- `docker` CLI vive en `/Applications/Docker.app/Contents/Resources/bin/` (sin brew). Si no está en PATH: `export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"`.
+- **Docker Desktop 4.38.0** (enero 2025): **la última que corre en Monterey**. Descarga directa `desktop.docker.com/mac/main/amd64/181591/Docker.dmg` (sha256 de Intel: `0b5f7c2c...bea362`, verificado contra el cask oficial de Homebrew). Ojo: **las release notes mienten sobre el mínimo real** — decían "Monterey 12+" pero el binario 4.48.0 exigía `LSMinimumSystemVersion=13.0` (Ventura); validar siempre con `plutil -p Docker.app/Contents/Info.plist` y con `depends_on macos` del cask histórico de Homebrew (commits de `Casks/d/docker.rb` / `Casks/d/docker-desktop.rb`). No actualizar sin cambiar de máquina/OS. El modelo actual (MacBookPro13,1 / 2016) no soporta más allá de Monterey.
+- `docker` CLI vive en `/Applications/Docker.app/Contents/Resources/bin/` (sin brew). Si no está en PATH: `export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"`. En shells viejos también hace falta `export PATH="$HOME/.local/node24/bin:$PATH"` para Node 24.
+- **MinIO ya no distribuye imágenes** (oct 2025 pasó a source-only; sep 2026 borró `minio/minio` de Docker Hub; oct 2026 Quay exige login). El compose de desarrollo quedó **solo con Postgres** y la decisión de almacenamiento de archivos (S3-compatible, Garage, u otro) se toma al llegar la **Etapa 3**.
 
 ## 6. Gotchas del stack (aprendidos en la Etapa 0)
 
