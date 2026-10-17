@@ -12,6 +12,7 @@ Backend para administrar propiedades, órdenes de reparación, asignaciones de t
 | `docs/stack.md` | Stack técnico, arquitectura, decisiones transversales y decisiones descartadas. | Al configurar el entorno o evaluar una tecnología nueva. |
 | `docs/plan.md` | Etapas de construcción (0-6) mapeadas al §17 de los requisitos, con alcance y criterio de salida de cada una. | Para saber en qué etapa estamos y qué sigue. |
 | `docs/especificacion/etapa-1.md` | Especificación técnica de la Etapa 0 + 1: modelo de datos, endpoints, matriz de permisos como tests, audit log. | Al implementar la Etapa 1. |
+| `docs/especificacion/etapa-2.md` | Especificación técnica de la Etapa 2: propiedades, inquilinos, órdenes, trabajos, asignaciones, cuentas de acceso limitado, notificaciones in-app. **Borrador pendiente de aprobación.** | Al revisar o implementar la Etapa 2. |
 
 Regla: los documentos se referencian entre sí, no se copian. Si un requisito cambia, se cambia primero en `proyect.md` y después en la especificación.
 
@@ -20,6 +21,7 @@ Regla: los documentos se referencian entre sí, no se copian. Si un requisito ca
 - Requisitos funcionales: **aprobados el 17/10/2026 (v1.0)**.
 - Etapa 0 (scaffolding del backend): **completada el 17/10/2026** — lint, tests unitarios, build, e2e con Testcontainers + PostgreSQL real y arranque con BD, todo verde (gate: `npm run check`). Sin CI remota: sin GitHub, por decisión del dueño.
 - Etapa 1 (auth, empresas, invitaciones, roles, audit log): **implementada el 17/10/2026** — gate `npm run check` en verde (unit 29 ✓, e2e 37 ✓ con matriz de permisos + contrato OpenAPI snapshot). Pendiente: email real con Resend (crear cuenta y verificar dominio DNS) y seed de desarrollo.
+- Etapa 2 (propiedades, órdenes, asignaciones): **spec en borrador** (`docs/especificacion/etapa-2.md`), **pendiente de aprobación** antes de implementar. No se escribe código hasta aprobar (regla SDD).
 
 ## Entorno
 
