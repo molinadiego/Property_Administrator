@@ -4,16 +4,43 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Order } from '../../generated/prisma/client';
+import { Job, Order, Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { AUDIT_ACTIONS_ETAPA2, AUDIT_ENTITIES_ETAPA2 } from '../audit/audit-actions';
+import {
+  AUDIT_ACTIONS_ETAPA2,
+  AUDIT_ACTIONS_ETAPA3,
+  AUDIT_ENTITIES_ETAPA2,
+} from '../audit/audit-actions';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuthContext, CompanyAccess } from '../../common/request-context';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddJobDto } from './dto/add-job.dto';
 import { CreateAssignmentDto, RejectAssignmentDto } from './dto/create-assignment.dto';
+import {
+  CancelOrderDto,
+  CompleteJobDto,
+  JobIncompleteDto,
+  JobProgressDto,
+  NotRealizedDto,
+} from './dto/job-action.dto';
+import {
+  canCancelOrder,
+  canCloseOrder,
+  canTransitionJob,
+  isTerminalJobStatus,
+  orderStatusAfterJobStart,
+} from './job-rules';
+
+/** Type of a `job_events` row as written inside a transaction (spec §2.5). */
+type JobEventData = {
+  jobId: string;
+  companyId: string;
+  type: 'progress_note' | 'started' | 'completed' | 'incomplete' | 'resumed' | 'not_realized';
+  message?: string | null;
+  actorUserId?: string | null;
+};
 
 /**
  * Orders, jobs and assignments (spec etapa-2.md §2.6–§2.8, §5.1–§5.8).
@@ -320,13 +347,20 @@ export class OrdersService {
       throw new ConflictException('La asignación ya fue respondida.');
     }
     const job = await this.prisma.job.findUniqueOrThrow({ where: { id: assignment.jobId } });
+    // Etapa 3 (approved decision, spec §1 / decision 1): accepting moves the
+    // job to `accepted`, NOT to `in_progress` — §20.2 «Aceptado → En curso»
+    // requires the explicit `start`. An incomplete job picked up by a new
+    // assignee (after reassign) also lands on `accepted`.
+    if (job.status !== 'pending' && job.status !== 'incomplete') {
+      throw new ConflictException('El trabajo no admite una nueva aceptación.');
+    }
 
     await this.prisma.$transaction(async (tx) => {
       await tx.assignment.update({
         where: { id: assignment.id },
         data: { status: 'accepted', respondedAt: new Date() },
       });
-      await tx.job.update({ where: { id: job.id }, data: { status: 'in_progress' } });
+      await tx.job.update({ where: { id: job.id }, data: { status: 'accepted' } });
       await this.audit.record(
         {
           companyId: access.companyId,
@@ -380,8 +414,13 @@ export class OrdersService {
     return { id: assignment.id, status: 'rejected' as const };
   }
 
-  /** Creates a new assignment for a rejected/pending job, keeping history
-   * (§5.7). Only the owning company. */
+  /**
+   * Creates a new assignment for a job, keeping history (§5.7, §20.3). Only
+   * the owning company (§16.1): a related company gets 403, an unrelated one
+   * 404. Now also **revokes** the previous assignment when it was still active
+   * (Etapa 3 decision 4) and refuses while the job is `in_progress` (§6.2: the
+   * professional must report `incomplete` first).
+   */
   async reassign(
     access: CompanyAccess,
     auth: AuthContext,
@@ -389,18 +428,33 @@ export class OrdersService {
     dto: CreateAssignmentDto,
   ) {
     const previous = await this.prisma.assignment.findFirst({
-      where: { id: assignmentId, companyId: access.companyId },
+      where: { id: assignmentId },
       include: { job: { include: { order: true } } },
     });
     if (!previous) throw new NotFoundException('Asignación no encontrada.');
+    await this.assertResponsible(previous.job.order, access);
 
     const job = previous.job;
+    // §6.2/§11: an in-progress job must first be reported incomplete, so the
+    // reason and state land in `job_events` before the responsible changes.
+    if (job.status === 'in_progress') {
+      throw new ConflictException('El trabajo está en curso: primero debe informarse incompleto.');
+    }
     const assignee = await this.prisma.membership.findFirst({
       where: { id: dto.assigneeMembershipId, status: 'active' },
     });
     if (!assignee) throw new NotFoundException('Asignado no encontrado.');
 
+    let revokedAssignmentId: string | null = null;
     const assignment = await this.prisma.$transaction(async (tx) => {
+      // §5.7/§20.3: a revoked assignment is never reactivated; both rows stay.
+      if (previous.status === 'pending' || previous.status === 'accepted') {
+        await tx.assignment.update({
+          where: { id: previous.id },
+          data: { status: 'revoked' },
+        });
+        revokedAssignmentId = previous.id;
+      }
       const created = await tx.assignment.create({
         data: {
           jobId: job.id,
@@ -416,7 +470,12 @@ export class OrdersService {
           action: AUDIT_ACTIONS_ETAPA2.ASSIGNMENT_REASSIGNED,
           entityType: AUDIT_ENTITIES_ETAPA2.ASSIGNMENT,
           entityId: created.id,
-          payload: { jobId: job.id, previousAssignmentId: previous.id, assigneeMembershipId: assignee.id },
+          payload: {
+            jobId: job.id,
+            previousAssignmentId: previous.id,
+            revokedAssignmentId,
+            assigneeMembershipId: assignee.id,
+          },
         },
         tx,
       );
@@ -427,7 +486,330 @@ export class OrdersService {
       jobId: assignment.jobId,
       status: assignment.status,
       previousAssignmentId: previous.id,
+      revokedAssignmentId,
     };
+  }
+
+  // -------------------------------------------------------------------------
+  // Etapa 3: job tracking, responsible decisions, close & cancel
+  // (docs/especificacion/etapa-3.md §4.1–§4.3)
+  // -------------------------------------------------------------------------
+
+  /**
+   * The assigned professional begins their own job (§6.1, §20.2):
+   * `accepted → in_progress`, first `started_at`, event + audit, and the order
+   * moves to `in_progress` (§20.1 «Aceptada → En curso», AC-3.1).
+   */
+  async startJob(access: CompanyAccess, auth: AuthContext, jobId: string) {
+    const job = await this.findOwnJob(jobId, auth);
+    if (!canTransitionJob(job.status, 'in_progress')) {
+      throw new ConflictException('El trabajo no puede iniciarse desde su estado actual.');
+    }
+    const order = await this.prisma.order.findUniqueOrThrow({ where: { id: job.orderId } });
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.job.update({
+        where: { id: job.id },
+        // `started_at` is set once and never cleared: it is the marker that
+        // decides order cancellation (§20.1, spec §2.2).
+        data: { status: 'in_progress', startedAt: job.startedAt ?? new Date() },
+      });
+      await this.addJobEvent(tx, { jobId: job.id, companyId: job.companyId, type: 'started', actorUserId: auth.userId });
+      const nextStatus = orderStatusAfterJobStart(order.status);
+      if (nextStatus !== order.status) {
+        await tx.order.update({ where: { id: order.id }, data: { status: nextStatus } });
+      }
+      await this.audit.record(
+        {
+          companyId: job.companyId,
+          actorUserId: auth.userId,
+          action: AUDIT_ACTIONS_ETAPA3.JOB_STARTED,
+          entityType: AUDIT_ENTITIES_ETAPA2.JOB,
+          entityId: job.id,
+          payload: { jobId: job.id, orderId: job.orderId },
+        },
+        tx,
+      );
+    });
+  }
+
+  /** Free progress note (§6.1): a `job_events` row, never an audit entry (§7). */
+  async recordProgress(access: CompanyAccess, auth: AuthContext, jobId: string, dto: JobProgressDto) {
+    const job = await this.findOwnJob(jobId, auth);
+    if (isTerminalJobStatus(job.status)) {
+      throw new ConflictException('El trabajo ya está finalizado.');
+    }
+    const event = await this.prisma.$transaction(async (tx) =>
+      this.addJobEvent(tx, {
+        jobId: job.id,
+        companyId: job.companyId,
+        type: 'progress_note',
+        message: dto.message,
+        actorUserId: auth.userId,
+      }),
+    );
+    return {
+      id: event.id,
+      jobId: job.id,
+      type: event.type,
+      message: event.message,
+      createdAt: event.createdAt.toISOString(),
+    };
+  }
+
+  /** The professional marks their own job done (§6.1, §20.2). */
+  async completeJob(access: CompanyAccess, auth: AuthContext, jobId: string, dto: CompleteJobDto) {
+    const job = await this.findOwnJob(jobId, auth);
+    if (!canTransitionJob(job.status, 'done')) {
+      throw new ConflictException('Solo un trabajo en curso puede completarse.');
+    }
+    const result = dto.result?.trim() || null;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.job.update({ where: { id: job.id }, data: { status: 'done', completedAt: new Date() } });
+      await this.addJobEvent(tx, {
+        jobId: job.id,
+        companyId: job.companyId,
+        type: 'completed',
+        message: result,
+        actorUserId: auth.userId,
+      });
+      await this.audit.record(
+        {
+          companyId: job.companyId,
+          actorUserId: auth.userId,
+          action: AUDIT_ACTIONS_ETAPA3.JOB_COMPLETED,
+          entityType: AUDIT_ENTITIES_ETAPA2.JOB,
+          entityId: job.id,
+          payload: { jobId: job.id, orderId: job.orderId, result },
+        },
+        tx,
+      );
+    });
+  }
+
+  /** The professional reports they could not finish (§6.2, §20.2). */
+  async reportIncomplete(access: CompanyAccess, auth: AuthContext, jobId: string, dto: JobIncompleteDto) {
+    const job = await this.findOwnJob(jobId, auth);
+    if (!canTransitionJob(job.status, 'incomplete')) {
+      throw new ConflictException('Solo un trabajo en curso puede quedar incompleto.');
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.job.update({ where: { id: job.id }, data: { status: 'incomplete' } });
+      await this.addJobEvent(tx, {
+        jobId: job.id,
+        companyId: job.companyId,
+        type: 'incomplete',
+        message: dto.reason,
+        actorUserId: auth.userId,
+      });
+      await this.audit.record(
+        {
+          companyId: job.companyId,
+          actorUserId: auth.userId,
+          action: AUDIT_ACTIONS_ETAPA3.JOB_INCOMPLETE,
+          entityType: AUDIT_ENTITIES_ETAPA2.JOB,
+          entityId: job.id,
+          payload: { jobId: job.id, orderId: job.orderId, reason: dto.reason },
+        },
+        tx,
+      );
+    });
+  }
+
+  /**
+   * The responsible party authorizes continuing with the SAME professional
+   * (§6.2, §20.2): `incomplete → in_progress` only while the accepted
+   * assignment is still active (matrix #11, #13).
+   */
+  async resumeJob(access: CompanyAccess, auth: AuthContext, jobId: string) {
+    const job = await this.findResponsibleJob(jobId, access);
+    if (!canTransitionJob(job.status, 'in_progress')) {
+      throw new ConflictException('Solo un trabajo incompleto puede reanudarse.');
+    }
+    const active = await this.prisma.assignment.findFirst({
+      where: { jobId: job.id, status: 'accepted' },
+    });
+    if (!active) {
+      throw new ConflictException('El trabajo no conserva al profesional que lo venía haciendo.');
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.job.update({ where: { id: job.id }, data: { status: 'in_progress' } });
+      await this.addJobEvent(tx, { jobId: job.id, companyId: job.companyId, type: 'resumed', actorUserId: auth.userId });
+      await this.audit.record(
+        {
+          companyId: job.companyId,
+          actorUserId: auth.userId,
+          action: AUDIT_ACTIONS_ETAPA3.JOB_RESUMED,
+          entityType: AUDIT_ENTITIES_ETAPA2.JOB,
+          entityId: job.id,
+          payload: { jobId: job.id, orderId: job.orderId },
+        },
+        tx,
+      );
+    });
+  }
+
+  /**
+   * «No pudo concretarse» (§6.3): terminal with a mandatory reason; the job,
+   * its history and its assignments rows are kept (§6.3 «No se elimina el
+   * trabajo ni su historial»); active assignments are revoked (§16.6).
+   */
+  async notRealizeJob(access: CompanyAccess, auth: AuthContext, jobId: string, dto: NotRealizedDto) {
+    const job = await this.findResponsibleJob(jobId, access);
+    if (!canTransitionJob(job.status, 'not_realized')) {
+      throw new ConflictException('El trabajo ya está finalizado.');
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.job.update({ where: { id: job.id }, data: { status: 'not_realized' } });
+      await tx.assignment.updateMany({
+        where: { jobId: job.id, status: { in: ['pending', 'accepted'] } },
+        data: { status: 'revoked' },
+      });
+      await this.addJobEvent(tx, {
+        jobId: job.id,
+        companyId: job.companyId,
+        type: 'not_realized',
+        message: dto.reason,
+        actorUserId: auth.userId,
+      });
+      await this.audit.record(
+        {
+          companyId: job.companyId,
+          actorUserId: auth.userId,
+          action: AUDIT_ACTIONS_ETAPA3.JOB_NOT_REALIZED,
+          entityType: AUDIT_ENTITIES_ETAPA2.JOB,
+          entityId: job.id,
+          payload: { jobId: job.id, orderId: job.orderId, reason: dto.reason },
+        },
+        tx,
+      );
+    });
+  }
+
+  /**
+   * Revokes an active assignment (§20.3): the job returns to `pending` when it
+   * never started; an `in_progress` job must first report `incomplete` (matrix
+   * #19). A revoked assignment is never reactivated (matrix #21).
+   */
+  async revokeAssignment(access: CompanyAccess, auth: AuthContext, assignmentId: string) {
+    const assignment = await this.prisma.assignment.findUnique({
+      where: { id: assignmentId },
+      include: { job: { include: { order: true } } },
+    });
+    if (!assignment) throw new NotFoundException('Asignación no encontrada.');
+    await this.assertResponsible(assignment.job.order, access);
+
+    if (assignment.status !== 'pending' && assignment.status !== 'accepted') {
+      throw new ConflictException('La asignación ya no está activa.');
+    }
+    if (assignment.job.status === 'in_progress') {
+      throw new ConflictException('El trabajo está en curso: primero debe informarse incompleto.');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.assignment.update({ where: { id: assignment.id }, data: { status: 'revoked' } });
+      if (assignment.job.status === 'accepted') {
+        await tx.job.update({ where: { id: assignment.jobId }, data: { status: 'pending' } });
+      }
+      await this.audit.record(
+        {
+          companyId: assignment.job.companyId,
+          actorUserId: auth.userId,
+          action: AUDIT_ACTIONS_ETAPA3.ASSIGNMENT_REVOKED,
+          entityType: AUDIT_ENTITIES_ETAPA2.ASSIGNMENT,
+          entityId: assignment.id,
+          payload: { jobId: assignment.jobId, orderId: assignment.job.orderId },
+        },
+        tx,
+      );
+    });
+  }
+
+  /**
+   * Closes the order (§6.4): every job must be `done` or `not_realized`; the
+   * row keeps `originator_id`, `company_id` and `closed_by`/`closed_at`
+   * separately. The preconditions are re-evaluated inside the transaction with
+   * a row lock (spec §11).
+   */
+  async closeOrder(access: CompanyAccess, auth: AuthContext, orderId: string) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Orden no encontrada.');
+    await this.assertResponsible(order, access);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId} FOR UPDATE`;
+      const current = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
+      const jobs = await tx.job.findMany({ where: { orderId }, select: { status: true } });
+      if (!canCloseOrder(current.status, jobs)) {
+        throw new ConflictException('La orden no puede cerrarse: hay trabajos sin finalizar o ya fue cerrada.');
+      }
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: 'completed', closedBy: auth.userId, closedAt: new Date() },
+      });
+      await this.audit.record(
+        {
+          companyId: current.companyId,
+          actorUserId: auth.userId,
+          action: AUDIT_ACTIONS_ETAPA3.ORDER_CLOSED,
+          entityType: AUDIT_ENTITIES_ETAPA2.ORDER,
+          entityId: orderId,
+          payload: {
+            originatorId: current.originatorId,
+            companyId: current.companyId,
+            closedBy: auth.userId,
+          },
+        },
+        tx,
+      );
+    });
+  }
+
+  /**
+   * Cancels the whole order (§20.1): only from `open`/`assigned`, only while
+   * no job has started, mandatory reason, active assignments revoked (§16.6).
+   */
+  async cancelOrder(access: CompanyAccess, auth: AuthContext, orderId: string, dto: CancelOrderDto) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Orden no encontrada.');
+    await this.assertResponsible(order, access);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId} FOR UPDATE`;
+      const current = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
+      const jobs = await tx.job.findMany({ where: { orderId }, select: { startedAt: true } });
+      if (!canCancelOrder(current.status, jobs)) {
+        throw new ConflictException(
+          current.status === 'in_progress' || jobs.some((j) => j.startedAt !== null)
+            ? 'La orden ya tiene trabajo realizado: no puede cancelarse.'
+            : 'La orden no está en un estado cancelable.',
+        );
+      }
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          status: 'cancelled',
+          cancelledBy: auth.userId,
+          cancelledAt: new Date(),
+          cancellationReason: dto.reason,
+        },
+      });
+      await tx.assignment.updateMany({
+        where: { status: { in: ['pending', 'accepted'] }, job: { orderId } },
+        data: { status: 'revoked' },
+      });
+      await this.audit.record(
+        {
+          companyId: current.companyId,
+          actorUserId: auth.userId,
+          action: AUDIT_ACTIONS_ETAPA3.ORDER_CANCELLED,
+          entityType: AUDIT_ENTITIES_ETAPA2.ORDER,
+          entityId: orderId,
+          payload: { reason: dto.reason },
+        },
+        tx,
+      );
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -512,6 +894,79 @@ export class OrdersService {
     return assignment;
   }
 
+  /** Active membership ids of the caller (permissions read per request, §16.6). */
+  private async activeMembershipIds(userId: string): Promise<string[]> {
+    const memberships = await this.prisma.membership.findMany({
+      where: { userId, status: 'active' },
+      select: { id: true },
+    });
+    return memberships.map((m) => m.id);
+  }
+
+  /**
+   * Resolves a job for its OWN professional (§6.1, §16.3): the active assignee
+   * proceeds; a member of the owning company — who sees the job but is not the
+   * assignee — gets 403 (matrix #3); everyone else gets 404 (matrix #4, #5,
+   * #10: another professional's job is simply not in their scope).
+   */
+  private async findOwnJob(jobId: string, auth: AuthContext): Promise<Job> {
+    const job = await this.prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('Trabajo no encontrado.');
+    const membershipIds = await this.activeMembershipIds(auth.userId);
+    const assignment = await this.prisma.assignment.findFirst({
+      where: {
+        jobId: job.id,
+        assigneeMembershipId: { in: membershipIds },
+        status: { in: ['pending', 'accepted'] },
+      },
+    });
+    if (assignment) return job;
+    const member = await this.prisma.membership.findFirst({
+      where: { companyId: job.companyId, userId: auth.userId, status: 'active' },
+    });
+    if (member) {
+      throw new ForbiddenException('Este trabajo no es tuyo: solo quien lo tiene asignado lo registra.');
+    }
+    throw new NotFoundException('Trabajo no encontrado.');
+  }
+
+  /**
+   * Resolves a job for the RESPONSIBLE party (§6.2, §6.3): only the owning
+   * company decides; a related company (holds or held an assignment) gets 403
+   * (matrix #12, #17); an unrelated one gets 404 (§16.8).
+   */
+  private async findResponsibleJob(jobId: string, access: CompanyAccess): Promise<Job> {
+    const job = await this.prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('Trabajo no encontrado.');
+    const order = await this.prisma.order.findUnique({ where: { id: job.orderId } });
+    if (!order) throw new NotFoundException('Trabajo no encontrado.');
+    await this.assertResponsible(order, access);
+    return job;
+  }
+
+  /** §16.1/§16.8: owning company proceeds, related company 403, unrelated 404. */
+  private async assertResponsible(order: Order, access: CompanyAccess): Promise<void> {
+    if (order.companyId === access.companyId) return;
+    const related = await this.prisma.assignment.findFirst({
+      where: { job: { orderId: order.id }, assigneeMembership: { companyId: access.companyId } },
+    });
+    if (!related) throw new NotFoundException('Orden no encontrada.');
+    throw new ForbiddenException('Solo la empresa responsable de la orden toma esta decisión.');
+  }
+
+  /** Appends a `job_events` row (append-only job history, spec §2.5). */
+  private async addJobEvent(tx: Prisma.TransactionClient, event: JobEventData) {
+    return tx.jobEvent.create({
+      data: {
+        jobId: event.jobId,
+        companyId: event.companyId,
+        type: event.type,
+        message: event.message ?? null,
+        actorUserId: event.actorUserId ?? null,
+      },
+    });
+  }
+
   private async jobsOf(
     orderId: string,
     scope: 'all' | 'own',
@@ -529,6 +984,8 @@ export class OrdersService {
         description: job.description,
         sortOrder: job.sortOrder,
         status: job.status,
+        startedAt: job.startedAt?.toISOString() ?? null,
+        completedAt: job.completedAt?.toISOString() ?? null,
         assignments: job.assignments.map((a) => ({
           id: a.id,
           status: a.status,
@@ -554,6 +1011,8 @@ export class OrdersService {
         description: job.description,
         sortOrder: job.sortOrder,
         status: job.status,
+        startedAt: job.startedAt?.toISOString() ?? null,
+        completedAt: job.completedAt?.toISOString() ?? null,
         assignments: job.assignments
           .filter((a) => membershipIds.includes(a.assigneeMembershipId))
           .map((a) => ({
@@ -581,6 +1040,13 @@ export class OrdersService {
       propertyId: order.propertyId,
       companyId: order.companyId,
       parentOrderId: order.parentOrderId,
+      // Etapa 3 (spec §2.2, §6.4): closing/cancellation are separate,
+      // auditable events with their own actor and timestamp.
+      closedBy: order.closedBy,
+      closedAt: order.closedAt ? order.closedAt.toISOString() : null,
+      cancelledBy: order.cancelledBy,
+      cancelledAt: order.cancelledAt ? order.cancelledAt.toISOString() : null,
+      cancellationReason: order.cancellationReason,
       access: opts.includeAccess
         ? {
             lockbox: order.accessLockbox,

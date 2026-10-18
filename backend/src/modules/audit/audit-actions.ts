@@ -30,6 +30,23 @@ export const AUDIT_ACTIONS_ETAPA2 = {
   ASSIGNMENT_REASSIGNED: 'assignment.reassigned',
 } as const;
 
+/** Audit actions of Etapa 3 (spec etapa-3.md §7). Free progress notes are
+ * intentionally absent: their history lives in `job_events` (§2.5, §7). */
+export const AUDIT_ACTIONS_ETAPA3 = {
+  JOB_STARTED: 'job.started',
+  JOB_COMPLETED: 'job.completed',
+  JOB_INCOMPLETE: 'job.incomplete',
+  JOB_RESUMED: 'job.resumed',
+  JOB_NOT_REALIZED: 'job.not_realized',
+  ORDER_CLOSED: 'order.closed',
+  ORDER_CANCELLED: 'order.cancelled',
+  ASSIGNMENT_REVOKED: 'assignment.revoked',
+  FILE_UPLOADED: 'file.uploaded',
+  FILE_DELETED: 'file.deleted',
+  HISTORY_SHARE_CREATED: 'history_share.created',
+  HISTORY_SHARE_REVOKED: 'history_share.revoked',
+} as const;
+
 export const AUDIT_ENTITIES = {
   USER: 'user',
   COMPANY: 'company',
@@ -46,4 +63,10 @@ export const AUDIT_ENTITIES_ETAPA2 = {
   ORDER: 'order',
   JOB: 'job',
   ASSIGNMENT: 'assignment',
+} as const;
+
+/** Audit entities of Etapa 3 (spec etapa-3.md §7). */
+export const AUDIT_ENTITIES_ETAPA3 = {
+  FILE: 'file',
+  HISTORY_SHARE: 'history_share',
 } as const;

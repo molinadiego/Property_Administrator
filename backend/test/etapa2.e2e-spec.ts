@@ -438,8 +438,11 @@ suite('etapa 2: matriz de permisos y flujos (e2e)', () => {
     expect(profBView.body.access).not.toBeNull();
   });
 
-  it('asignación aceptada marca el job in_progress y es visible en el detalle', async () => {
+  it('asignación aceptada deja el job accepted (inicio explícito con start)', async () => {
     // Accept O1 job1 (assigned to profB) and check status + visibility.
+    // Etapa 3 (approved change, spec etapa-3 §1 / decision 5): accepting moves
+    // the job to `accepted`, NOT to `in_progress` — §20.2 «Aceptado → En
+    // curso» requires the explicit `start` of the tracking endpoints.
     await agents.profB
       .post(`${API}/companies/${companies.B}/assignments/${assignments.O1job1}/accept`)
       .send({})
@@ -448,7 +451,7 @@ suite('etapa 2: matriz de permisos y flujos (e2e)', () => {
       .get(`${API}/companies/${companies.A}/orders/${orders.O1}`)
       .expect(200);
     const job1 = detail.body.jobs.find((j: { id: string }) => j.id === jobs.O1job1);
-    expect(job1.status).toBe('in_progress');
+    expect(job1.status).toBe('accepted');
     expect(job1.assignments[0].status).toBe('accepted');
     // Double-accept conflicts.
     await agents.profB
