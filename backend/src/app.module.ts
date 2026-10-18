@@ -22,6 +22,10 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { PropertiesModule } from './modules/properties/properties.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { UsersModule } from './modules/users/users.module';
+// Etapa 4 (docs/especificacion/etapa-4.md)
+import { EconomicSettingsModule } from './modules/economic-settings/economic-settings.module';
+import { CostsModule } from './modules/costs/costs.module';
+import { AuthorizationsModule } from './modules/authorizations/authorizations.module';
 
 @Module({
   imports: [
@@ -50,6 +54,10 @@ import { UsersModule } from './modules/users/users.module';
     StorageModule,
     FilesModule,
     HistoryModule,
+    // Etapa 4 (docs/especificacion/etapa-4.md)
+    EconomicSettingsModule,
+    CostsModule,
+    AuthorizationsModule,
   ],
   providers: [
     // Every route requires a valid session cookie unless marked @Public().
