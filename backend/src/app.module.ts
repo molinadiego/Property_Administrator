@@ -27,6 +27,8 @@ import { EconomicSettingsModule } from './modules/economic-settings/economic-set
 import { CostsModule } from './modules/costs/costs.module';
 import { AuthorizationsModule } from './modules/authorizations/authorizations.module';
 import { BillingModule } from './modules/billing/billing.module';
+// Etapa 6 (docs/especificacion/etapa-6.md)
+import { WarrantyModule } from './modules/warranty/warranty.module';
 
 @Module({
   imports: [
@@ -61,6 +63,8 @@ import { BillingModule } from './modules/billing/billing.module';
     AuthorizationsModule,
     // Etapa 5 (docs/especificacion/etapa-5.md)
     BillingModule,
+    // Etapa 6 (docs/especificacion/etapa-6.md)
+    WarrantyModule,
   ],
   providers: [
     // Every route requires a valid session cookie unless marked @Public().
