@@ -1,8 +1,10 @@
 // Development seed: loads a small, 100% fictitious dataset (reserved `.test`
 // domain) so the app has something to show and the email flows can be exercised
-// against real data. Covers etapas 1–5, including a billing demo (draft,
+// against real data. Covers etapas 1–6, including a billing demo (draft,
 // issued, partial, refunded, paid and overdue invoices plus a suspected
-// duplicate). Never runs in production; there is no real user data here.
+// duplicate) and the Etapa 6 demo (three subscription plans, an open warranty
+// claim over a completed job and an urgent order with a pending assignment).
+// Never runs in production; there is no real user data here.
 //
 // Idempotent and non-destructive: every row uses a fixed UUID and is inserted
 // with `skipDuplicates`, so re-running never duplicates. The limited-access
@@ -78,6 +80,12 @@ const LINE = (n: number): string =>
   `eeeeeeee-eeee-4eee-8eee-eeeeeeeeee${String(n).padStart(2, '0')}`;
 const PMT = (n: number): string =>
   `ffffffff-ffff-4fff-8fff-ffffffffff${String(n).padStart(2, '0')}`;
+
+// Etapa 6 (suscripciones, garantías, urgencias) ------------------------------
+const PLAN_PRO = 'cccccccc-cccc-4ccc-8ccc-cccccccccc01'; // profesional, USD 33
+const PLAN_CONTR = 'cccccccc-cccc-4ccc-8ccc-cccccccccc02'; // contractor, USD 66
+const PLAN_PM = 'cccccccc-cccc-4ccc-8ccc-cccccccccc03'; // property_management, USD 99
+const WC_1 = 'cccccccc-cccc-4ccc-8ccc-cccccccccc11'; // J_5 warranty claim, open
 
 const DEV_PASSWORD = 'DevDemo123!';
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -462,6 +470,45 @@ async function main(): Promise<void> {
           { companyId: C_GESTION, lastNumber: 1 },
         ],
       }),
+      // --- Etapa 6: planes, garantías y urgencias (spec etapa-6.md) --------
+      // Los precios son de ejemplo (33/66/99 USD, §18.3) y la semilla no los
+      // sobrescribe: un ajuste hecho por despliegue se conserva (D4, §11.9).
+      prisma.plan.upsert({
+        where: { category: 'profesional' },
+        create: { id: PLAN_PRO, name: 'Profesional independiente', category: 'profesional', price: '33.00' },
+        update: { name: 'Profesional independiente' },
+      }),
+      prisma.plan.upsert({
+        where: { category: 'contractor' },
+        create: { id: PLAN_CONTR, name: 'Contratista', category: 'contractor', price: '66.00' },
+        update: { name: 'Contratista' },
+      }),
+      prisma.plan.upsert({
+        where: { category: 'property_management' },
+        create: { id: PLAN_PM, name: 'Administradora de propiedades', category: 'property_management', price: '99.00' },
+        update: { name: 'Administradora de propiedades' },
+      }),
+      // Plan explícito para Gestión; Taller queda sin plan_id para demostrar
+      // el plan por categoría (own_business → profesional, D3).
+      prisma.company.update({ where: { id: C_GESTION }, data: { planId: PLAN_PM } }),
+      // Reclamo de garantía abierto sobre el trabajo Completado J_5 (§13).
+      prisma.warrantyClaim.createMany({
+        skipDuplicates: true,
+        data: [
+          {
+            id: WC_1,
+            companyId: C_GESTION,
+            orderId: O_4,
+            jobId: J_5,
+            description: 'El ventilador hace ruido tras la instalación; se pide revisión en garantía.',
+            createdBy: U_ANA,
+          },
+        ],
+      }),
+      // Orden urgente con la asignación A_2 todavía pendiente: el barrido
+      // recuerda a Bob y, al vencer el plazo de la empresa asignada (24h),
+      // escala a sus owners (§18.4, D1/D2).
+      prisma.order.update({ where: { id: O_2 }, data: { urgent: true } }),
     ]);
 
     console.log('Seed completado (datos ficticios de desarrollo).');

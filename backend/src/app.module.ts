@@ -31,6 +31,7 @@ import { BillingModule } from './modules/billing/billing.module';
 // Etapa 6 (docs/especificacion/etapa-6.md)
 import { WarrantyModule } from './modules/warranty/warranty.module';
 import { UrgencyModule } from './modules/urgency/urgency.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { UrgencyModule } from './modules/urgency/urgency.module';
     // Etapa 6 (docs/especificacion/etapa-6.md)
     WarrantyModule,
     UrgencyModule,
+    SubscriptionsModule,
   ],
   providers: [
     // Every route requires a valid session cookie unless marked @Public().
