@@ -690,6 +690,837 @@
           "audit-log"
         ]
       }
+    },
+    "/api/v1/companies/{id}/properties": {
+      "post": {
+        "operationId": "PropertiesController_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePropertyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Propiedad creada"
+          },
+          "403": {
+            "description": "No es miembro (403)"
+          },
+          "404": {
+            "description": "Espacio inexistente (404)"
+          },
+          "422": {
+            "description": "Datos inválidos (422)"
+          }
+        },
+        "summary": "Crea la ficha de una propiedad (mínima o completa, §5.1)",
+        "tags": [
+          "properties"
+        ]
+      },
+      "get": {
+        "operationId": "PropertiesController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de propiedades"
+          }
+        },
+        "summary": "Lista las propiedades del espacio",
+        "tags": [
+          "properties"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/properties/{propId}": {
+      "get": {
+        "operationId": "PropertiesController_getDetail",
+        "parameters": [
+          {
+            "name": "propId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la propiedad",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle"
+          },
+          "404": {
+            "description": "Propiedad inexistente (404)"
+          }
+        },
+        "summary": "Detalle de la propiedad con sus inquilinos",
+        "tags": [
+          "properties"
+        ]
+      },
+      "patch": {
+        "operationId": "PropertiesController_update",
+        "parameters": [
+          {
+            "name": "propId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la propiedad",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePropertyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actualizada"
+          },
+          "403": {
+            "description": "No es la administradora (403)"
+          },
+          "404": {
+            "description": "Propiedad inexistente (404)"
+          }
+        },
+        "summary": "Edita los datos oficiales (solo administradora, §4.4)",
+        "tags": [
+          "properties"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/properties/{propId}/tenants": {
+      "post": {
+        "operationId": "PropertiesController_addTenant",
+        "parameters": [
+          {
+            "name": "propId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la propiedad",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePropertyTenantDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tenant creado y vinculado"
+          },
+          "404": {
+            "description": "Propiedad inexistente (404)"
+          },
+          "409": {
+            "description": "Email ya registrado (409)"
+          },
+          "422": {
+            "description": "Vacante con inquilino (422)"
+          }
+        },
+        "summary": "Registra un inquilino o propietario y lo vincula a la propiedad",
+        "tags": [
+          "properties"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/tenants/{tenantId}": {
+      "patch": {
+        "operationId": "PropertiesController_updateTenant",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del inquilino",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenantDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actualizado"
+          },
+          "404": {
+            "description": "Inquilino inexistente (404)"
+          }
+        },
+        "summary": "Edita los datos operativos del inquilino (§4.4)",
+        "tags": [
+          "properties"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/clients": {
+      "post": {
+        "operationId": "ClientsController_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClientDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cliente registrado"
+          },
+          "403": {
+            "description": "No es negocio propio (403)"
+          },
+          "409": {
+            "description": "Email ya registrado (409)"
+          }
+        },
+        "summary": "Registra un cliente propio (empresa own_business, §2.3)",
+        "tags": [
+          "clients"
+        ]
+      },
+      "get": {
+        "operationId": "ClientsController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de clientes"
+          }
+        },
+        "summary": "Lista de clientes propios",
+        "tags": [
+          "clients"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders": {
+      "post": {
+        "operationId": "OrdersController_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Orden creada con su primer trabajo"
+          },
+          "404": {
+            "description": "Espacio o propiedad inexistente (404)"
+          },
+          "422": {
+            "description": "Datos inválidos (422)"
+          }
+        },
+        "summary": "Crea una orden vinculada a una propiedad (§5.1)",
+        "tags": [
+          "orders"
+        ]
+      },
+      "get": {
+        "operationId": "OrdersController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de órdenes"
+          }
+        },
+        "summary": "Órdenes del espacio y las asignadas al usuario (§2.12)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}": {
+      "get": {
+        "operationId": "OrdersController_getDetail",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle"
+          },
+          "404": {
+            "description": "Orden inexistente o ajena (404)"
+          }
+        },
+        "summary": "Detalle de la orden; el profesional ve solo sus trabajos (§2.3)",
+        "tags": [
+          "orders"
+        ]
+      },
+      "patch": {
+        "operationId": "OrdersController_update",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Orden actualizada"
+          },
+          "403": {
+            "description": "No la gestiona este espacio (403)"
+          },
+          "404": {
+            "description": "Orden inexistente o ajena (404)"
+          }
+        },
+        "summary": "Edita instrucciones/acceso de la orden gestionada (§4.4, §5.8)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}/jobs": {
+      "post": {
+        "operationId": "OrdersController_addJob",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Trabajo agregado"
+          },
+          "404": {
+            "description": "Orden inexistente o ajena (404)"
+          }
+        },
+        "summary": "Agrega un trabajo a una orden compuesta (§5.5)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}/assignments": {
+      "post": {
+        "operationId": "OrdersController_assign",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssignmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Asignación creada (pending)"
+          },
+          "404": {
+            "description": "Orden, trabajo o asignado inexistente (404)"
+          },
+          "409": {
+            "description": "Ya tiene asignación activa (409)"
+          }
+        },
+        "summary": "Asigna un trabajo a un contratista o profesional (§5.6)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/assignments/{assignId}/accept": {
+      "post": {
+        "operationId": "OrdersController_accept",
+        "parameters": [
+          {
+            "name": "assignId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la asignación",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Aceptada"
+          },
+          "404": {
+            "description": "Asignación inexistente o ajena (404)"
+          },
+          "409": {
+            "description": "Ya respondida (409)"
+          }
+        },
+        "summary": "Acepta la asignación (§5.6, solo el asignado)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/assignments/{assignId}/reject": {
+      "post": {
+        "operationId": "OrdersController_reject",
+        "parameters": [
+          {
+            "name": "assignId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la asignación",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectAssignmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Rechazada"
+          },
+          "404": {
+            "description": "Asignación inexistente o ajena (404)"
+          },
+          "409": {
+            "description": "Ya respondida (409)"
+          }
+        },
+        "summary": "Rechaza la asignación; el trabajo queda pending (§5.6)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/assignments/{assignId}/reassign": {
+      "post": {
+        "operationId": "OrdersController_reassign",
+        "parameters": [
+          {
+            "name": "assignId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la asignación previa",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssignmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Nueva asignación creada"
+          },
+          "404": {
+            "description": "Asignación o asignado inexistente (404)"
+          }
+        },
+        "summary": "Reasigna el trabajo conservando el historial (§5.7)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "operationId": "NotificationsController_listMine",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Cantidad máxima de elementos (1-100)",
+            "schema": {
+              "default": 50,
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Cursor opaco devuelto en nextCursor",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista paginada"
+          }
+        },
+        "summary": "Notificaciones in-app del usuario autenticado",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/{notifId}/read": {
+      "post": {
+        "operationId": "NotificationsController_markRead",
+        "parameters": [
+          {
+            "name": "notifId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la notificación",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Marcada como leída"
+          }
+        },
+        "summary": "Marca una notificación como leída",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/limited/{token}/orders": {
+      "get": {
+        "operationId": "LimitedController_listOrders",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "Token opaco de acceso limitado",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Órdenes visibles para la cuenta limitada"
+          },
+          "401": {
+            "description": "Token inválido, revocado o expirado (401)"
+          }
+        },
+        "summary": "Órdenes de la vivienda/relación, solo estado (§4.3)",
+        "tags": [
+          "limited-access"
+        ]
+      }
+    },
+    "/api/v1/limited/{token}/requests": {
+      "post": {
+        "operationId": "LimitedController_createRequest",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "Token opaco de acceso limitado",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pedido registrado (status requested)"
+          },
+          "401": {
+            "description": "Token inválido, revocado o expirado (401)"
+          },
+          "404": {
+            "description": "Propiedad inexistente (404)"
+          },
+          "422": {
+            "description": "Sin propiedad referenciada (422)"
+          }
+        },
+        "summary": "Pide un trabajo; se crea una orden requested (§5.1)",
+        "tags": [
+          "limited-access"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}/convert": {
+      "post": {
+        "operationId": "LimitedController_convert",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden requested",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Orden convertida (open)"
+          },
+          "404": {
+            "description": "Orden inexistente (404)"
+          },
+          "422": {
+            "description": "No está requested (422)"
+          }
+        },
+        "summary": "Convierte un pedido requested en orden real (§5.1, AC-4.5)",
+        "tags": [
+          "limited-access"
+        ]
+      }
     }
   },
   "info": {
@@ -790,7 +1621,8 @@
             "enum": [
               "property_management",
               "contractor",
-              "profesional"
+              "profesional",
+              "own_business"
             ],
             "example": "property_management"
           }
@@ -863,6 +1695,374 @@
             "description": "Requerido solo sin sesión activa"
           }
         }
+      },
+      "CreatePropertyDto": {
+        "type": "object",
+        "properties": {
+          "addressLine": {
+            "type": "string",
+            "example": "123 Sunset Ave"
+          },
+          "city": {
+            "type": "string",
+            "example": "Miami"
+          },
+          "state": {
+            "type": "string",
+            "example": "FL"
+          },
+          "postalCode": {
+            "type": "string",
+            "example": "33101"
+          },
+          "occupancy": {
+            "type": "string",
+            "enum": [
+              "occupied",
+              "vacant"
+            ],
+            "default": "vacant"
+          },
+          "ownerName": {
+            "type": "string"
+          },
+          "ownerPhone": {
+            "type": "string"
+          },
+          "ownerEmail": {
+            "type": "string"
+          },
+          "ownerAddress": {
+            "type": "string"
+          },
+          "ownerCity": {
+            "type": "string"
+          },
+          "ownerState": {
+            "type": "string"
+          },
+          "ownerPostalCode": {
+            "type": "string"
+          },
+          "communityName": {
+            "type": "string"
+          },
+          "communityAccessCode": {
+            "type": "string",
+            "description": "Código de acceso a la comunidad (restringido)"
+          },
+          "entryInstructions": {
+            "type": "string"
+          },
+          "allowUnattendedEntry": {
+            "type": "boolean",
+            "default": false
+          },
+          "petsInfo": {
+            "type": "string"
+          },
+          "otherInstructions": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "addressLine",
+          "city",
+          "state"
+        ]
+      },
+      "UpdatePropertyDto": {
+        "type": "object",
+        "properties": {
+          "addressLine": {
+            "type": "string",
+            "example": "123 Sunset Ave"
+          },
+          "city": {
+            "type": "string",
+            "example": "Miami"
+          },
+          "state": {
+            "type": "string",
+            "example": "FL"
+          },
+          "postalCode": {
+            "type": "string",
+            "example": "33101"
+          },
+          "occupancy": {
+            "type": "string",
+            "enum": [
+              "occupied",
+              "vacant"
+            ],
+            "default": "vacant"
+          },
+          "ownerName": {
+            "type": "string"
+          },
+          "ownerPhone": {
+            "type": "string"
+          },
+          "ownerEmail": {
+            "type": "string"
+          },
+          "ownerAddress": {
+            "type": "string"
+          },
+          "ownerCity": {
+            "type": "string"
+          },
+          "ownerState": {
+            "type": "string"
+          },
+          "ownerPostalCode": {
+            "type": "string"
+          },
+          "communityName": {
+            "type": "string"
+          },
+          "communityAccessCode": {
+            "type": "string",
+            "description": "Código de acceso a la comunidad (restringido)"
+          },
+          "entryInstructions": {
+            "type": "string"
+          },
+          "allowUnattendedEntry": {
+            "type": "boolean",
+            "default": false
+          },
+          "petsInfo": {
+            "type": "string"
+          },
+          "otherInstructions": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePropertyTenantDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "tenant"
+            ],
+            "example": "tenant"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ana López"
+          },
+          "phones": {
+            "example": [
+              "+1 305 555 0101"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "address": {
+            "type": "string"
+          },
+          "availability": {
+            "type": "string",
+            "description": "Franjas horarias disponibles para la visita"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email para entregar el token de acceso limitado"
+          }
+        },
+        "required": [
+          "kind",
+          "name"
+        ]
+      },
+      "UpdateTenantDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Ana López"
+          },
+          "phones": {
+            "example": [
+              "+1 305 555 0101"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "address": {
+            "type": "string"
+          },
+          "availability": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateClientDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Roberto Díaz"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email para entregar el token de acceso limitado"
+          },
+          "phones": {
+            "example": [
+              "+1 305 555 0101"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "address": {
+            "type": "string"
+          },
+          "availability": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CreateOrderDto": {
+        "type": "object",
+        "properties": {
+          "propertyId": {
+            "type": "string",
+            "description": "Propiedad vinculada (obligatoria, §5.1)"
+          },
+          "title": {
+            "type": "string",
+            "example": "Revisar triturador de basura"
+          },
+          "description": {
+            "type": "string",
+            "example": "No tritura, hace ruido pero no muele."
+          },
+          "clientRelationshipId": {
+            "type": "string",
+            "description": "Cliente propio (solo empresas own_business)"
+          },
+          "accessLockbox": {
+            "type": "string",
+            "description": "Lockbox de la visita (vive en la orden, §5.8)"
+          },
+          "accessCommunityCode": {
+            "type": "string",
+            "description": "Código de comunidad de esta visita (§5.8)"
+          },
+          "accessEntryInstructions": {
+            "type": "string",
+            "description": "Instrucciones de entrada de esta visita (§5.8)"
+          }
+        },
+        "required": [
+          "propertyId",
+          "title",
+          "description"
+        ]
+      },
+      "UpdateOrderDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Revisar triturador de basura"
+          },
+          "description": {
+            "type": "string",
+            "example": "No tritura, hace ruido pero no muele."
+          },
+          "accessLockbox": {
+            "type": "string",
+            "description": "Lockbox de la visita (§5.8)"
+          },
+          "accessCommunityCode": {
+            "type": "string",
+            "description": "Código de comunidad de esta visita (§5.8)"
+          },
+          "accessEntryInstructions": {
+            "type": "string",
+            "description": "Instrucciones de entrada de esta visita (§5.8)"
+          }
+        }
+      },
+      "AddJobDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Reemplazar triturador"
+          },
+          "description": {
+            "type": "string",
+            "example": "El triturador está quemado; reemplazar por equivalente."
+          }
+        },
+        "required": [
+          "title",
+          "description"
+        ]
+      },
+      "CreateAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "description": "Trabajo a asignar"
+          },
+          "assigneeMembershipId": {
+            "type": "string",
+            "description": "Membresía del asignado (rol activo)"
+          }
+        },
+        "required": [
+          "jobId",
+          "assigneeMembershipId"
+        ]
+      },
+      "RejectAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "No tengo disponibilidad esta semana."
+          }
+        }
+      },
+      "CreateRequestDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Fuga bajo el lavadero"
+          },
+          "description": {
+            "type": "string",
+            "example": "Apenas sale agua, ya está mojando el piso."
+          },
+          "propertyId": {
+            "type": "string",
+            "description": "Propiedad del trabajo (obligatoria para clientes propios)"
+          }
+        },
+        "required": [
+          "title",
+          "description"
+        ]
       }
     }
   }
