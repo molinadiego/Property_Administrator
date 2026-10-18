@@ -1,9 +1,11 @@
 # Especificación técnica — Etapa 2: Propiedades y órdenes
 
-> **Borrador para aprobación.** No se escribe código hasta que el dueño apruebe este documento
-> (regla SDD en `AGENTS.md`). Derivada de `docs/plan.md` §Etapa 2 = `proyect.md` §17 (Etapa 2).
-> Las reglas de negocio se referencian por § a `proyect.md`, nunca se copian. Ver las preguntas
-> de aprobación al final (§ Preguntas para aprobar).
+> **Aprobada el 17/10/2026** por el dueño. Decisiones confirmadas: (1) cuentas de acceso limitado
+> con **token opaco** entregado por correo (hash en BD); (2) `'own_business'` en `CompanyType`;
+> (3) relación profesional↔cliente con tabla explícita `client_relationships`;
+> (4) notificaciones in-app con tipo enumerado + `read_at`.
+> Derivada de `docs/plan.md` §Etapa 2 = `proyect.md` §17 (Etapa 2).
+> Las reglas de negocio se referencian por § a `proyect.md`, nunca se copian.
 
 ---
 
@@ -259,6 +261,7 @@ Todos documentados en `/api/v1`; los *tenant-scoped* derivan `company_id` de la 
 | POST | `/companies/:id/orders` | Crea orden vinculada a propiedad; puede crear su primer job | miembro activo | 201 / 404 / 422 |
 | GET | `/companies/:id/orders` | Lista paginada (espacio propio; §2.12) | miembro activo | 200 / 404 |
 | GET | `/companies/:id/orders/:orderId` | Detalle de la orden y sus jobs | miembro activo o asignado activo | 200 / 404 |
+| PATCH | `/companies/:id/orders/:orderId` | Editar instrucciones/acceso de la orden que gestiona (§4.4, §5.8) | miembro activo del espacio dueño o con asignación activa | 200 / 403 / 404 |
 | POST | `/companies/:id/orders/:orderId/jobs` | Agrega trabajo (compuestas, §5.5) | miembro activo | 201 / 403 / 404 |
 | POST | `/companies/:id/orders/:orderId/assignments` | Asigna un job (§5.6) | miembro activo | 201 / 404 |
 | POST | `/companies/:id/assignments/:assignId/accept` | Acepta (§5.6) | asignado | 204 / 403 / 404 |
@@ -315,7 +318,7 @@ Tests con Testcontainers + PostgreSQL real. **Si un escenario falla, no se pasa 
 | 10 | Tras **rechazar**, el profesional ya no lee el lockbox | 404/403 |
 | 11 | Cuenta limitada lista órdenes de su vivienda | 200, solo estado (sin costos/facturas) |
 | 12 | Cuenta limitada ve otra propiedad/relación | 401/404 |
-| 13 | Cuenta limitada **crea** una orden directamente | 403 (§5.1) |
+| 13 | Cuenta limitada **crea** una orden directamente | 401 — no tiene sesión de empresa (su único flujo es el pedido `requested` de §5.1; jamás crea órdenes reales) |
 | 14 | Usuario de la empresa convierte un pedido `requested` | pasa a `open`, audit log |
 | 15 | Inquilino sobre propiedad **vacante** sin datos | 422 (§4.3) |
 | 16 | Contratista edita datos oficiales de la propiedad | 403 (§4.4) |
@@ -340,7 +343,7 @@ Mínimo exigido por §12 («quién y cuándo») y §4.4:
 | `property_tenant.added` | property_tenant | vínculo propietario/inquilino |
 | `tenant.updated` | tenant | edición de datos de inquilino |
 | `client.created` | client_relationship | registro de cliente propio |
-| `order.created` | order | creación de orden |
+| `order.created` / `order.updated` | order | creación y edición de instrucciones/acceso |
 | `order.converted_from_request` | order | pedido convertido en orden |
 | `job.added` | job | trabajo agregado a orden compuesta |
 | `assignment.created` | assignment | asignación de trabajo |
@@ -443,7 +446,9 @@ Cada criterio se implementa como test (§8). Reglas por referencia (§x), no cop
 
 ## Preguntas para aprobar antes de implementar
 
-1. **Token de acceso limitado (§3 / AC-4.1):** ¿OK el token opaco por correo para que inquilino/propietario/cliente consulten sus órdenes, o preferís que se manejen sin acceso propio (desde la cuenta del profesional/empresa)? Este es el que cambia más la forma de los endpoints de §4.4.
-2. **`own_business` en `CompanyType`:** ¿OK agregar el cuarto valor para el negocio propio del profesional?
-3. **Cliente propio modelado como `client_relationships`:** ¿OK el modelo explícito de la relación profesional↔cliente?
-4. **Notificaciones in-app con tipo enumerado + `read_at`:** ¿OK este alcance mínimo?
+**Resueltas el 17/10/2026 (aprobación del dueño):**
+
+1. **Token de acceso limitado (§3 / AC-4.1):** ✔ aprobado — token opaco entregado por correo al vincular la cuenta; en la BD solo su hash (patrón de las invitaciones de Etapa 1).
+2. **`own_business` en `CompanyType`:** ✔ aprobado.
+3. **Cliente propio modelado como `client_relationships`:** ✔ aprobado.
+4. **Notificaciones in-app con tipo enumerado + `read_at`:** ✔ aprobado.

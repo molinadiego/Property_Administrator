@@ -60,7 +60,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 **Criterio de salida:** los flujos de creación → asignación → aceptación/rechazo funcionan extremo a extremo con notificación in-app; las cuentas con acceso limitado ven exactamente lo que dice §4.3 (y nada más); un usuario de una empresa no puede consultar órdenes privadas de otra (§16.8), verificado por tests.
 
-**Entregable:** `docs/especificacion/etapa-2.md` (borrador listo, **pendiente de aprobación**) + su implementación.
+**Entregable:** `docs/especificacion/etapa-2.md` (**aprobada el 17/10/2026**) + su implementación (**implementada el 17/10/2026**, gate `npm run check` en verde: unit 29 ✓, e2e 64 ✓).
 
 ---
 

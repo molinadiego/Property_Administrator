@@ -5,12 +5,16 @@ Contexto que no vive en los otros documentos. `AGENTS.md` son reglas de trabajo,
 ## 1. Estado del proyecto
 
 - Requisitos funcionales **aprobados v1.0 (17/10/2026)** y cerrados: intocables sin aprobación expresa.
-- Documentación completa: `README.md`, `AGENTS.md`, `docs/stack.md`, `docs/plan.md`, `docs/especificacion/etapa-1.md`.
+- Documentación completa: `README.md`, `AGENTS.md`, `docs/stack.md`, `docs/plan.md`, `docs/especificacion/etapa-1.md`, `docs/especificacion/etapa-2.md`.
 - Skills creadas en `.opencode/skills/`: `consistency-check` y `new-stage-spec` (ambas registradas en sesiones OpenCode del repo).
 - **Etapa 0: COMPLETADA (17/10/2026)** — scaffold en `backend/` con todo verde: lint ✓, 7 unit tests ✓, build ✓, e2e 3/3 con Testcontainers + PostgreSQL 16 real ✓, health `200 {"status":"ok","database":"up"}` contra la BD de desarrollo ✓. Gate de salida: `npm run check` (sin CI remota).
 - **Etapa 1: IMPLEMENTADA Y VERDE (17/10/2026)** — auth, companies, memberships, invitations, audit log, roles y cookie de sesión. Gate local `npm run check` en verde y determinista: lint ✓, build ✓, unit 29 ✓, e2e 37 ✓ (matriz de permisos de la spec + contrato OpenAPI snapshot). Contrato del API versionado en `backend/openapi/openapi.json`; regenerar con `npm run openapi:update`.
 - **Pendientes de la Etapa 1**: cuenta Resend + verificación DNS del dominio (emails transaccionales); seed de desarrollo (`prisma/seed.ts`) queda para una etapa posterior por decisión.
-- **Siguiente paso: Etapa 2** — pendiente de spec (`docs/especificacion/etapa-2.md`) y de tu aprobación antes de implementar.
+- **Etapa 2: SPEC APROBADA E IMPLEMENTADA Y VERDE (17/10/2026)** — propiedades, tenants/clients con acceso limitado por token opaco, órdenes (compuestas, `requested`→`open`), jobs, assignments (accept/reject/reassign) y notificaciones in-app. Gate local `npm run check` en verde y determinista: lint ✓, build ✓, unit 29 ✓, e2e 64 ✓ (Etapa 1 + matriz de 24 escenarios de Etapa 2 + contrato OpenAPI). `CompanyType` ahora incluye `own_business`. Contrato regenerado con `npm run openapi:update`.
+  - **Decisiones aprobadas por el dueño (17/10/2026)**: (1) token **opaco** de acceso limitado, entregado por correo, guardado solo como hash (patrón invitaciones de Etapa 1); (2) `'own_business'` en `CompanyType`; (3) relación profesional↔cliente con tabla explícita `client_relationships`; (4) notificaciones in-app con tipo enumerado + `read_at`.
+  - **Ajustes de spec hechos durante la implementación** (para que la matriz aprobada pase, sin tocar `proyect.md`): se agregó `PATCH /companies/:id/orders/:orderId` (matriz #17 exigía editar instrucciones de la orden gestionada y la tabla §4.3 no lo listaba) + evento `order.updated` en audit; la celda #13 de la matriz se aclaró a 401 (con token opaco no hay sesión de empresa, el intento de crear orden directa falla en el guard de sesión, no con 403).
+  - **Pendientes de Etapa 2**: seed de desarrollo (`prisma/seed.ts`).
+- **Siguiente paso: Resend** — el dueño pidió ayuda con Resend (crear cuenta + verificar DNS del dominio) al cerrar la Etapa 2. Luego, decidir si se retoma el flujo completo de una Etapa 3.
 
 ## 2. Preferencias de trabajo del dueño
 
@@ -32,7 +36,7 @@ Contexto que no vive en los otros documentos. `AGENTS.md` son reglas de trabajo,
   - Jurisdicción EE.UU., facturas en PDF, sin facturación electrónica.
   - Quien tiene negocio propio y participa en espacios ajenos paga solo su plan.
 - **Spec-driven development adoptado por etapa/feature**: la spec se aprueba antes de implementar y sus criterios de aceptación se convierten en tests (regla en `AGENTS.md`). Se decidió **mantener `docs/especificacion/`** y no renombrar el directorio a `specs/` — no crear un árbol paralelo de especificaciones ni duplicar reglas de negocio que viven en `proyect.md`.
-- **Sin GitHub ni CI remota** (decisión del dueño, 17/10/2026): el repo es **git local** y la condición de salida de etapa es el gate local `npm run check`. El workflow de GitHub Actions se dejó en `.github/workflows/ci.yml` por si cambia de opinión, pero **no volver a proponer** subirlo a ningún servicio remoto sin que él lo pida. Recomendarle backup del directorio de vez en cuando.
+- **Git local + respaldo en GitHub, sin CI remota** (decisión del dueño 17/10/2026; ampliada el mismo día): el gate de salida de etapa es **local** (`npm run check`). El dueño creó el repo `https://github.com/molinadiego/Property_Administrator` y pidió usarlo como **respaldo remoto** (`origin`, branch `main`). No activar CI remota sin pedido explícito; el workflow de GitHub Actions sigue en `.github/` por si se habilita después.
 - **Email transaccional: Resend, no AWS SES** (decidido 17/10/2026, aprobado por el dueño): SES eliminó el free tier para cuentas nuevas (julio 2026), su sandbox exige pedir production access (revisión manual) y suma fricción operativa (IAM, región, SNS de bounces). El volumen de la Etapa 1 (invitaciones, recuperación de contraseña) entra holgado en el free de Resend (3.000/mes, 100/día). Si algún día escala a cientos de miles de emails/mes, se evalúa migrar la implementación detrás de la misma interfaz — no volver a plantear SES ahora por ser más barato a gran volumen.
 - **§18 — sigue abierto** (preguntar, nunca inventar): precios/planes, límites de uso, funciones por categoría, requisitos fiscales por estado, tratamiento de impuestos, procedimiento de autorización telefónica, y todo el §18.4 (se resuelve al diseñar).
 
@@ -61,3 +65,10 @@ Contexto que no vive en los otros documentos. `AGENTS.md` son reglas de trabajo,
 - TS 6: `baseUrl` está deprecado (lo quitamos), `types` no se auto-incluye (hay que declarar `"types": ["node", "jest"]`) y `nest build` exige `rootDir` explícito en `tsconfig.build.json`.
 - `testcontainers` v12 usa `withEnvironment()`, no `withEnv()`.
 - El e2e tiene un guard de Docker: localmente la suite se **saltea sin Docker**; en CI la variable `REQUIRE_DOCKER=true` la **fuerza a fallar** si falta el daemon (nunca debe pasar en verde falso).
+
+## 7. Gotchas aprendidos en la Etapa 2
+
+- **Nunca anidar una petición `await` de supertest dentro de `.send(...)`** de otra petición (p. ej. `.send({ jobId: (await jobListOf(id))[0] })`). supertest comparte estado de servidor por agent; la llamada intermedia cierra/maneja el server y la petición externa revienta con un `TypeError: Cannot read properties of null (reading 'address')` en `formatServerUrl` (enmascara el fallo real). **Siempre** resolver la llamada previa en una variable aparte antes de construir la siguiente.
+- **`npx prisma migrate dev` falla con "environment is non-interactive"** cuando no hay TTY; además, si se le da TTY vía `script`, pregunta y cancela con `N` por defecto. Truco que funciona: `echo y | script -q /dev/null npx prisma migrate dev --name <nombre>`. (Alternativa: `prisma migrate diff` a mano.) `prisma migrate deploy` (usado en los e2e) no tiene este problema.
+- **Tipos de modelo de Prisma 7** (`Order`, `Job`, etc.) se importan desde `../../generated/prisma/client`, **no** desde el namespace `Prisma` (que solo expone `*Model`, `*GetPayload` no existe para todos). `Prisma.TransactionClient` y `Prisma.InputJsonValue` sí están en el namespace.
+- **`payload` del audit log** es `Prisma.InputJsonValue`: un `Record<string, unknown>` no es asignable directamente → tipar los objetos before/after como `Record<string, string | null>` (o castear) para que compile.
