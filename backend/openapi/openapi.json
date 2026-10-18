@@ -2769,6 +2769,673 @@
         ]
       }
     },
+    "/api/v1/companies/{id}/invoices": {
+      "get": {
+        "operationId": "BillingController_list",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Estado filtrado; overdue cubre vencidas con saldo (§11.2)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_id",
+            "required": false,
+            "in": "query",
+            "description": "Restringe a una orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "counterparty_company_id",
+            "required": false,
+            "in": "query",
+            "description": "Contraparte (empresa emisora o destinataria)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Tamaño de página (default 50)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Cursor opaco de la página anterior",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de facturas con cursor"
+          },
+          "404": {
+            "description": "Empresa fuera de alcance (404)"
+          }
+        },
+        "summary": "Facturas emitidas y recibidas por la empresa (§11.3)",
+        "tags": [
+          "billing"
+        ]
+      },
+      "post": {
+        "operationId": "BillingController_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Borrador creado (sin número ni total)"
+          },
+          "404": {
+            "description": "Orden inexistente o fuera de alcance (404)"
+          },
+          "409": {
+            "description": "Orden no aceptada o no terminada (409)"
+          }
+        },
+        "summary": "Crea borrador de una orden facturable (D1a/D1b, §11.1, §11.4)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/invoices/{invId}": {
+      "get": {
+        "operationId": "BillingController_get",
+        "parameters": [
+          {
+            "name": "invId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la factura",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Factura visible para la parte"
+          },
+          "404": {
+            "description": "Factura ajena o borrador del destinatario (404)"
+          }
+        },
+        "summary": "Detalle de factura: renglones, pagos, saldo y estado (§20.4)",
+        "tags": [
+          "billing"
+        ]
+      },
+      "patch": {
+        "operationId": "BillingController_patch",
+        "parameters": [
+          {
+            "name": "invId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la factura",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchInvoiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Borrador actualizado"
+          },
+          "403": {
+            "description": "Solo el emisor edita (403)"
+          },
+          "409": {
+            "description": "Factura emitida: inmutable (409)"
+          },
+          "422": {
+            "description": "Sin campos que cambiar (422)"
+          }
+        },
+        "summary": "Edita notas/vencimiento de un borrador (§11.5)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/invoices/{invId}/lines": {
+      "put": {
+        "operationId": "BillingController_putLines",
+        "parameters": [
+          {
+            "name": "invId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la factura",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutInvoiceLinesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Renglones reemplazados"
+          },
+          "403": {
+            "description": "Solo el emisor edita (403)"
+          },
+          "409": {
+            "description": "Factura emitida: inmutable (409)"
+          },
+          "422": {
+            "description": "Trabajo no facturable por la empresa (422)"
+          }
+        },
+        "summary": "Reemplaza los renglones del borrador (§11.1, §11.4)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/invoices/{invId}/emit": {
+      "post": {
+        "operationId": "BillingController_emit",
+        "parameters": [
+          {
+            "name": "invId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la factura",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Factura emitida (204)"
+          },
+          "403": {
+            "description": "Solo el emisor emite (403)"
+          },
+          "409": {
+            "description": "Ya emitida u orden no facturable (409)"
+          },
+          "422": {
+            "description": "Sin renglones, total 0 o vencimiento pasado (422)"
+          }
+        },
+        "summary": "Emite el borrador: número correlativo, totales congelados, correo (D2, D5)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/invoices/{invId}/pdf": {
+      "get": {
+        "operationId": "BillingController_pdf",
+        "parameters": [
+          {
+            "name": "invId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la factura",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "application/pdf"
+          },
+          "404": {
+            "description": "Factura ajena (404)"
+          },
+          "409": {
+            "description": "Borrador: aún sin emitir (409)"
+          }
+        },
+        "summary": "PDF de la factura emitida o anulada (§11.1, §11.6)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/invoices/{invId}/void": {
+      "post": {
+        "operationId": "BillingController_voidInvoice",
+        "parameters": [
+          {
+            "name": "invId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la factura",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidInvoiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Factura anulada (204)"
+          },
+          "403": {
+            "description": "Rol insuficiente o no es el emisor (403)"
+          },
+          "409": {
+            "description": "Borrador o ya pagada (409)"
+          }
+        },
+        "summary": "Anula una factura emitida con saldo; solo owner del emisor (§11.5, P4)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/invoices/{invId}/payments": {
+      "post": {
+        "operationId": "BillingController_registerPayment",
+        "parameters": [
+          {
+            "name": "invId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la factura",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pago registrado o posible duplicado"
+          },
+          "404": {
+            "description": "Factura ajena (404)"
+          },
+          "409": {
+            "description": "Borrador, anulada u orden sin saldo (409)"
+          },
+          "422": {
+            "description": "Importe, fecha o saldo inválidos (422)"
+          }
+        },
+        "summary": "Registra pago o devolución; posible duplicado queda en sospecha (§11.1, D6, P5)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/payments/{paymentId}/reconcile": {
+      "post": {
+        "operationId": "BillingController_reconcile",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del pago",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconcilePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Conciliado (204)"
+          },
+          "404": {
+            "description": "Pago ajeno (404)"
+          },
+          "409": {
+            "description": "No es un posible duplicado pendiente (409)"
+          }
+        },
+        "summary": "Resuelve un posible duplicado: same o distinct (§11.1, D6)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/accounting-exports": {
+      "get": {
+        "operationId": "BillingController_export",
+        "parameters": [
+          {
+            "name": "format",
+            "required": true,
+            "in": "query",
+            "description": "Formato del archivo",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pdf",
+                "excel"
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Desde (YYYY-MM-DD, inclusive)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Hasta (YYYY-MM-DD, inclusive)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_id",
+            "required": false,
+            "in": "query",
+            "description": "Restringe a una orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "counterparty_company_id",
+            "required": false,
+            "in": "query",
+            "description": "Restringe a una contraparte (empresa o tenant)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo descargable; audit accounting.exported"
+          },
+          "422": {
+            "description": "Filtros inválidos (422)"
+          }
+        },
+        "summary": "Registros contables propios en PDF o Excel (§3.5, §16.10)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/limited/{token}/invoices": {
+      "get": {
+        "operationId": "BillingController_listLimited",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "Token opaco de acceso limitado",
+            "schema": {}
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Facturas del tenant (sin borradores)"
+          },
+          "401": {
+            "description": "Token inválido, revocado o expirado (401)"
+          }
+        },
+        "summary": "Facturas emitidas al cliente propio, solo lectura (P3, D13)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/limited/{token}/invoices/{invId}": {
+      "get": {
+        "operationId": "BillingController_getLimited",
+        "parameters": [
+          {
+            "name": "invId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la factura",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "Token opaco de acceso limitado",
+            "schema": {}
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Factura del tenant"
+          },
+          "401": {
+            "description": "Token inválido (401)"
+          },
+          "404": {
+            "description": "Factura de otro tenant o borrador (404)"
+          }
+        },
+        "summary": "Detalle de una factura del cliente (renglones, pagos, saldo)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/api/v1/limited/{token}/invoices/{invId}/pdf": {
+      "get": {
+        "operationId": "BillingController_pdfLimited",
+        "parameters": [
+          {
+            "name": "invId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la factura",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "Token opaco de acceso limitado",
+            "schema": {}
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "application/pdf"
+          },
+          "401": {
+            "description": "Token inválido (401)"
+          },
+          "404": {
+            "description": "Factura de otro tenant o borrador (404)"
+          }
+        },
+        "summary": "PDF de la factura del cliente (§11.1, §11.6)",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
     "/api/v1/companies/{id}/orders/{orderId}/authorization-requests": {
       "get": {
         "operationId": "AuthorizationsController_listRequests",
@@ -3892,6 +4559,158 @@
             "description": "Notas del emisor al enviar"
           }
         }
+      },
+      "CreateInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "description": "Orden facturada (v1: una sola orden por factura, §11.1)"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas del emisor (editables solo en borrador)"
+          }
+        },
+        "required": [
+          "orderId"
+        ]
+      },
+      "PatchInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "string",
+            "description": "Notas del emisor; cadena vacía las borra"
+          },
+          "dueDate": {
+            "type": "string",
+            "description": "Fecha de vencimiento (YYYY-MM-DD); default emisión + 30 días (D3)"
+          }
+        }
+      },
+      "InvoiceLineDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "description": "Trabajo de la orden del que proviene el renglón (§11.1)"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Concepto",
+            "enum": [
+              "material",
+              "labor",
+              "tool_rental",
+              "travel",
+              "other"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "example": "Reemplazo de mezcladera"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Importe en USD con hasta 2 decimales",
+            "example": "85.00"
+          }
+        },
+        "required": [
+          "jobId",
+          "kind",
+          "description",
+          "amount"
+        ]
+      },
+      "PutInvoiceLinesDto": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "description": "Lista completa de renglones",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineDto"
+            }
+          }
+        },
+        "required": [
+          "lines"
+        ]
+      },
+      "VoidInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Motivo obligatorio de la anulación (§11.5)"
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "CreatePaymentDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Importe en USD con hasta 2 decimales",
+            "example": "500.00"
+          },
+          "paidAt": {
+            "type": "string",
+            "description": "Fecha del pago (YYYY-MM-DD); no puede ser futura (D7)"
+          },
+          "kind": {
+            "type": "string",
+            "description": "charge = pago (default), refund = devolución (§12)",
+            "enum": [
+              "charge",
+              "refund"
+            ]
+          },
+          "method": {
+            "type": "string",
+            "description": "Medio de pago",
+            "enum": [
+              "cash",
+              "check",
+              "transfer",
+              "card",
+              "other"
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "description": "Referencia o comprobante (parte de la comparación de duplicados, §11.1)"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas del registrante"
+          }
+        },
+        "required": [
+          "amount",
+          "paidAt"
+        ]
+      },
+      "ReconcilePaymentDto": {
+        "type": "object",
+        "properties": {
+          "resolution": {
+            "type": "string",
+            "description": "same = es el mismo pago (no suma); distinct = es otro pago (suma)",
+            "enum": [
+              "same",
+              "distinct"
+            ]
+          }
+        },
+        "required": [
+          "resolution"
+        ]
       },
       "CreateAuthorizationRequestDto": {
         "type": "object",
