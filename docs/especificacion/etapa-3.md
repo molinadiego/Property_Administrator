@@ -3,7 +3,9 @@
 > **Borrador generado el 17/10/2026** — pendiente de aprobación del dueño (condición previa a
 > implementar, regla SDD en `AGENTS.md`). Decisiones ya confirmadas: (1) almacenamiento
 > S3-compatible con **mock S3 en proceso** (`s3rver`) para dev/test y endpoint S3 real por
-> variable de entorno en producción, tras una interfaz `StorageService` (17/10/2026).
+> variable de entorno en producción, tras una interfaz `StorageService` (17/10/2026);
+> (2) alineación de `proyect.md` §5.6 con §20.1 (enmienda del 17/10/2026): tras un rechazo
+> se crea una **nueva** orden que referencia la rechazada; la rechazada no se reabre.
 > Decisiones de diseño que este borrador propone se listan en §1 y se aprueban o rechazan en
 > «Preguntas para aprobar antes de implementar». Derivada de `docs/plan.md` §Etapa 3 =
 > `proyect.md` §17 (Etapa 3). Las reglas de negocio se referencian por § a `proyect.md`,
@@ -37,9 +39,11 @@ Según `docs/plan.md` §Etapa 3, esta etapa implementa:
 - **Aceptación/rechazo de la orden a nivel de orden** (§5.6 «el contratista puede aceptar o
   rechazar una orden», §20.1 «Enviada → Aceptada/Rechazada»): la Etapa 2 aprobó modelar la
   aceptación/rechazo **a nivel de asignación** (spec etapa-2 §4.3) y no existe un modelo de
-  «orden enviada a otra empresa» (solo orden propia + asignaciones, ver etapa-2 §2.12). Queda
-  **reportado** como decisión abierta, junto a una **contradicción detectada** entre §5.6 y
-  §20.1 (ver «Preguntas para aprobar»). No se implementa en esta etapa.
+  «orden enviada a otra empresa» (solo orden propia + asignaciones, ver etapa-2 §2.12). La
+  **contradicción detectada** entre §5.6 y §20.1 quedó **resuelta el 17/10/2026** en la
+  fuente de verdad: `proyect.md` §5.6 enmendada para alinearse a §20.1 (nueva orden que
+  referencia la rechazada; la rechazada no se reabre). Sigue **abierta** solo la decisión de
+  implementar aquí el rechazo de órdenes (pregunta 2); mientras tanto, fuera de alcance.
 - **Costos en el historial** (§7.2–§7.4 mencionan «costos registrados/comunicados/presentados»):
   llegan en la **Etapa 4**; el historial de esta etapa cubre trabajos, fechas, estados y
   resultados, y los campos de costo se agregan cuando existan (plan.md §Etapa 4).
@@ -615,22 +619,23 @@ marca una decisión técnica propuesta que requiere aprobación (§1 y preguntas
 
 ## Preguntas para aprobar antes de implementar
 
-**Pendientes de decisión del dueño:**
+**Resuelta:**
 
-1. **Contradicción detectada en `proyect.md` (reporte, no resuelta en silencio — `AGENTS.md`):**
-   - §5.6 (línea de aceptación/rechazo): «Si un contratista rechaza una orden, la
-     administradora puede **enviarla a otro contratista** o cancelarla».
-   - §20.1: «Una orden **rechazada no se reabre** para enviarla a otro destinatario. Si
-     corresponde, se crea una nueva orden y se conserva la referencia a la rechazada».
-   - Son incompatibles: enviar la **misma** orden rechazada a otro destinatario vs. crear una
-     nueva. **No lo resuelvo yo**: o se enmienda §5.6 para alinearlo a §20.1 (mi lectura:
-     §20.1 es la sección de transiciones y la v1.0 lo consolidó después), o se aclara que
-     «enviarla» significa «crear una nueva referenciando la rechazada». Afecta a la Etapa 3
-     solo si se incorpora el rechazo de órdenes (siguiente pregunta).
+1. **Contradicción detectada en `proyect.md` §5.6 ↔ §20.1 — RESUELTA (17/10/2026, decisión
+   del dueño):** manda §20.1: si un contratista rechaza una orden, la administradora **crea
+   una nueva orden** para otro contratista conservando la referencia a la rechazada; la
+   rechazada **no se reabre**. Enmienda aplicada en `proyect.md` (§5.6 y nota en su
+   historial) y registrada en `MEMORY.md` §3. Queda retirada de §5.6 la opción «o cancelarla»,
+   que §20.1 no contempla entre sus transiciones. Efecto en esta etapa: **ninguno** mientras
+   el rechazo de órdenes siga fuera de alcance (pregunta 2).
+
+**Pendientes de decisión del dueño (2 a 7):**
+
 2. **¿Aceptación/rechazo de la orden a nivel de orden en esta etapa?** Mi propuesta: **no**
    (fuera de alcance, §1): la Etapa 2 aprobó modelarlo a nivel de asignación y no existe el
    modelo «orden enviada a otra empresa». Si lo quieres dentro, se agrega una sección a la
-   spec (y antes se resuelve la pregunta 1).
+   spec (el mecanismo ya está decidido en la pregunta 1: nueva orden que referencia la
+   rechazada).
 3. **Responsable de las decisiones (§1.7):** miembro activo de la empresa dueña de la
    orden/job para `not_realized`/`resume`/`revoke`/`reassign`/`close`/`cancel`. ¿Apruebas? (§5.6
    habla también de «el contratista que la gestiona»; en nuestros dos modelos ese contratista

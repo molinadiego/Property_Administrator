@@ -4,7 +4,7 @@ Plataforma de administración de propiedades y trabajos de reparación
 
 Versión: 1.0 — Requisitos aprobados
 Estado: Aprobado (17/10/2026)
-Historial: v0.5 consolidación de reglas de alcance, autorizaciones y estados; v0.6 reglas de autorización unificadas, cuentas con acceso limitado, transiciones de factura y formato; v0.7 decisiones del 18.1-18.3 incorporadas (propiedad requerida, política de emergencia con override, acceso permanente a registros, facturación por orden, jurisdicción EE.UU., cobro de suscripciones); v1.0 aprobado para convertirse en especificación funcional y técnica.
+Historial: v0.5 consolidación de reglas de alcance, autorizaciones y estados; v0.6 reglas de autorización unificadas, cuentas con acceso limitado, transiciones de factura y formato; v0.7 decisiones del 18.1-18.3 incorporadas (propiedad requerida, política de emergencia con override, acceso permanente a registros, facturación por orden, jurisdicción EE.UU., cobro de suscripciones); v1.0 aprobado para convertirse en especificación funcional y técnica. Enmienda 17/10/2026 (§5.6, aprobada por el dueño): ante el rechazo de una orden, la administradora crea una nueva orden para otro contratista conservando la referencia a la rechazada (§20.1; la rechazada no se reabre); se retiró de §5.6 la opción de cancelar la rechazada, que §20.1 no contempla entre sus transiciones.
 Objetivo: Definir cómo debe funcionar el negocio antes de diseñar la arquitectura técnica o comenzar la implementación.
 
 ⸻
@@ -290,7 +290,7 @@ Los trabajos independientes pueden avanzar según sus propias autorizaciones, si
 
 - El contratista puede aceptar o rechazar una orden que recibe de una administradora.
 - El profesional puede aceptar o rechazar una asignación de un contratista o una administradora.
-- Si un contratista rechaza una orden, la administradora puede enviarla a otro contratista o cancelarla.
+- Si un contratista rechaza una orden, la administradora puede crear una nueva orden para otro contratista, conservando la referencia a la rechazada; la orden rechazada no se reabre (ver 20.1).
 - Si un profesional rechaza un trabajo, el responsable —la entidad originadora de la orden o el contratista que la gestiona, según corresponda— puede reasignarlo. Si se determina que el trabajo no puede realizarse, debe registrarse «No pudo concretarse» con el motivo, respetando las reglas de cancelación de la orden original.
 
 El rechazo corresponde a una asignación concreta y no equivale a cancelar el trabajo subyacente. Si un profesional rechaza la asignación, el trabajo permanece pendiente para que el responsable lo reasigne. Si finalmente no puede realizarse, se registra el resultado «No pudo concretarse» con el motivo. El rechazo y la nueva asignación deben quedar registrados por separado.
