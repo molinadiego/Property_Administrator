@@ -1,6 +1,8 @@
 // Development seed: loads a small, 100% fictitious dataset (reserved `.test`
 // domain) so the app has something to show and the email flows can be exercised
-// against real data. Never runs in production; there is no real user data here.
+// against real data. Covers etapas 1–5, including a billing demo (draft,
+// issued, partial, refunded, paid and overdue invoices plus a suspected
+// duplicate). Never runs in production; there is no real user data here.
 //
 // Idempotent and non-destructive: every row uses a fixed UUID and is inserted
 // with `skipDuplicates`, so re-running never duplicates. The limited-access
@@ -56,8 +58,35 @@ const N_2 = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbb02'; // read, to Bob
 
 const LAT_1 = 'cccccccc-cccc-4ccc-8ccc-cccccccccc01'; // limited-access token (T_1)
 
+// Etapa 5 (billing) ---------------------------------------------------------
+const O_4 = '88888888-8888-4888-8888-888888888804'; // completed, billed by Taller
+const O_5 = '88888888-8888-4888-8888-888888888805'; // client order (CR_1 ↔ T_2)
+const J_5 = '99999999-9999-4999-8999-999999999905'; // O_4 job, done
+const J_6 = '99999999-9999-4999-8999-999999999906'; // O_5 job, done
+const A_3 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa03'; // J_5 accepted → Carla (Taller)
+const A_4 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa04'; // J_6 accepted → Bob (Gestión)
+
+const INV_1 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd01'; // draft (Taller → Gestión)
+const INV_2 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd02'; // issued #1 + duplicate suspect
+const INV_3 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd03'; // #2 partially paid
+const INV_4 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd04'; // #3 paid, then refunded
+const INV_5 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd05'; // #4 paid in full
+const INV_6 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd06'; // #5 overdue
+const INV_7 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd07'; // Gestión #1 → client T_2
+
+const LINE = (n: number): string =>
+  `eeeeeeee-eeee-4eee-8eee-eeeeeeeeee${String(n).padStart(2, '0')}`;
+const PMT = (n: number): string =>
+  `ffffffff-ffff-4fff-8fff-ffffffffff${String(n).padStart(2, '0')}`;
+
 const DEV_PASSWORD = 'DevDemo123!';
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Relative date for billing demo rows (never the future for paidAt). */
+function daysFromNow(days: number): Date {
+  return new Date(Date.now() + days * DAY_MS);
+}
 
 // Same helpers as src/common/tokens.ts (kept inline so the seed is standalone).
 function generateToken(): string {
@@ -246,6 +275,193 @@ async function main(): Promise<void> {
         create: { id: LAT_1, tenantId: T_1, tokenHash, status: 'active', expiresAt },
         update: { tokenHash, status: 'active', expiresAt, revokedAt: null },
       }),
+
+      // Etapa 5: billing demo (fictitious invoices & payments) --------------
+      // Taller Carla (own_business) bills Gestión for a finished job (D1a,
+      // §11.4), and Gestión bills its own client Carlos (D1b, P3). Persisted
+      // statuses are the base ones (`draft`/`issued`); paid, partially_paid
+      // and overdue are derived at read time (§20.4, D4).
+      prisma.order.createMany({
+        skipDuplicates: true,
+        data: [
+          {
+            id: O_4,
+            companyId: C_GESTION,
+            propertyId: P_1,
+            title: 'Instalación de ventilador de techo',
+            description: 'Trabajo terminado y facturado por Taller Carla.',
+            origin: 'management',
+            originatorId: U_ANA,
+            status: 'completed',
+          },
+          {
+            id: O_5,
+            companyId: C_GESTION,
+            propertyId: P_3,
+            title: 'Revisión eléctrica para el cliente Carlos',
+            description: 'Orden del cliente propio (client_relationship CR_1).',
+            origin: 'own_business',
+            originatorId: U_ANA,
+            clientRelationshipId: CR_1,
+            status: 'completed',
+          },
+        ],
+      }),
+      prisma.job.createMany({
+        skipDuplicates: true,
+        data: [
+          { id: J_5, orderId: O_4, companyId: C_GESTION, title: 'Instalar ventilador', description: 'Montaje y prueba del ventilador.', sortOrder: 1, status: 'done' },
+          { id: J_6, orderId: O_5, companyId: C_GESTION, title: 'Revisión eléctrica', description: 'Inspección completa del tablero.', sortOrder: 1, status: 'done' },
+        ],
+      }),
+      prisma.assignment.createMany({
+        skipDuplicates: true,
+        data: [
+          { id: A_3, jobId: J_5, companyId: C_GESTION, assigneeMembershipId: M_CARLA_T, assignedBy: U_ANA, status: 'accepted', respondedAt: daysFromNow(-25) },
+          { id: A_4, jobId: J_6, companyId: C_GESTION, assigneeMembershipId: M_BOB_G, assignedBy: U_ANA, status: 'accepted', respondedAt: daysFromNow(-12) },
+        ],
+      }),
+      prisma.invoice.createMany({
+        skipDuplicates: true,
+        data: [
+          // Draft: no number, no totals (D2/D5).
+          {
+            id: INV_1,
+            companyId: C_TALLER,
+            recipientCompanyId: C_GESTION,
+            orderId: O_4,
+            status: 'draft',
+            dueDate: daysFromNow(30),
+            notes: 'Borrador: falta confirmar los materiales con el cliente.',
+            createdById: U_CARLA,
+          },
+          // #1 issued: partial charge plus a suspected duplicate (D6).
+          {
+            id: INV_2,
+            companyId: C_TALLER,
+            recipientCompanyId: C_GESTION,
+            orderId: O_4,
+            status: 'issued',
+            number: 1,
+            issueDate: daysFromNow(-10),
+            dueDate: daysFromNow(20),
+            subtotal: '450.00',
+            total: '450.00',
+            notes: 'Emitida tras la visita de emergencia.',
+            createdById: U_CARLA,
+          },
+          // #2 issued: partially paid (120 of 300).
+          {
+            id: INV_3,
+            companyId: C_TALLER,
+            recipientCompanyId: C_GESTION,
+            orderId: O_4,
+            status: 'issued',
+            number: 2,
+            issueDate: daysFromNow(-12),
+            dueDate: daysFromNow(18),
+            subtotal: '300.00',
+            total: '300.00',
+            createdById: U_CARLA,
+          },
+          // #3 issued: paid in full, then partially refunded (P5).
+          {
+            id: INV_4,
+            companyId: C_TALLER,
+            recipientCompanyId: C_GESTION,
+            orderId: O_4,
+            status: 'issued',
+            number: 3,
+            issueDate: daysFromNow(-15),
+            dueDate: daysFromNow(15),
+            subtotal: '250.00',
+            total: '250.00',
+            createdById: U_CARLA,
+          },
+          // #4 issued: paid in full.
+          {
+            id: INV_5,
+            companyId: C_TALLER,
+            recipientCompanyId: C_GESTION,
+            orderId: O_4,
+            status: 'issued',
+            number: 4,
+            issueDate: daysFromNow(-20),
+            dueDate: daysFromNow(10),
+            subtotal: '140.00',
+            total: '140.00',
+            createdById: U_CARLA,
+          },
+          // #5 issued: due date in the past -> derived overdue (D4, P6).
+          {
+            id: INV_6,
+            companyId: C_TALLER,
+            recipientCompanyId: C_GESTION,
+            orderId: O_4,
+            status: 'issued',
+            number: 5,
+            issueDate: daysFromNow(-45),
+            dueDate: daysFromNow(-15),
+            subtotal: '90.00',
+            total: '90.00',
+            notes: 'Vencida: Gestión pidió una prórroga que nunca llegó.',
+            createdById: U_CARLA,
+          },
+          // Gestión #1: invoice to its own client (D1b, P3) — visible in the
+          // limited-access account of Carlos (T_2).
+          {
+            id: INV_7,
+            companyId: C_GESTION,
+            recipientTenantId: T_2,
+            orderId: O_5,
+            status: 'issued',
+            number: 1,
+            issueDate: daysFromNow(-8),
+            dueDate: daysFromNow(22),
+            subtotal: '220.00',
+            total: '220.00',
+            createdById: U_ANA,
+          },
+        ],
+      }),
+      prisma.invoiceLine.createMany({
+        skipDuplicates: true,
+        data: [
+          { id: LINE(1), invoiceId: INV_1, jobId: J_5, kind: 'material', description: 'Ventilador de techo', amount: '180.00' },
+          { id: LINE(2), invoiceId: INV_1, jobId: J_5, kind: 'labor', description: 'Instalación', amount: '120.00' },
+          { id: LINE(3), invoiceId: INV_2, jobId: J_5, kind: 'labor', description: 'Servicio de emergencia', amount: '450.00' },
+          { id: LINE(4), invoiceId: INV_3, jobId: J_5, kind: 'material', description: 'Filtros y refrigerante', amount: '300.00' },
+          { id: LINE(5), invoiceId: INV_4, jobId: J_5, kind: 'labor', description: 'Instalación completa', amount: '250.00' },
+          { id: LINE(6), invoiceId: INV_5, jobId: J_5, kind: 'labor', description: 'Visita técnica', amount: '140.00' },
+          { id: LINE(7), invoiceId: INV_6, jobId: J_5, kind: 'other', description: 'Reposición de tornillería', amount: '90.00' },
+          { id: LINE(8), invoiceId: INV_7, jobId: J_6, kind: 'labor', description: 'Revisión eléctrica completa', amount: '220.00' },
+        ],
+      }),
+      prisma.payment.createMany({
+        skipDuplicates: true,
+        data: [
+          // INV_2: canonical charge + look-alike flagged as possible duplicate.
+          { id: PMT(5), companyId: C_GESTION, invoiceId: INV_2, kind: 'charge', status: 'recorded', amount: '200.00', paidAt: daysFromNow(-1), method: 'transfer', reference: 'TRF-DEMO-5', createdById: U_BOB },
+          { id: PMT(6), companyId: C_TALLER, invoiceId: INV_2, kind: 'charge', status: 'duplicate_suspect', duplicateOfId: PMT(5), amount: '200.00', paidAt: daysFromNow(-1), method: 'transfer', reference: 'TRF-DEMO-5', notes: 'Posible duplicado: una de las partes debe conciliarla (D6).', createdById: U_CARLA },
+          // INV_3: partial payment.
+          { id: PMT(1), companyId: C_GESTION, invoiceId: INV_3, kind: 'charge', status: 'recorded', amount: '120.00', paidAt: daysFromNow(-5), method: 'transfer', reference: 'TRF-DEMO-1', createdById: U_BOB },
+          // INV_4: full payment followed by a partial refund (net 200 of 250).
+          { id: PMT(2), companyId: C_GESTION, invoiceId: INV_4, kind: 'charge', status: 'recorded', amount: '250.00', paidAt: daysFromNow(-7), method: 'transfer', reference: 'TRF-DEMO-2', createdById: U_BOB },
+          { id: PMT(3), companyId: C_TALLER, invoiceId: INV_4, kind: 'refund', status: 'recorded', amount: '50.00', paidAt: daysFromNow(-2), method: 'transfer', reference: 'REEMBOLSO-DEMO', notes: 'Devolución parcial por material faltante.', createdById: U_CARLA },
+          // INV_5: full payment.
+          { id: PMT(4), companyId: C_GESTION, invoiceId: INV_5, kind: 'charge', status: 'recorded', amount: '140.00', paidAt: daysFromNow(-3), method: 'transfer', reference: 'TRF-DEMO-4', createdById: U_BOB },
+          // INV_7: partial payment on the client invoice.
+          { id: PMT(7), companyId: C_GESTION, invoiceId: INV_7, kind: 'charge', status: 'recorded', amount: '100.00', paidAt: daysFromNow(-4), method: 'transfer', reference: 'TRF-DEMO-7', createdById: U_ANA },
+        ],
+      }),
+      // Gapless per-company series (D2): Taller is at 5, Gestión at 1.
+      prisma.invoiceCounter.createMany({
+        skipDuplicates: true,
+        data: [
+          { companyId: C_TALLER, lastNumber: 5 },
+          { companyId: C_GESTION, lastNumber: 1 },
+        ],
+      }),
     ]);
 
     console.log('Seed completado (datos ficticios de desarrollo).');
@@ -257,6 +473,10 @@ async function main(): Promise<void> {
     console.log('Token de acceso limitado (María / T_1) — solo se guardó su hash:');
     console.log('  ' + token);
     console.log('  Vence: ' + expiresAt.toISOString());
+    console.log('');
+    console.log('Facturas de demo (Etapa 5): Taller Carla → Gestión (N.º 1–5: borrador,');
+    console.log('  parcial, devuelta, pagada y vencida) y Gestión → Carlos Cliente (N.º 1,');
+    console.log('  visible en la cuenta limitada de Carlos cuando tenga token).');
   } finally {
     await prisma.$disconnect();
   }
