@@ -113,3 +113,15 @@ export const AUDIT_ENTITIES_ETAPA5 = {
   PAYMENT: 'payment',
   ACCOUNTING_EXPORT: 'accounting_export',
 } as const;
+
+/** Audit actions of Etapa 6 (spec etapa-6.md §7). */
+export const AUDIT_ACTIONS_ETAPA6 = {
+  WARRANTY_CLAIM_CREATED: 'warranty_claim.created',
+  WARRANTY_CLAIM_RESOLVED: 'warranty_claim.resolved',
+  ORDER_URGENCY_SET: 'order.urgency_set',
+} as const;
+
+/** Audit entities of Etapa 6 (spec etapa-6.md §7). */
+export const AUDIT_ENTITIES_ETAPA6 = {
+  WARRANTY_CLAIM: 'warranty_claim',
+} as const;

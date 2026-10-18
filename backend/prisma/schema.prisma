@@ -115,6 +115,24 @@ enum NotificationType {
   assignment_accepted
   assignment_rejected
   job_added
+  // Etapa 6 (docs/especificacion/etapa-6.md §2.7): urgencias §18.4
+  urgent_reminder
+  urgent_escalated
+}
+
+// ---------------------------------------------------------------------------
+// Etapa 6 enums (docs/especificacion/etapa-6.md §2)
+// ---------------------------------------------------------------------------
+
+enum WarrantyClaimStatus {
+  open
+  resolved
+}
+
+enum PlanCategory {
+  profesional
+  contractor
+  property_management
 }
 
 enum LimitedAccessStatus {
@@ -231,6 +249,10 @@ model User {
   historySharesCreated       HistoryShare[]         @relation("HistoryShareCreatedBy")
   ordersClosed               Order[]                @relation("OrderClosedBy")
   ordersCancelled            Order[]                @relation("OrderCancelledBy")
+  // Etapa 6 (docs/especificacion/etapa-6.md §2.6)
+  notificationPreferences    NotificationPreference[]
+  warrantyClaimsResolved     WarrantyClaim[]        @relation("WarrantyClaimResolvedBy")
+  warrantyClaimsCreated      WarrantyClaim[]        @relation("WarrantyClaimCreatedBy")
   // Etapa 4 (docs/especificacion/etapa-4.md §2)
   commercialRelationsCreated CommercialRelation[]   @relation("CommercialRelationCreatedBy")
   costReportsSubmitted       CostReport[]           @relation("CostReportSubmittedBy")
@@ -262,8 +284,15 @@ model Company {
   emergencyPolicy      EmergencyPolicy @default(prior_authorization) @map("emergency_policy")
   /// Pre-authorized emergency amount for the `emergency_amount` policy (§8.6).
   emergencyExtraAmount Decimal?        @map("emergency_extra_amount") @db.Decimal(12, 2)
+  /// Etapa 6: response window for urgent orders received from other
+  /// companies (§14.2, §18.4); default 24h, owner-editable (etapa-6.md §2.4).
+  urgentResponseHours Int              @default(24) @map("urgent_response_hours")
+  /// Etapa 6: explicit subscription plan (§15); null = plan by company
+  /// category (etapa-6.md §2.4, D3).
+  planId              String?          @map("plan_id") @db.Uuid
 
   createdByUser             User                   @relation("CompanyCreatedBy", fields: [createdBy], references: [id])
+  plan                      Plan?                  @relation(fields: [planId], references: [id])
   memberships               Membership[]
   invitations               Invitation[]
   auditEntries              AuditLog[]             @relation("AuditCompany")
@@ -286,6 +315,8 @@ model Company {
   invoicesReceived          Invoice[]              @relation("InvoiceRecipientCompany")
   paymentsRegistered        Payment[]              @relation("PaymentCompany")
   invoiceCounter            InvoiceCounter?
+  // Etapa 6 (docs/especificacion/etapa-6.md §2)
+  warrantyClaims            WarrantyClaim[]
 
   @@map("companies")
 }
@@ -506,6 +537,9 @@ model Order {
   accessCommunityCode     String?     @map("access_community_code")
   accessEntryInstructions String?     @map("access_entry_instructions")
   status                  OrderStatus @default(open)
+  /// Etapa 6: urgent flag (§14.2); only editable while the order is active
+  /// (spec etapa-6.md §2.2).
+  urgent                  Boolean     @default(false)
   closedBy                String?     @map("closed_by") @db.Uuid
   closedAt                DateTime?   @map("closed_at") @db.Timestamptz()
   cancelledBy             String?     @map("cancelled_by") @db.Uuid
@@ -546,6 +580,8 @@ model Order {
   authorizationRequests AuthorizationRequest[]
   // Etapa 5: una factura siempre es de una sola orden (v1, §11.1 / D8)
   invoices              Invoice[]
+  // Etapa 6: reclamos de garantía sobre un trabajo de esta orden (§13)
+  warrantyClaims        WarrantyClaim[]
 
   @@index([companyId, createdAt])
   @@index([propertyId])
@@ -575,6 +611,8 @@ model Job {
   authorizations OrderAuthorization[]
   // Etapa 5: cada renglón de factura referencia el trabajo (§11.1)
   invoiceLines   InvoiceLine[]
+  // Etapa 6: reclamos de garantía sobre este trabajo reparado (§13)
+  warrantyClaims WarrantyClaim[]
 
   @@unique([orderId, sortOrder])
   @@index([orderId])
@@ -592,6 +630,10 @@ model Assignment {
   assignedBy           String           @map("assigned_by") @db.Uuid
   respondedAt          DateTime?        @map("responded_at") @db.Timestamptz()
   rejectionReason      String?          @map("rejection_reason")
+  /// Etapa 6: urgency-window sweep marks for urgent orders (spec etapa-6.md
+  /// §2.3); idempotency markers, never cleared.
+  urgencyReminderAt    DateTime?        @map("urgency_reminder_at") @db.Timestamptz()
+  urgencyEscalatedAt   DateTime?        @map("urgency_escalated_at") @db.Timestamptz()
   createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz()
 
   job                Job          @relation(fields: [jobId], references: [id])
@@ -1016,4 +1058,75 @@ model InvoiceCounter {
   company Company @relation(fields: [companyId], references: [id])
 
   @@map("invoice_counters")
+}
+
+// ---------------------------------------------------------------------------
+// Etapa 6 models (docs/especificacion/etapa-6.md §2)
+// ---------------------------------------------------------------------------
+
+/// Reclamo de garantía sobre un trabajo reparado (§13). La empresa
+/// originadora de la orden original lo inicia y gestiona en su propio
+/// espacio (D5); para el resto de empresas es invisible (404). El
+/// historial de la reparación no se duplica: fechas, profesional, costos,
+/// fotos y documentos se conservan enlazando la orden, el trabajo, los
+/// costos y los archivos ya existentes (etapa-6.md §2.1).
+model WarrantyClaim {
+  id               String              @id @default(uuid()) @db.Uuid
+  companyId        String              @map("company_id") @db.Uuid
+  orderId          String              @map("order_id") @db.Uuid
+  jobId            String              @map("job_id") @db.Uuid
+  description      String
+  status           WarrantyClaimStatus @default(open)
+  resolution       String?
+  resolvedAt       DateTime?           @map("resolved_at") @db.Timestamptz()
+  resolvedByUserId String?             @map("resolved_by_user_id") @db.Uuid
+  createdBy        String              @map("created_by") @db.Uuid
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
+
+  company        Company @relation(fields: [companyId], references: [id])
+  order          Order   @relation(fields: [orderId], references: [id])
+  job            Job     @relation(fields: [jobId], references: [id])
+  resolvedByUser User?   @relation("WarrantyClaimResolvedBy", fields: [resolvedByUserId], references: [id])
+  createdByUser  User    @relation("WarrantyClaimCreatedBy", fields: [createdBy], references: [id])
+
+  @@index([companyId])
+  @@index([companyId, orderId])
+  @@index([jobId])
+  @@map("warranty_claims")
+}
+
+/// Plan de suscripción por categoría (§15, §18.3). Precios de ejemplo
+/// 33/66/99 USD al mes, ajustables por semilla/despliegue (D4); sin
+/// límites de uso ni funciones diferenciadas en la v1 y la cobranza
+/// queda fuera del sistema (§18.3). Un solo plan por categoría.
+model Plan {
+  id        String       @id @default(uuid()) @db.Uuid
+  name      String
+  category  PlanCategory @unique
+  price     Decimal      @db.Decimal(12, 2)
+  currency  String       @default("USD")
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+
+  companies Company[]
+
+  @@map("plans")
+}
+
+/// Preferencia de correo por usuario y tipo de aviso (§18.4). El in-app
+/// nunca se apaga; ausencia de fila = correo encendido (default §18.4).
+/// `type` es un string validado en la capa de servicio contra el conjunto
+/// cerrado de avisos (etapa-6.md §2.6): los tipos de NotificationType más
+/// los correos de negocio (costos, autorizaciones, facturación — D6).
+model NotificationPreference {
+  userId       String   @map("user_id") @db.Uuid
+  type         String
+  emailEnabled Boolean  @default(true) @map("email_enabled")
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@id([userId, type])
+  @@map("notification_preferences")
 }
