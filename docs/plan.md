@@ -116,11 +116,13 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 **Alcance**
 - Garantías y reparaciones repetidas (§13).
 - Notificaciones avanzadas (§14 y §18.4 — preferencias por usuario y tipo; solicitudes urgentes con plazo configurable, recordatorio y escalación).
-- Suscripciones (§15 y §18.3 — resueltas el 18/10/2026: planes por categoría, sin límites de uso ni funciones diferenciadas, precios en $0 editables, cobranza fuera del sistema).
-- Integraciones y automatizaciones.
+- Suscripciones (§15 y §18.3 — resueltas el 18/10/2026: planes por categoría, sin límites de uso ni funciones diferenciadas, precios de ejemplo $33/$66/$99 editables, cobranza fuera del sistema).
+- Integraciones y automatizaciones: **pospuestas** (decisión del dueño 18/10/2026 — `proyect.md` no las define).
 - Interfaz web: producto nuevo, fuera del alcance del backend de las etapas 1-5 (§1).
 
-**Criterio de salida:** a definir al llegar; las decisiones de negocio que lo bloqueaban (§18.3 suscripciones y §18.4 detalles de diseño) quedaron resueltas el 18/10/2026 con la enmienda a `proyect.md`.
+**Criterio de salida:** definido en `docs/especificacion/etapa-6.md` §9 (gate `npm run check` verde, matriz de permisos de la spec, OpenAPI regenerado, semilla actualizada y CI en verde).
+
+**Entregable:** `docs/especificacion/etapa-6.md` (**borrador escrito el 18/10/2026, pendiente de aprobación del dueño** — 7 decisiones de diseño en su §1.2). No empezar código hasta que se apruebe (regla SDD en `AGENTS.md`).
 
 ---
 
