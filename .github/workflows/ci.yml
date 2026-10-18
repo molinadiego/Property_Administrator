@@ -38,6 +38,16 @@ jobs:
         run: npm run prisma:generate
 
       # REQUIRE_DOCKER=true hace fallar el gate si el daemon no está
-      # disponible, en vez de saltarse los e2e silenciosamente.
+      # disponible, en vez de saltarse los e2e silenciosamente. El runner usa
+      # bash con pipefail por defecto, así que `tee` no enmascara el código de
+      # salida: el paso falla y además queda el log completo como artifact.
       - name: Run gate (lint + build + unit + e2e)
-        run: REQUIRE_DOCKER=true npm run check
+        run: REQUIRE_DOCKER=true npm run check 2>&1 | tee gate-output.log
+
+      - name: Upload gate log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-output
+          path: backend/gate-output.log
+          retention-days: 7
