@@ -139,7 +139,7 @@ export class BillingService {
     }
 
     const filters: Prisma.InvoiceWhereInput[] = [
-      { OR: [{ companyId: access.companyId }, { recipientCompanyId: access.companyId }] },
+      { OR: [{ companyId: access.companyId }, { recipientCompanyId: access.companyId, status: { not: 'draft' } }] },
     ];
     if (query.order_id) filters.push({ orderId: query.order_id });
     if (query.counterparty_company_id) {
@@ -174,7 +174,8 @@ export class BillingService {
 
   /** Invoice detail: lines, payments, net paid and balance. */
   async getInvoice(access: CompanyAccess, invoiceId: string) {
-    const { invoice } = await this.loadInvoice(invoiceId, access);
+    const { invoice, role } = await this.loadInvoice(invoiceId, access);
+    this.assertRecipientCanRead(invoice, role);
     return this.serializeInvoice(invoice, { includeLines: true });
   }
 
@@ -376,7 +377,8 @@ export class BillingService {
 
   /** PDF download of an emitted or voided invoice (§11.1, §11.6). */
   async getPdf(access: CompanyAccess, invoiceId: string) {
-    const { invoice } = await this.loadInvoice(invoiceId, access);
+    const { invoice, role } = await this.loadInvoice(invoiceId, access);
+    this.assertRecipientCanRead(invoice, role);
     return this.invoicePdfOf(invoice);
   }
 
@@ -458,6 +460,10 @@ export class BillingService {
         include: this.invoiceInclude(),
       });
       if (invoice.companyId !== access.companyId && invoice.recipientCompanyId !== access.companyId) {
+        throw new NotFoundException('Factura no encontrada.');
+      }
+      if (invoice.status === 'draft' && invoice.companyId !== access.companyId) {
+        // The recipient must not learn that a draft exists (§11.3).
         throw new NotFoundException('Factura no encontrada.');
       }
       const derived = this.derivedStatusOf(invoice);
@@ -893,7 +899,11 @@ export class BillingService {
     });
   }
 
-  /** Issuer sees everything; a recipient only sees emitted invoices (§11.3). */
+  /**
+   * Issuer sees everything; a recipient only reaches emitted invoices (§11.3).
+   * The recipient-side draft check lives in the read/write callers so edits
+   * answer 403 (§11.5) while reads never confirm a draft's existence.
+   */
   private async loadInvoice(invoiceId: string, access: CompanyAccess): Promise<{ invoice: InvoiceFull; role: InvoicePartyRole }> {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id: invoiceId },
@@ -901,11 +911,16 @@ export class BillingService {
     });
     if (!invoice) throw new NotFoundException('Factura no encontrada.');
     if (invoice.companyId === access.companyId) return { invoice, role: 'issuer' };
-    if (invoice.recipientCompanyId === access.companyId && invoice.status !== 'draft') {
-      return { invoice, role: 'recipient' };
-    }
-    // Third companies and recipient-side drafts never leak (§11.3, §16.8).
+    if (invoice.recipientCompanyId === access.companyId) return { invoice, role: 'recipient' };
+    // Third companies never see an invoice (§11.3, §16.8).
     throw new NotFoundException('Factura no encontrada.');
+  }
+
+  /** Reads confirm a recipient-side draft never existed (§11.3). */
+  private assertRecipientCanRead(invoice: InvoiceFull, role: InvoicePartyRole): void {
+    if (role === 'recipient' && invoice.status === 'draft') {
+      throw new NotFoundException('Factura no encontrada.');
+    }
   }
 
   private async loadLimitedInvoice(tenantId: string, invoiceId: string): Promise<InvoiceFull> {
@@ -1015,7 +1030,7 @@ export class BillingService {
     const to = query.to ? new Date(`${query.to.slice(0, 10)}T00:00:00.000Z`) : null;
 
     const invoiceFilters: Prisma.InvoiceWhereInput[] = [
-      { OR: [{ companyId: access.companyId }, { recipientCompanyId: access.companyId }] },
+      { OR: [{ companyId: access.companyId }, { recipientCompanyId: access.companyId, status: { not: 'draft' } }] },
     ];
     if (query.order_id) invoiceFilters.push({ orderId: query.order_id });
     if (query.counterparty_company_id) {
