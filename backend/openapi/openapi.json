@@ -2323,6 +2323,749 @@
           "history"
         ]
       }
+    },
+    "/api/v1/companies/{id}/economic-settings": {
+      "get": {
+        "operationId": "EconomicSettingsController_getSettings",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Política general"
+          }
+        },
+        "summary": "Lee la política económica general de la empresa (§8.4, §8.6)",
+        "tags": [
+          "economic-settings"
+        ]
+      },
+      "patch": {
+        "operationId": "EconomicSettingsController_updateSettings",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEconomicSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Política actualizada"
+          },
+          "403": {
+            "description": "Rol sin permiso (403)"
+          },
+          "422": {
+            "description": "Datos inválidos (422)"
+          }
+        },
+        "summary": "Actualiza la política económica general (solo rol owner, decisión 7)",
+        "tags": [
+          "economic-settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/commercial-relations": {
+      "get": {
+        "operationId": "EconomicSettingsController_listRelations",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de relaciones"
+          }
+        },
+        "summary": "Relaciones comerciales de la empresa con su override (§8.6)",
+        "tags": [
+          "economic-settings"
+        ]
+      },
+      "post": {
+        "operationId": "EconomicSettingsController_createRelation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommercialRelationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Relación creada"
+          },
+          "403": {
+            "description": "Rol sin permiso (403)"
+          },
+          "404": {
+            "description": "Contraparte inexistente (404)"
+          },
+          "409": {
+            "description": "Relación duplicada (409)"
+          },
+          "422": {
+            "description": "Contraparte inválida (422)"
+          }
+        },
+        "summary": "Crea una relación comercial con su contraparte (§8.6, decisión 4)",
+        "tags": [
+          "economic-settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/commercial-relations/{relationId}": {
+      "patch": {
+        "operationId": "EconomicSettingsController_updateRelation",
+        "parameters": [
+          {
+            "name": "relationId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la relación",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommercialRelationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Relación actualizada"
+          },
+          "403": {
+            "description": "Rol sin permiso (403)"
+          },
+          "404": {
+            "description": "Relación inexistente o ajena (404)"
+          },
+          "422": {
+            "description": "Datos inválidos (422)"
+          }
+        },
+        "summary": "Edita override/etiqueta o finaliza una relación (§2.4, §4.7)",
+        "tags": [
+          "economic-settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}/economic-policy": {
+      "get": {
+        "operationId": "EconomicSettingsController_getOrderPolicy",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Política de la orden"
+          },
+          "404": {
+            "description": "Orden inexistente o ajena (404)"
+          }
+        },
+        "summary": "Límite, margen (solo originadora) y política de emergencia vigente",
+        "tags": [
+          "economic-settings"
+        ]
+      },
+      "patch": {
+        "operationId": "EconomicSettingsController_updateOrderPolicy",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrderEconomicPolicyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Política actualizada"
+          },
+          "403": {
+            "description": "Empresa no originadora (403)"
+          },
+          "404": {
+            "description": "Orden o relación inexistente (404)"
+          },
+          "422": {
+            "description": "Márgenes o importes inválidos (422)"
+          }
+        },
+        "summary": "Fija límite, margen y relación comercial de la orden (§8.4–§8.6)",
+        "tags": [
+          "economic-settings"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/assignments/{assignId}/cost-report": {
+      "get": {
+        "operationId": "CostsController_getCostReport",
+        "parameters": [
+          {
+            "name": "assignId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la asignación",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reporte e historial de versiones"
+          },
+          "404": {
+            "description": "Asignación inexistente o ajena (404)"
+          }
+        },
+        "summary": "Reporte de costos vigente + versiones enviadas (§8.1–§8.3)",
+        "tags": [
+          "costs"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/assignments/{assignId}/cost-report/items": {
+      "put": {
+        "operationId": "CostsController_putItems",
+        "parameters": [
+          {
+            "name": "assignId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la asignación",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutCostItemsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Borrador guardado"
+          },
+          "403": {
+            "description": "No es la empresa asignada (403)"
+          },
+          "404": {
+            "description": "Asignación inexistente o ajena (404)"
+          },
+          "409": {
+            "description": "Versión ya enviada sin corrección abierta (409)"
+          },
+          "422": {
+            "description": "Ítems inválidos (422)"
+          }
+        },
+        "summary": "Reemplaza los ítems del borrador (put-list, §8.1)",
+        "tags": [
+          "costs"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/assignments/{assignId}/cost-report/submit": {
+      "post": {
+        "operationId": "CostsController_submit",
+        "parameters": [
+          {
+            "name": "assignId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la asignación",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitCostReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Reporte enviado y notificado"
+          },
+          "403": {
+            "description": "No es la empresa asignada o nunca aceptó (403)"
+          },
+          "404": {
+            "description": "Asignación inexistente o ajena (404)"
+          },
+          "409": {
+            "description": "Sin borrador para enviar (409)"
+          },
+          "422": {
+            "description": "Reporte sin ítems (422)"
+          }
+        },
+        "summary": "Confirma el envío de los costos (acción explícita, §8.1)",
+        "tags": [
+          "costs"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/assignments/{assignId}/cost-report/correct": {
+      "post": {
+        "operationId": "CostsController_correct",
+        "parameters": [
+          {
+            "name": "assignId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la asignación",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Nuevo borrador corregido enlazado a la anterior"
+          },
+          "403": {
+            "description": "No es la empresa asignada (403)"
+          },
+          "404": {
+            "description": "Asignación inexistente o ajena (404)"
+          },
+          "409": {
+            "description": "Sin versión enviada o borrador ya abierto (409)"
+          }
+        },
+        "summary": "Abre una corrección copiando la última versión enviada (§8.2)",
+        "tags": [
+          "costs"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}/authorization-requests": {
+      "get": {
+        "operationId": "AuthorizationsController_listRequests",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de solicitudes"
+          },
+          "404": {
+            "description": "Orden inexistente o ajena (404)"
+          }
+        },
+        "summary": "Solicitudes de autorización: la originadora todas, la asignada las suyas",
+        "tags": [
+          "authorizations"
+        ]
+      },
+      "post": {
+        "operationId": "AuthorizationsController_createRequest",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAuthorizationRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Solicitud creada (pending)"
+          },
+          "403": {
+            "description": "Sin asignación activa o empresa originadora (403)"
+          },
+          "404": {
+            "description": "Orden inexistente o ajena (404)"
+          },
+          "422": {
+            "description": "Importe o datos inválidos (422)"
+          }
+        },
+        "summary": "Informa y propone: exceder el límite o trabajo adicional (§9)",
+        "tags": [
+          "authorizations"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/authorization-requests/{requestId}/approve": {
+      "post": {
+        "operationId": "AuthorizationsController_approve",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la solicitud",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Aprobada"
+          },
+          "403": {
+            "description": "Empresa no originadora (403)"
+          },
+          "404": {
+            "description": "Solicitud inexistente o ajena (404)"
+          },
+          "409": {
+            "description": "Ya resuelta u orden finalizada (409)"
+          }
+        },
+        "summary": "Aprueba: crea la constancia; additional_work agrega el job a la orden (§8.4, decisión 5)",
+        "tags": [
+          "authorizations"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/authorization-requests/{requestId}/reject": {
+      "post": {
+        "operationId": "AuthorizationsController_reject",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la solicitud",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveAuthorizationRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Rechazada"
+          },
+          "403": {
+            "description": "Empresa no originadora (403)"
+          },
+          "404": {
+            "description": "Solicitud inexistente o ajena (404)"
+          },
+          "409": {
+            "description": "Ya resuelta (409)"
+          },
+          "422": {
+            "description": "Nota de rechazo ausente (422)"
+          }
+        },
+        "summary": "Rechaza con nota obligatoria (§9)",
+        "tags": [
+          "authorizations"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}/authorizations": {
+      "get": {
+        "operationId": "AuthorizationsController_listAuthorizations",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de constancias"
+          },
+          "404": {
+            "description": "Orden inexistente o ajena (404)"
+          }
+        },
+        "summary": "Constancias de la orden; la asignada ve las que afectan su límite (§16.9)",
+        "tags": [
+          "authorizations"
+        ]
+      },
+      "post": {
+        "operationId": "AuthorizationsController_recordAuthorization",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordAuthorizationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Constancia registrada"
+          },
+          "403": {
+            "description": "Empresa no originadora (403)"
+          },
+          "404": {
+            "description": "Orden inexistente o ajena (404)"
+          },
+          "422": {
+            "description": "Fecha futura, tope o datos inválidos (422)"
+          }
+        },
+        "summary": "Registra una autorización recibida fuera (teléfono, §18.1)",
+        "tags": [
+          "authorizations"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}/economic-summary": {
+      "get": {
+        "operationId": "AuthorizationsController_getEconomicSummary",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen económico (el margen solo lo ve la originadora)"
+          },
+          "404": {
+            "description": "Orden inexistente o ajena (404)"
+          }
+        },
+        "summary": "Límite efectivo, techo autorizado, costos enviados y excesos (§8.4–§8.7)",
+        "tags": [
+          "authorizations"
+        ]
+      }
     }
   },
   "info": {
@@ -2769,6 +3512,29 @@
           "accessEntryInstructions": {
             "type": "string",
             "description": "Instrucciones de entrada de esta visita (§5.8)"
+          },
+          "spendingLimit": {
+            "type": "object",
+            "description": "Límite de gasto de la orden; null explícito = «sin límite» (§8.4)",
+            "example": "250.00"
+          },
+          "applyCompanyDefault": {
+            "type": "boolean",
+            "description": "Aplica el límite general de la empresa si no se envía uno (default true, §8.4)",
+            "default": true
+          },
+          "marginEnabled": {
+            "type": "boolean",
+            "description": "Activa el margen comercial de la orden (§8.5)"
+          },
+          "marginPercent": {
+            "type": "string",
+            "description": "Porcentaje de margen (0–20, §8.5)",
+            "example": "20"
+          },
+          "commercialRelationId": {
+            "type": "string",
+            "description": "Relación comercial que gobierna la emergencia de la orden (§8.6, decisión 4)"
           }
         },
         "required": [
@@ -2960,6 +3726,245 @@
         "required": [
           "propertyId",
           "sharedWithMembershipId"
+        ]
+      },
+      "UpdateEconomicSettingsDto": {
+        "type": "object",
+        "properties": {
+          "defaultSpendingLimit": {
+            "type": "object",
+            "description": "Límite general de gasto; null = «sin límite económico» (§8.4)",
+            "example": "250.00"
+          },
+          "emergencyPolicy": {
+            "type": "string",
+            "description": "Política general de emergencia (§8.6)",
+            "enum": [
+              "prior_authorization",
+              "resolve_without_authorization",
+              "emergency_amount"
+            ]
+          },
+          "emergencyExtraAmount": {
+            "type": "object",
+            "description": "Importe adicional pre-autorizado para la política emergency_amount (§8.6)",
+            "example": "150.00"
+          }
+        }
+      },
+      "CreateCommercialRelationDto": {
+        "type": "object",
+        "properties": {
+          "counterpartyCompanyId": {
+            "type": "string",
+            "description": "Contraparte empresa (exclusivo con clientRelationshipId)"
+          },
+          "clientRelationshipId": {
+            "type": "string",
+            "description": "Cliente propio (exclusivo con counterpartyCompanyId)"
+          },
+          "label": {
+            "type": "string",
+            "description": "Nombre comercial de la relación",
+            "example": "Contratista Norte"
+          },
+          "emergencyPolicy": {
+            "type": "string",
+            "description": "Override de política de emergencia (§8.6)",
+            "enum": [
+              "prior_authorization",
+              "resolve_without_authorization",
+              "emergency_amount"
+            ]
+          },
+          "emergencyExtraAmount": {
+            "type": "string",
+            "description": "Importe del override cuando la política es emergency_amount",
+            "example": "300.00"
+          }
+        }
+      },
+      "UpdateCommercialRelationDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "object",
+            "description": "Nombre comercial de la relación"
+          },
+          "emergencyPolicy": {
+            "type": "string",
+            "description": "Override de política de emergencia; null = no sobrescribe (§8.6)",
+            "enum": [
+              "prior_authorization",
+              "resolve_without_authorization",
+              "emergency_amount"
+            ]
+          },
+          "emergencyExtraAmount": {
+            "type": "object",
+            "description": "Importe del override (null lo limpia)"
+          },
+          "ended": {
+            "type": "boolean",
+            "description": "Finaliza la relación: no admite órdenes nuevas (§2.4)"
+          }
+        }
+      },
+      "UpdateOrderEconomicPolicyDto": {
+        "type": "object",
+        "properties": {
+          "spendingLimit": {
+            "type": "object",
+            "description": "Límite de gasto de la orden; null = «sin límite económico» (§8.4)",
+            "example": "250.00"
+          },
+          "marginEnabled": {
+            "type": "boolean",
+            "description": "Activa el margen comercial (≤ 20 %, §8.5)"
+          },
+          "marginPercent": {
+            "type": "object",
+            "description": "Porcentaje de margen (0–20); null lo limpia (§8.5)",
+            "example": "20"
+          },
+          "commercialRelationId": {
+            "type": "object",
+            "description": "Relación comercial que gobierna la orden (§8.6); null la desvincula"
+          }
+        }
+      },
+      "CostItemDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Concepto del costo (§8.1)",
+            "enum": [
+              "material",
+              "labor",
+              "other"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "example": "Pulgadas de tubería de cobre"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Importe en USD con hasta 2 decimales",
+            "example": "125.50"
+          },
+          "isEmergency": {
+            "type": "boolean",
+            "description": "Registrado dentro de una intervención de emergencia (§8.6)"
+          }
+        },
+        "required": [
+          "category",
+          "description",
+          "amount"
+        ]
+      },
+      "PutCostItemsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Lista completa de renglones (§8.1)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostItemDto"
+            }
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas del emisor sobre el borrador"
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "SubmitCostReportDto": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "string",
+            "description": "Notas del emisor al enviar"
+          }
+        }
+      },
+      "CreateAuthorizationRequestDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Exceder el límite de gasto o proponer un trabajo adicional (§8.4, §9)",
+            "enum": [
+              "exceed_spending_limit",
+              "additional_work"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Qué se propone y por qué",
+            "example": "La reparación requiere un repuesto de USD 80 adicionales."
+          },
+          "requestedAmount": {
+            "type": "string",
+            "description": "Importe propuesto: tope para exceder, referencia para adicional (§8.4)",
+            "example": "80.00"
+          }
+        },
+        "required": [
+          "type",
+          "description"
+        ]
+      },
+      "ResolveAuthorizationRequestDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "description": "Nota de resolución (obligatoria al rechazar, §9)"
+          }
+        }
+      },
+      "RecordAuthorizationDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "exceed_spending_limit",
+              "additional_work"
+            ]
+          },
+          "grantedByDescription": {
+            "type": "string",
+            "description": "Quién autorizó: nombre y rol de quien dio la autorización",
+            "example": "María López, dueña"
+          },
+          "grantedAt": {
+            "type": "string",
+            "description": "Cuándo autorizó (ISO 8601, sin futuro)",
+            "example": "2026-10-18T15:30:00.000Z"
+          },
+          "description": {
+            "type": "string",
+            "description": "Qué autorizó",
+            "example": "Autorizó repuesto adicional de USD 80 por teléfono."
+          },
+          "amountCap": {
+            "type": "string",
+            "description": "Tope opcional autorizado (§18.1)",
+            "example": "80.00"
+          }
+        },
+        "required": [
+          "type",
+          "grantedByDescription",
+          "grantedAt",
+          "description"
         ]
       }
     }
