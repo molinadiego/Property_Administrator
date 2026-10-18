@@ -107,7 +107,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 **Criterio de salida:** el ciclo orden → factura → pago → saldo cierra con integridad financiera (dinero en `Decimal`, sin Float); las transiciones de estado de factura coinciden con §20.4; los tests de visibilidad de facturas (§11.3) pasan.
 
-**Entregable:** `docs/especificacion/etapa-5.md` (**aprobada el 18/10/2026** — 6/6 decisiones resueltas en su §1.2, con la ampliación de alcance P3: facturación a cliente propio y cuentas limitadas de solo lectura).
+**Entregable:** `docs/especificacion/etapa-5.md` (**aprobada el 18/10/2026** — 6/6 decisiones resueltas en su §1.2, con la ampliación de alcance P3: facturación a cliente propio y cuentas limitadas de solo lectura). **Implementada el 18/10/2026** (regla SDD en `AGENTS.md`): módulo `billing` (facturas con serie correlativa sin huecos, pagos con detección de duplicados y conciliación, PDF con `pdfmake`, exports contables con `exceljs`, facturación a cliente propio y rutas limitadas de solo lectura; aviso D9 al corregir costos), matriz e2e de 54 escenarios en `backend/test/etapa5.e2e-spec.ts`, `npm run check` verde (lint + build + 102 unit + 219 e2e).
 
 ---
 
