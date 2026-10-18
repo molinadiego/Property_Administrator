@@ -18,6 +18,7 @@ Decisión cerrada para la primera versión del backend. Corresponde a la Etapa 0
 | Logging / configuración | pino + ConfigModule con esquema validado | Fallar temprano si falta una variable de entorno. Logs estructurados desde el día 1. |
 | Infra de desarrollo | Docker compose (Postgres; MinIO en la Etapa 3), **Git local + gate de chequeo local** (`npm run check`: lint + build + tests + e2e) + respaldo remoto en GitHub (`molinadiego/Property_Administrator`, desde 17/10/2026, a petición del dueño) | Entornos reproducibles; el gate local bloquea el avance de etapa sin todo verde. El remoto es solo respaldo: **la condición de salida de etapa sigue siendo el gate local**; no se activa CI remota (el workflow de Actions queda en `.github/` por si se decide habilitar). |
 | Seed de desarrollo | `tsx` (devDependency) + `backend/prisma/seed.ts` (`npm run prisma:seed`) | Carga datos 100% ficticios (dominio reservado `.test`) para desarrollar y probar los flujos de email con caso real. `tsx` ejecuta el script TS contra el cliente Prisma generado **sin build previo**; es solo de desarrollo, no entra al build de producción ni al runtime (agregado 17/10/2026). Idempotente y no destructivo: UUIDs fijos + `skipDuplicates`; el token de acceso limitado se upsertea y su valor crudo se imprime (solo se guarda el hash). |
+| Almacenamiento de archivos (Etapa 3) | Interfaz `StorageService` + driver S3 con `@aws-sdk/client-s3` (runtime); **`s3rver`** (devDependency) como mock S3 **en proceso** en dev/test cuando no hay `STORAGE_ENDPOINT`; endpoint S3 real por env en producción (decidido 17/10/2026, ver `MEMORY.md` §5) | Fotos, documentos e historial lo exigen (§7.1, criterio de salida de la Etapa 3). Hablar el protocolo S3 desde el día 1 mantiene el código intacto al cambiar de backend (hoy mock en proceso, mañana Garage/R2/S3: solo config). `s3rver` evita un servicio Docker más en una máquina limitada y permite probar el driver real (HTTP + firma) en los e2e. La descarga se sirve **por la API** (verificación de permiso en cada request, §16.1), no con URLs prefirmadas. |
 
 ## 2. Decisiones transversales del modelo
 
@@ -37,7 +38,7 @@ No se instala todo el primer día. Cada pieza entra cuando hay una necesidad con
 | Necesidad | Tecnología | Etapa |
 |---|---|---|
 | Email transaccional (invitaciones) | Resend | 1 |
-| Fotos, documentos y comprobantes | S3-compatible (MinIO en desarrollo) | 3 |
+| Fotos, documentos y comprobantes | S3-compatible: `StorageService` + `@aws-sdk/client-s3` (mock `s3rver` en proceso en dev/test, endpoint real por env en prod — decidido 17/10/2026, ver §1 y `MEMORY.md` §5) | 3 |
 | Colas de trabajo (PDFs, emails pesados) | Redis + BullMQ | 5 (aprox.) |
 | Generación de PDF de factura | pdfmake | 5 |
 | Descargas contables Excel | exceljs | 5 |
@@ -80,3 +81,5 @@ Cada módulo tiene controlador (HTTP + DTOs), servicio (reglas de negocio y perm
 | Auth0 / Clerk (auth gestionado) | Ahorra login básico, pero el modelo de membresías multi-empresa con roles y cuentas limitadas hay que escribirlo igual en la app. Se puede reconsiderar si el tiempo aprieta. |
 | AWS SES para el email (decidido 17/10/2026) | Sin free tier para cuentas nuevas desde julio 2026 (solo créditos AWS temporales), sandbox que exige pedir production access (revisión manual) y más fricción operativa (IAM, región, SNS de bounces). El volumen de la Etapa 1 entra holgado en el free de Resend; si algún día escala a cientos de miles de emails/mes, se evalúa migrar la implementación. |
 | Microservicios | El §17 avanza por etapas; un monolito modular bien estructurado gana hasta que exista una razón real de escala. |
+| MinIO (almacenamiento original de la Etapa 3) | Dejó de distribuir imágenes: oct 2025 pasó a source-only, sep 2026 borró `minio/minio` de Docker Hub y oct 2026 Quay exige login (ver `MEMORY.md` §5). Sin imagen fiable que levantar. |
+| Garage / S3 gestionado (Cloudflare R2, AWS S3) para dev y test (decidido 17/10/2026) | Garage agregaba un servicio Docker más y setup de buckets/claves en una máquina limitada; R2/AWS exigían cuenta, credenciales y costo desde el desarrollo. El mock en proceso `s3rver` cubre dev/test y el driver S3 es el mismo; si algún día hace falta un S3 "de verdad" en self-hosting o prod, se apunta `STORAGE_ENDPOINT` a Garage/R2/S3 sin tocar código. |

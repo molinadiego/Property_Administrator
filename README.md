@@ -13,6 +13,7 @@ Backend para administrar propiedades, órdenes de reparación, asignaciones de t
 | `docs/plan.md` | Etapas de construcción (0-6) mapeadas al §17 de los requisitos, con alcance y criterio de salida de cada una. | Para saber en qué etapa estamos y qué sigue. |
 | `docs/especificacion/etapa-1.md` | Especificación técnica de la Etapa 0 + 1: modelo de datos, endpoints, matriz de permisos como tests, audit log. | Al implementar la Etapa 1. |
 | `docs/especificacion/etapa-2.md` | Especificación técnica de la Etapa 2: propiedades, inquilinos, órdenes, trabajos, asignaciones, cuentas de acceso limitado, notificaciones in-app. **Aprobada e implementada.** | Al revisar la Etapa 2. |
+| `docs/especificacion/etapa-3.md` | Especificación técnica de la Etapa 3: seguimiento de trabajos (avances, incompletos, reasignaciones, «no pudo concretarse», cierre y cancelación de órdenes), archivos (fotos/documentos con almacenamiento S3) e historial. **Borrador pendiente de aprobación.** | Al revisar la Etapa 3. |
 
 Regla: los documentos se referencian entre sí, no se copian. Si un requisito cambia, se cambia primero en `proyect.md` y después en la especificación.
 
@@ -22,6 +23,7 @@ Regla: los documentos se referencian entre sí, no se copian. Si un requisito ca
 - Etapa 0 (scaffolding del backend): **completada el 17/10/2026** — lint, tests unitarios, build, e2e con Testcontainers + PostgreSQL real y arranque con BD, todo verde (gate: `npm run check`). Repo con respaldo en GitHub (`molinadiego/Property_Administrator`); sin CI remota activa.
 - Etapa 1 (auth, empresas, invitaciones, roles, audit log): **implementada el 17/10/2026** — gate `npm run check` en verde (unit 29 ✓, e2e 37 ✓ con matriz de permisos + contrato OpenAPI snapshot). Email con Resend operativa en modo sandbox. Seed de desarrollo implementado.
 - Etapa 2 (propiedades, órdenes, asignaciones, cuentas con acceso limitado, notificaciones in-app): **spec aprobada e implementada el 17/10/2026** — gate `npm run check` en verde (unit 29 ✓, e2e 64 ✓ con la matriz de 24 escenarios de la spec + contrato OpenAPI actualizado). Decisiones aprobadas: token opaco por correo para cuentas limitadas, `own_business` en `CompanyType`, `client_relationships` explícita, notificaciones in-app con tipo enumerado. Seed de desarrollo implementado.
+- Etapa 3 (seguimiento de trabajos, archivos e historial): **spec en borrador el 17/10/2026, pendiente de aprobación** (`docs/especificacion/etapa-3.md`, con 7 preguntas para el dueño — incluye una contradicción detectada en `proyect.md` §5.6 ↔ §20.1, reportada sin resolver). Almacenamiento decidido: `StorageService` + driver S3 con mock `s3rver` en proceso en dev/test. **Sin implementación hasta aprobar la spec (SDD).**
 
 ## Entorno
 
