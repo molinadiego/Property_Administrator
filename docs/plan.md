@@ -122,7 +122,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 **Criterio de salida:** definido en `docs/especificacion/etapa-6.md` §9 (gate `npm run check` verde, matriz de permisos de la spec, OpenAPI regenerado, semilla actualizada y CI en verde).
 
-**Entregable:** `docs/especificacion/etapa-6.md` (**borrador escrito el 18/10/2026, pendiente de aprobación del dueño** — 7 decisiones de diseño en su §1.2). No empezar código hasta que se apruebe (regla SDD en `AGENTS.md`).
+**Entregable:** `docs/especificacion/etapa-6.md` (**aprobada el 18/10/2026** por el dueño, con las 7 decisiones de diseño de su §1.2; en implementación).
 
 ---
 

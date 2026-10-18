@@ -7,8 +7,9 @@ referencias (§x) apuntan a `proyect.md`.
 Base normativa: `proyect.md` §12, §13, §14 (14.1–14.3), §15, §16, §17,
 §18.3, §18.4 (resueltos el 18/10/2026), §20.
 
-> **Estado:** borrador de spec **pendiente de aprobación por el dueño**
-> (regla SDD en `AGENTS.md`: no empezar código hasta la aprobación).
+> **Estado: aprobada para implementar (18/10/2026).** Aprobada por el dueño
+> con las 7 decisiones de diseño D1–D7 de §1.2. Regla SDD cumplida
+> (`AGENTS.md`): el criterio de aceptación de cada regla es un test.
 
 ---
 
