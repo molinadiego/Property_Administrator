@@ -121,6 +121,23 @@ export class EmailService {
     await this.send({ to, subject, html, text });
   }
 
+  async sendLimitedAccess(
+    to: string,
+    params: { name: string; accessUrl: string; expiresAt: Date },
+  ): Promise<void> {
+    const subject = 'Tu acceso a Home Management';
+    const text =
+      `Hola ${params.name}: recibiste acceso para consultar el estado de tus órdenes.\n\n` +
+      `Ingresa aquí: ${params.accessUrl}\n` +
+      `El enlace vence el ${params.expiresAt.toISOString()}.\n` +
+      `Si no esperabas este mensaje, ignora este correo.\n`;
+    const html =
+      `<p>Hola ${escapeHtml(params.name)}: recibiste acceso para consultar el estado de tus órdenes.</p>` +
+      `<p><a href="${escapeHtml(params.accessUrl)}">Ingresa a tu panel</a></p>` +
+      `<p>El enlace vence el ${params.expiresAt.toISOString()}. Si no esperabas este mensaje, ignora este correo.</p>`;
+    await this.send({ to, subject, html, text });
+  }
+
   private async send(message: EmailMessage): Promise<void> {
     await this.transport.send(message);
     this.capturedEmails.push({ ...message, sentAt: new Date() });
