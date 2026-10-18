@@ -122,7 +122,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 **Criterio de salida:** definido en `docs/especificacion/etapa-6.md` §9 (gate `npm run check` verde, matriz de permisos de la spec, OpenAPI regenerado, semilla actualizada y CI en verde).
 
-**Entregable:** `docs/especificacion/etapa-6.md` (**aprobada el 18/10/2026** por el dueño, con las 7 decisiones de diseño de su §1.2; en implementación).
+**Entregable:** `docs/especificacion/etapa-6.md` (**aprobada e implementada el 18/10/2026**: gate `npm run check` en verde, matriz de 34 escenarios en `test/etapa6.e2e-spec.ts`, OpenAPI y semilla actualizados).
 
 ---
 
@@ -130,5 +130,5 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 - **Etapa 1 — proveedor de email decidido: Resend** (17/10/2026). Cuenta creada y funcionando en modo sandbox (`onboarding@resend.dev`); la API key vive solo en variable de entorno (`backend/.env`, gitignored). Verificar un dominio por DNS es opcional y solo hace falta para enviar a usuarios reales fuera del sandbox (ver `MEMORY.md` §8).
 - **Etapa 5** puede avanzar sin resolver todo el §18.2: la jurisdicción (EE.UU., solo PDF) ya está decidida; los requisitos fiscales por estado y el tratamiento de impuestos quedan abiertos y se tocan cuando se cierren.
-- **Etapa 6**: las decisiones que lo bloqueaban (§18.3 suscripciones, §18.4 detalles de diseño) quedaron resueltas el 18/10/2026 con la enmienda a `proyect.md`; el alcance ya puede especificarse. Sigue abierto únicamente §18.2 (impuestos), que no bloquea la Etapa 6.
+- **Etapa 6**: spec aprobada e implementada el 18/10/2026 (`docs/especificacion/etapa-6.md`). Las decisiones que la bloqueaban (§18.3 suscripciones, §18.4 detalles de diseño) quedaron resueltas con la enmienda a `proyect.md`. Sigue abierto únicamente §18.2 (impuestos), que no bloquea ninguna etapa restante.
 - El **§18.1** (procedimiento de autorización por teléfono) se resuelve en la Etapa 4, al diseñar el registro de autorizaciones.

@@ -1847,6 +1847,50 @@
         ]
       }
     },
+    "/api/v1/me/notification-preferences": {
+      "get": {
+        "operationId": "NotificationPreferencesController_listMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Todos los tipos con su flag de correo (default true)"
+          }
+        },
+        "summary": "Preferencias de correo por tipo de aviso del usuario (§18.4)",
+        "tags": [
+          "notification-preferences"
+        ]
+      },
+      "put": {
+        "operationId": "NotificationPreferencesController_updateMine",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationPreferencesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Preferencias aplicadas"
+          },
+          "401": {
+            "description": "Sin sesión (401)"
+          },
+          "422": {
+            "description": "Tipo desconocido o payload inválido (422)"
+          }
+        },
+        "summary": "Actualiza las preferencias de correo del usuario (§18.4)",
+        "tags": [
+          "notification-preferences"
+        ]
+      }
+    },
     "/api/v1/limited/{token}/orders": {
       "get": {
         "operationId": "LimitedController_listOrders",
@@ -3733,6 +3777,280 @@
           "authorizations"
         ]
       }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}/warranty-claims": {
+      "post": {
+        "operationId": "WarrantyController_create",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden original",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWarrantyClaimDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reclamo creado (open)"
+          },
+          "401": {
+            "description": "Sin sesión (401)"
+          },
+          "404": {
+            "description": "Orden o trabajo inexistente/ajeno (404)"
+          },
+          "422": {
+            "description": "Trabajo no Completado o body inválido (422)"
+          }
+        },
+        "summary": "Crea un reclamo de garantía sobre un trabajo Completado (§13)",
+        "tags": [
+          "warranty"
+        ]
+      },
+      "get": {
+        "operationId": "WarrantyController_list",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden original",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de reclamos"
+          },
+          "404": {
+            "description": "Orden inexistente o ajena (404)"
+          }
+        },
+        "summary": "Reclamos de garantía de una orden propia (§13)",
+        "tags": [
+          "warranty"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/warranty-claims/{claimId}": {
+      "get": {
+        "operationId": "WarrantyController_getDetail",
+        "parameters": [
+          {
+            "name": "claimId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del reclamo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle del reclamo"
+          },
+          "404": {
+            "description": "Reclamo inexistente o ajeno (404)"
+          }
+        },
+        "summary": "Detalle del reclamo con el contexto de la reparación original (§13)",
+        "tags": [
+          "warranty"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/warranty-claims/{claimId}/resolve": {
+      "post": {
+        "operationId": "WarrantyController_resolve",
+        "parameters": [
+          {
+            "name": "claimId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del reclamo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveWarrantyClaimDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reclamo resuelto"
+          },
+          "401": {
+            "description": "Sin sesión (401)"
+          },
+          "404": {
+            "description": "Reclamo inexistente o ajeno (404)"
+          },
+          "409": {
+            "description": "Reclamo ya resuelto (409)"
+          },
+          "422": {
+            "description": "Resolución vacía o inválida (422)"
+          }
+        },
+        "summary": "Resuelve un reclamo abierto con su resolución (§13)",
+        "tags": [
+          "warranty"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/urgency-settings": {
+      "get": {
+        "operationId": "UrgencyController_getSettings",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuración vigente"
+          }
+        },
+        "summary": "Plazo de respuesta a órdenes urgentes de la empresa (§14.2, §18.4)",
+        "tags": [
+          "urgency"
+        ]
+      },
+      "patch": {
+        "operationId": "UrgencyController_updateSettings",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUrgencySettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Configuración actualizada"
+          },
+          "403": {
+            "description": "Rol sin permiso (403)"
+          },
+          "422": {
+            "description": "Plazo fuera de 1–720 o payload inválido (422)"
+          }
+        },
+        "summary": "Actualiza el plazo de respuesta (solo owner, §18.4)",
+        "tags": [
+          "urgency"
+        ]
+      }
+    },
+    "/api/v1/plans": {
+      "get": {
+        "operationId": "SubscriptionsController_listPlans",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Los tres planes con sus precios"
+          }
+        },
+        "summary": "Planes de suscripción (solo lectura, §15, §18.3)",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/subscription": {
+      "get": {
+        "operationId": "SubscriptionsController_getSubscription",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan vigente de la empresa"
+          },
+          "404": {
+            "description": "Empresa inexistente o ajena (404)"
+          }
+        },
+        "summary": "Plan efectivo de la empresa: explícito o el de su categoría (D3)",
+        "tags": [
+          "subscriptions"
+        ]
+      }
     }
   },
   "info": {
@@ -4232,6 +4550,10 @@
           "accessEntryInstructions": {
             "type": "string",
             "description": "Instrucciones de entrada de esta visita (§5.8)"
+          },
+          "urgent": {
+            "type": "boolean",
+            "description": "Marca de urgente de la orden (§14.2, etapa 6)"
           }
         }
       },
@@ -4338,6 +4660,39 @@
         },
         "required": [
           "reason"
+        ]
+      },
+      "NotificationPreferenceEntryDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "urgent_reminder",
+            "description": "Tipo de aviso del conjunto cerrado"
+          },
+          "emailEnabled": {
+            "type": "boolean",
+            "example": true,
+            "description": "¿Enviar correo además del aviso en la aplicación?"
+          }
+        },
+        "required": [
+          "type",
+          "emailEnabled"
+        ]
+      },
+      "UpdateNotificationPreferencesDto": {
+        "type": "object",
+        "properties": {
+          "preferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationPreferenceEntryDto"
+            }
+          }
+        },
+        "required": [
+          "preferences"
         ]
       },
       "CreateRequestDto": {
@@ -4784,6 +5139,49 @@
           "grantedByDescription",
           "grantedAt",
           "description"
+        ]
+      },
+      "CreateWarrantyClaimDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "example": "La reparación de la filtración volvió a aparecer una semana después.",
+            "description": "Trabajo reparado objeto del reclamo (debe estar en estado Completado)."
+          },
+          "description": {
+            "type": "string",
+            "example": "La filtración bajo el lavamanos reapareció con el uso normal."
+          }
+        },
+        "required": [
+          "jobId",
+          "description"
+        ]
+      },
+      "ResolveWarrantyClaimDto": {
+        "type": "object",
+        "properties": {
+          "resolution": {
+            "type": "string",
+            "example": "Cobertura reconocida; se emitió una nueva orden para el mismo profesional."
+          }
+        },
+        "required": [
+          "resolution"
+        ]
+      },
+      "UpdateUrgencySettingsDto": {
+        "type": "object",
+        "properties": {
+          "responseHours": {
+            "type": "number",
+            "example": 24,
+            "description": "Horas de plazo de respuesta (1–720)"
+          }
+        },
+        "required": [
+          "responseHours"
         ]
       }
     }

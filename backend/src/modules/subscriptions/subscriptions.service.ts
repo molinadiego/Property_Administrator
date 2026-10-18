@@ -47,12 +47,19 @@ export class SubscriptionsService {
     return 'profesional';
   }
 
-  private serialize(plan: { id: string; name: string; category: string; price: unknown; currency: string }) {
+  private serialize(plan: {
+    id: string;
+    name: string;
+    category: string;
+    price: { toFixed: (dp?: number) => string };
+    currency: string;
+  }) {
     return {
       id: plan.id,
       name: plan.name,
       category: plan.category,
-      price: String(plan.price),
+      // Fixed 2-decimal money format (§11): 33.00, never 33.
+      price: plan.price.toFixed(2),
       currency: plan.currency,
     };
   }

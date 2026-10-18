@@ -248,8 +248,24 @@ export class OrdersService {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundException('Orden no encontrada.');
 
+    const manages = await this.managesOrder(order, access);
+    if (!manages) {
+      // Foreign company: existence is never leaked (§16.8) → 404.
+      const isRelated = await this.isRelatedToOrder(order, access);
+      if (!isRelated) throw new NotFoundException('Orden no encontrada.');
+      // A related contractor edits instructions, never the urgency: that
+      // belongs to the order's company only (etapa-6.md §4.2, §14.2).
+      if (dto.urgent !== undefined) {
+        throw new ForbiddenException('Solo la empresa de la orden marca la urgencia (§14.2).');
+      }
+      throw new ForbiddenException(
+        'Solo la empresa responsable de la orden o el contratista asignado editan sus instrucciones.',
+      );
+    }
+
     // Etapa 6 (spec etapa-6.md §4.2, §14.2): the urgent flag belongs to the
-    // order's company only, and only while the order is active (§20.1).
+    // order's company (manages can also be true via an assignment), and only
+    // while the order is active (§20.1).
     if (dto.urgent !== undefined) {
       if (order.companyId !== access.companyId) {
         throw new ForbiddenException('Solo la empresa de la orden marca la urgencia (§14.2).');
@@ -257,16 +273,6 @@ export class OrdersService {
       if (order.status === 'completed' || order.status === 'cancelled') {
         throw new ConflictException('La orden cerrada no admite cambios de urgencia (§20.1).');
       }
-    }
-
-    const manages = await this.managesOrder(order, access);
-    if (!manages) {
-      // Foreign company: existence is never leaked (§16.8) → 404.
-      const isRelated = await this.isRelatedToOrder(order, access);
-      if (!isRelated) throw new NotFoundException('Orden no encontrada.');
-      throw new ForbiddenException(
-        'Solo la empresa responsable de la orden o el contratista asignado editan sus instrucciones.',
-      );
     }
 
     const data: Record<string, string | null | boolean> = {};
