@@ -326,6 +326,17 @@ export class EmailService {
     await this.send({ to, subject, html, text });
   }
 
+  /**
+   * Generic notice email (spec etapa-6.md §4.3, D6): callers build the
+   * message and gate it with the user's preferences before sending.
+   */
+  async sendNotice(
+    to: string,
+    message: { subject: string; text: string; html: string },
+  ): Promise<void> {
+    await this.send({ to, ...message });
+  }
+
   private async send(message: EmailMessage): Promise<void> {
     await this.transport.send(message);
     this.capturedEmails.push({ ...message, sentAt: new Date() });

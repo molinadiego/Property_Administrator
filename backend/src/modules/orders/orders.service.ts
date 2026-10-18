@@ -11,9 +11,11 @@ import { AuditService } from '../audit/audit.service';
 import {
   AUDIT_ACTIONS_ETAPA2,
   AUDIT_ACTIONS_ETAPA3,
+  AUDIT_ACTIONS_ETAPA6,
   AUDIT_ENTITIES_ETAPA2,
 } from '../audit/audit-actions';
 import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationDispatchService } from '../notifications/notification-dispatch.service';
 import { AuthContext, CompanyAccess } from '../../common/request-context';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -60,6 +62,7 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly dispatch: NotificationDispatchService,
   ) {}
 
   /** Creates the order and its first job (§5.1, §5.3). */
@@ -245,6 +248,17 @@ export class OrdersService {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundException('Orden no encontrada.');
 
+    // Etapa 6 (spec etapa-6.md §4.2, §14.2): the urgent flag belongs to the
+    // order's company only, and only while the order is active (§20.1).
+    if (dto.urgent !== undefined) {
+      if (order.companyId !== access.companyId) {
+        throw new ForbiddenException('Solo la empresa de la orden marca la urgencia (§14.2).');
+      }
+      if (order.status === 'completed' || order.status === 'cancelled') {
+        throw new ConflictException('La orden cerrada no admite cambios de urgencia (§20.1).');
+      }
+    }
+
     const manages = await this.managesOrder(order, access);
     if (!manages) {
       // Foreign company: existence is never leaked (§16.8) → 404.
@@ -255,7 +269,7 @@ export class OrdersService {
       );
     }
 
-    const data: Record<string, string | null> = {};
+    const data: Record<string, string | null | boolean> = {};
     const before: Record<string, string | null> = {};
     const after: Record<string, string | null> = {};
     const fields: Array<keyof UpdateOrderDto> = [
@@ -268,11 +282,12 @@ export class OrdersService {
     for (const field of fields) {
       const value = dto[field];
       if (value === undefined) continue;
-      const normalized = value.trim() || null;
+      const normalized = (value as string).trim() || null;
       data[field] = normalized;
       before[field] = order[field as keyof typeof order] as string | null;
       after[field] = normalized;
     }
+    if (dto.urgent !== undefined) data.urgent = dto.urgent;
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const result = await tx.order.update({ where: { id: orderId }, data });
@@ -287,6 +302,19 @@ export class OrdersService {
         },
         tx,
       );
+      if (dto.urgent !== undefined && dto.urgent !== order.urgent) {
+        await this.audit.record(
+          {
+            companyId: access.companyId,
+            actorUserId: auth.userId,
+            action: AUDIT_ACTIONS_ETAPA6.ORDER_URGENCY_SET,
+            entityType: AUDIT_ENTITIES_ETAPA2.ORDER,
+            entityId: orderId,
+            payload: { urgent: dto.urgent },
+          },
+          tx,
+        );
+      }
       return result;
     });
 
@@ -422,6 +450,8 @@ export class OrdersService {
         tx,
       );
     });
+    // §14.1 (etapa-6): the assigner is told the assignment was accepted.
+    await this.notifyAssigner(assignment, 'accepted');
     return { id: assignment.id, status: 'accepted' as const };
   }
 
@@ -460,6 +490,8 @@ export class OrdersService {
         tx,
       );
     });
+    // §14.1 (etapa-6): the assigner is told the assignment was rejected.
+    await this.notifyAssigner(assignment, 'rejected', dto.reason);
     return { id: assignment.id, status: 'rejected' as const };
   }
 
@@ -927,6 +959,51 @@ export class OrdersService {
     return found !== null;
   }
 
+  /**
+   * §14.1 (etapa-6.md): the user who created the assignment learns about
+   * the response — in-app always, email unless the user disabled it (D6).
+   * Runs after the commit; a provider failure never breaks the response.
+   */
+  private async notifyAssigner(
+    assignment: { id: string; companyId: string; assignedBy: string; jobId: string },
+    kind: 'accepted' | 'rejected',
+    reason?: string | null,
+  ) {
+    const job = await this.prisma.job.findUniqueOrThrow({
+      where: { id: assignment.jobId },
+      select: { title: true, order: { select: { title: true } } },
+    });
+    const type = kind === 'accepted' ? 'assignment_accepted' : 'assignment_rejected';
+    const orderTitle = job.order.title;
+    const title = kind === 'accepted' ? 'Asignación aceptada' : 'Asignación rechazada';
+    const body =
+      kind === 'accepted'
+        ? `Se aceptó la asignación del trabajo "${job.title}" de la orden "${orderTitle}".`
+        : `Se rechazó la asignación del trabajo "${job.title}" de la orden "${orderTitle}".` +
+          (reason ? ` Motivo: ${reason.trim()}` : '');
+    await this.notifications.notify({
+      userId: assignment.assignedBy,
+      companyId: assignment.companyId,
+      type,
+      title,
+      body,
+      entityType: 'assignment',
+      entityId: assignment.id,
+    });
+
+    const assigner = await this.prisma.user.findUnique({
+      where: { id: assignment.assignedBy },
+      select: { email: true },
+    });
+    if (!assigner) return;
+    await this.dispatch.sendNoticeIfEnabled({ userId: assignment.assignedBy }, type, {
+      to: assigner.email,
+      subject: `${title}: "${orderTitle}"`,
+      text: `${body}\n\nConsulta el detalle en la plataforma.\n`,
+      html: `<p>${body.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')}</p><p>Consulta el detalle en la plataforma.</p>`,
+    });
+  }
+
   private async findAssignable(assignmentId: string, access: CompanyAccess, auth: AuthContext) {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id: assignmentId },
@@ -1085,6 +1162,8 @@ export class OrdersService {
       title: order.title,
       description: order.description,
       status: order.status,
+      // Etapa 6 (§14.2): urgent flag, editable while the order is active.
+      urgent: order.urgent,
       origin: order.origin,
       propertyId: order.propertyId,
       companyId: order.companyId,

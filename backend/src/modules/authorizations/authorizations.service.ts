@@ -9,6 +9,7 @@ import { Order, OrderAuthorization, Prisma } from '../../generated/prisma/client
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { EmailService } from '../email/email.service';
+import { NotificationPreferencesService } from '../notifications/notification-preferences.service';
 import { AUDIT_ACTIONS_ETAPA4, AUDIT_ENTITIES_ETAPA4 } from '../audit/audit-actions';
 import { AuthContext, CompanyAccess } from '../../common/request-context';
 import { CreateAuthorizationRequestDto, ResolveAuthorizationRequestDto } from './dto/authorization-request.dto';
@@ -52,6 +53,7 @@ export class AuthorizationsService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly email: EmailService,
+    private readonly preferences: NotificationPreferencesService,
   ) {}
 
   // -------------------------------------------------------------------------
@@ -141,9 +143,12 @@ export class AuthorizationsService {
       return created;
     });
 
-    const recipient = await this.originatorEmail(order);
-    if (recipient) {
-      await this.email.sendAuthorizationRequested(recipient, {
+    const recipient = await this.originatorContact(order);
+    if (
+      recipient &&
+      (await this.preferences.isEmailEnabled(recipient.userId, 'authorization_requested'))
+    ) {
+      await this.email.sendAuthorizationRequested(recipient.email, {
         orderTitle: order.title,
         type: request.type,
       });
@@ -165,7 +170,13 @@ export class AuthorizationsService {
       where: { id: resolved.request.requestedByUserId },
       select: { email: true },
     });
-    if (requester) {
+    if (
+      requester &&
+      (await this.preferences.isEmailEnabled(
+        resolved.request.requestedByUserId,
+        'authorization_resolved',
+      ))
+    ) {
       await this.email.sendAuthorizationResolved(requester.email, {
         orderTitle: resolved.order.title,
         type: resolved.request.type,
@@ -186,7 +197,13 @@ export class AuthorizationsService {
       where: { id: resolved.request.requestedByUserId },
       select: { email: true },
     });
-    if (requester) {
+    if (
+      requester &&
+      (await this.preferences.isEmailEnabled(
+        resolved.request.requestedByUserId,
+        'authorization_resolved',
+      ))
+    ) {
       await this.email.sendAuthorizationResolved(requester.email, {
         orderTitle: resolved.order.title,
         type: resolved.request.type,
@@ -531,19 +548,22 @@ export class AuthorizationsService {
 
   /** Email recipient on the originating side (§14.1): the order's
    * originator, falling back to an owner of the company. */
-  private async originatorEmail(order: Order): Promise<string | null> {
+  /** Originator contact for authorization notices (§14.1, D6). */
+  private async originatorContact(
+    order: Order,
+  ): Promise<{ userId: string; email: string } | null> {
     if (order.originatorId) {
       const originator = await this.prisma.user.findUnique({
         where: { id: order.originatorId },
         select: { email: true },
       });
-      if (originator) return originator.email;
+      if (originator) return { userId: order.originatorId, email: originator.email };
     }
     const owner = await this.prisma.membership.findFirst({
       where: { companyId: order.companyId, role: 'owner', status: 'active' },
       include: { user: { select: { email: true } } },
     });
-    return owner?.user.email ?? null;
+    return owner ? { userId: owner.userId, email: owner.user.email } : null;
   }
 
   private serializeAuthorization(

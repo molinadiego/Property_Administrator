@@ -42,6 +42,7 @@ No se instala todo el primer día. Cada pieza entra cuando hay una necesidad con
 | Colas de trabajo (PDFs, emails pesados) | Redis + BullMQ | 5 (aprox.) |
 | Generación de PDF de factura | pdfmake | 5 |
 | Descargas contables Excel | exceljs | 5 |
+| Barrido de urgencias (recordatorio a mitad de ventana y escalación al vencer, spec etapa-6.md §4.2/D7) | `@nestjs/schedule` — cron de 15 min; bajo `NODE_ENV=test` el cron queda deshabilitado y las suites e2e invocan el barrido directamente | 6 |
 | Interfaz web | Frontend TypeScript (a definir) | 6 (producto nuevo, fuera del backend) |
 
 ## 4. Arquitectura

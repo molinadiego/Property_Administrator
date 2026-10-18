@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from 'nestjs-pino';
 import { validateEnv } from './config/env.validation';
 import { getLoggerOptions } from './config/logger.options';
@@ -29,6 +30,7 @@ import { AuthorizationsModule } from './modules/authorizations/authorizations.mo
 import { BillingModule } from './modules/billing/billing.module';
 // Etapa 6 (docs/especificacion/etapa-6.md)
 import { WarrantyModule } from './modules/warranty/warranty.module';
+import { UrgencyModule } from './modules/urgency/urgency.module';
 
 @Module({
   imports: [
@@ -37,6 +39,9 @@ import { WarrantyModule } from './modules/warranty/warranty.module';
       validate: validateEnv,
       ignoreEnvFile: process.env.NODE_ENV === 'test',
     }),
+    // Etapa 6 (etapa-6.md D7): the urgency sweep runs on a 15-minute cron,
+    // disabled under NODE_ENV=test — e2e suites invoke sweep() directly.
+    ScheduleModule.forRoot(),
     LoggerModule.forRoot(getLoggerOptions()),
     PrismaModule,
     HealthModule,
@@ -65,6 +70,7 @@ import { WarrantyModule } from './modules/warranty/warranty.module';
     BillingModule,
     // Etapa 6 (docs/especificacion/etapa-6.md)
     WarrantyModule,
+    UrgencyModule,
   ],
   providers: [
     // Every route requires a valid session cookie unless marked @Public().

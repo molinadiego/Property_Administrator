@@ -10,6 +10,8 @@ import type { InvoiceStatus as InvoiceStatusValue } from '../../generated/prisma
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { EmailService } from '../email/email.service';
+import { NotificationPreferencesService } from '../notifications/notification-preferences.service';
+import { NoticeType } from '../notifications/notice-types';
 import { AUDIT_ACTIONS_ETAPA5, AUDIT_ENTITIES_ETAPA5 } from '../audit/audit-actions';
 import { AuthContext, CompanyAccess } from '../../common/request-context';
 import { decodeCursor, encodeCursor } from '../../common/pagination';
@@ -78,6 +80,7 @@ export class BillingService {
     private readonly email: EmailService,
     private readonly pdf: PdfService,
     private readonly excel: ExcelService,
+    private readonly preferences: NotificationPreferencesService,
   ) {}
 
   // =========================================================================
@@ -363,9 +366,9 @@ export class BillingService {
     });
 
     const { issued, totalCents } = result;
-    const recipientEmail = await this.invoiceContactEmail(issued, 'recipient');
-    if (recipientEmail) {
-      await this.email.sendInvoiceIssued(recipientEmail, {
+    const recipientContact = await this.invoiceContact(issued, 'recipient');
+    if (recipientContact && (await this.emailEnabled(recipientContact.userId, 'invoice_issued'))) {
+      await this.email.sendInvoiceIssued(recipientContact.email, {
         invoiceNumber: issued.number!,
         orderTitle: issued.order.title,
         total: money(totalCents),
@@ -426,9 +429,9 @@ export class BillingService {
       return updated;
     });
 
-    const counterpart = await this.invoiceContactEmail(voided, 'recipient');
-    if (counterpart) {
-      await this.email.sendInvoiceVoided(counterpart, {
+    const counterpart = await this.invoiceContact(voided, 'recipient');
+    if (counterpart && (await this.emailEnabled(counterpart.userId, 'invoice_voided'))) {
+      await this.email.sendInvoiceVoided(counterpart.email, {
         invoiceNumber: voided.number!,
         orderTitle: voided.order.title,
         reason: dto.reason,
@@ -584,9 +587,12 @@ export class BillingService {
     if (!result.duplicateSuspect) {
       const counterpartSide: 'issuer' | 'recipient' =
         result.invoice.companyId === access.companyId ? 'recipient' : 'issuer';
-      const counterpart = await this.invoiceContactEmail(result.invoice, counterpartSide);
-      if (counterpart) {
-        await this.email.sendPaymentRecorded(counterpart, {
+      const counterpart = await this.invoiceContact(result.invoice, counterpartSide);
+      if (
+        counterpart &&
+        (await this.emailEnabled(counterpart.userId, 'payment_recorded'))
+      ) {
+        await this.email.sendPaymentRecorded(counterpart.email, {
           invoiceNumber: result.invoice.number!,
           orderTitle: result.invoice.order.title,
           amount: money(amountCents),
@@ -599,7 +605,7 @@ export class BillingService {
         where: { id: auth.userId },
         select: { email: true },
       });
-      if (registrant) {
+      if (registrant && (await this.emailEnabled(auth.userId, 'payment_duplicate_suspect'))) {
         await this.email.sendPaymentDuplicateSuspect(registrant.email, {
           invoiceNumber: result.invoice.number!,
           amount: money(amountCents),
@@ -770,17 +776,18 @@ export class BillingService {
     });
     let sent = 0;
     for (const invoice of invoices) {
-      const targets = new Set<string>();
+      const targets = new Map<string, string | null>();
       if (invoice.companyId !== correctorCompanyId) {
-        const email = await this.invoiceContactEmail(invoice, 'issuer');
-        if (email) targets.add(email);
+        const contact = await this.invoiceContact(invoice, 'issuer');
+        if (contact) targets.set(contact.email, contact.userId);
       }
       if (invoice.recipientCompanyId !== null && invoice.recipientCompanyId !== correctorCompanyId) {
-        const email = await this.invoiceContactEmail(invoice, 'recipient');
-        if (email) targets.add(email);
+        const contact = await this.invoiceContact(invoice, 'recipient');
+        if (contact) targets.set(contact.email, contact.userId);
       }
-      for (const target of targets) {
-        await this.email.sendCostCorrectionNotice(target, {
+      for (const [email, userId] of targets) {
+        if (!(await this.emailEnabled(userId, 'cost_correction_notice'))) continue;
+        await this.email.sendCostCorrectionNotice(email, {
           orderTitle: invoice.order.title,
           invoiceNumber: invoice.number!,
         });
@@ -972,7 +979,12 @@ export class BillingService {
   }
 
   /** Email of one side of an invoice; null when that side has no address (D10). */
-  private async invoiceContactEmail(
+  /**
+   * Contact of the invoice counterpart for notices (§14.1, D6). `userId` is
+   * null when the contact is a tenant (no account, no preferences: their
+   * business emails always go, like account-mechanism mail).
+   */
+  private async invoiceContact(
     invoice: {
       companyId: string;
       recipientCompanyId: string | null;
@@ -981,13 +993,13 @@ export class BillingService {
       orderId: string;
     },
     side: 'issuer' | 'recipient',
-  ): Promise<string | null> {
+  ): Promise<{ userId: string | null; email: string } | null> {
     if (side === 'issuer') {
       const user = await this.prisma.user.findUnique({
         where: { id: invoice.createdById },
         select: { email: true },
       });
-      return user?.email ?? null;
+      return user ? { userId: invoice.createdById, email: user.email } : null;
     }
     if (invoice.recipientCompanyId) {
       const order = await this.prisma.order.findUnique({
@@ -999,22 +1011,29 @@ export class BillingService {
           where: { id: order.originatorId },
           select: { email: true },
         });
-        if (originator) return originator.email;
+        if (originator) return { userId: order.originatorId, email: originator.email };
       }
       const owner = await this.prisma.membership.findFirst({
         where: { companyId: invoice.recipientCompanyId, role: 'owner', status: 'active' },
         include: { user: { select: { email: true } } },
       });
-      return owner?.user.email ?? null;
+      return owner ? { userId: owner.userId, email: owner.user.email } : null;
     }
     if (invoice.recipientTenantId) {
       const tenant = await this.prisma.tenant.findUnique({
         where: { id: invoice.recipientTenantId },
         select: { email: true },
       });
-      return tenant?.email ?? null;
+      // Tenant email is nullable (etapa-2): no address, no notice.
+      return tenant?.email ? { userId: null, email: tenant.email } : null;
     }
     return null;
+  }
+
+  /** Per-user email gate (etapa-6 D6): tenant contacts are never gated. */
+  private async emailEnabled(userId: string | null, type: NoticeType): Promise<boolean> {
+    if (!userId) return true;
+    return this.preferences.isEmailEnabled(userId, type);
   }
 
   /** Gathers the company's own visible records and renders them (D11). */

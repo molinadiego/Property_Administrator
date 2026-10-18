@@ -9,6 +9,7 @@ import { Assignment, CostReport, Order, Prisma } from '../../generated/prisma/cl
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { EmailService } from '../email/email.service';
+import { NotificationPreferencesService } from '../notifications/notification-preferences.service';
 import { AUDIT_ACTIONS_ETAPA4, AUDIT_ENTITIES_ETAPA4 } from '../audit/audit-actions';
 import { BillingService } from '../billing/billing.service';
 import { AuthContext, CompanyAccess } from '../../common/request-context';
@@ -51,6 +52,7 @@ export class CostsService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly email: EmailService,
+    private readonly preferences: NotificationPreferencesService,
     private readonly billing: BillingService,
   ) {}
 
@@ -227,20 +229,23 @@ export class CostsService {
     });
 
     const actor = await this.prisma.user.findUnique({ where: { id: auth.userId } });
-    const recipient = await this.recipientEmail(order);
+    const recipient = await this.recipientContact(order);
     if (recipient) {
       const params = {
         orderTitle: order.title,
         version: report.version,
         submittedByName: actor?.name ?? 'Profesional asignado',
       };
-      if (report.previousReportId) {
-        await this.email.sendCostCorrected(recipient, params);
-      } else {
-        await this.email.sendCostsSubmitted(recipient, {
-          ...params,
-          total: fromCents(totalCents) ?? '0.00',
-        });
+      const noticeType = report.previousReportId ? 'cost_corrected' : 'costs_submitted';
+      if (await this.preferences.isEmailEnabled(recipient.userId, noticeType)) {
+        if (report.previousReportId) {
+          await this.email.sendCostCorrected(recipient.email, params);
+        } else {
+          await this.email.sendCostsSubmitted(recipient.email, {
+            ...params,
+            total: fromCents(totalCents) ?? '0.00',
+          });
+        }
       }
     }
     // Spec etapa-5 D9 (proyect.md §8.2): a cost correction never touches an
@@ -337,19 +342,22 @@ export class CostsService {
 
   /** Email recipient of cost notifications (§8.1, §14.1): the order's
    * originator, falling back to an owner of the originating company. */
-  private async recipientEmail(order: Order): Promise<string | null> {
+  /** Recipient contact (originator or owner) for cost notices (§14.1, D6). */
+  private async recipientContact(
+    order: Order,
+  ): Promise<{ userId: string; email: string } | null> {
     if (order.originatorId) {
       const originator = await this.prisma.user.findUnique({
         where: { id: order.originatorId },
         select: { email: true },
       });
-      if (originator) return originator.email;
+      if (originator) return { userId: order.originatorId, email: originator.email };
     }
     const owner = await this.prisma.membership.findFirst({
       where: { companyId: order.companyId, role: 'owner', status: 'active' },
       include: { user: { select: { email: true } } },
     });
-    return owner?.user.email ?? null;
+    return owner ? { userId: owner.userId, email: owner.user.email } : null;
   }
 
   private serializeReport(report: CostReportRow) {

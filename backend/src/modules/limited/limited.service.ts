@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS_ETAPA2, AUDIT_ENTITIES_ETAPA2 } from '../audit/audit-actions';
 import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationDispatchService } from '../notifications/notification-dispatch.service';
 
 /**
  * Limited-access flows (spec etapa-2.md §4.4, approved token decision §3).
@@ -22,6 +23,7 @@ export class LimitedAccessService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly dispatch: NotificationDispatchService,
   ) {}
 
   /** Orders of the tenant's housing/relation, minimal fields (§4.3). */
@@ -68,7 +70,7 @@ export class LimitedAccessService {
   ) {
     const target = await this.resolveTarget(tenantId, dto.propertyId);
 
-    const order = await this.prisma.$transaction(async (tx) => {
+    const request = await this.prisma.$transaction(async (tx) => {
       const created = await tx.order.create({
         data: {
           companyId: target.companyId,
@@ -112,10 +114,27 @@ export class LimitedAccessService {
           tx,
         );
       }
-      return created;
+      return { order: created, ownerIds: owners.map((owner) => owner.userId) };
     });
 
-    return { id: order.id, title: order.title, status: order.status };
+    // §14.1 (etapa-6.md): the in-app notice is always created; the email to
+    // each owner follows the commit and their per-type preference (D6).
+    for (const ownerId of request.ownerIds) {
+      const owner = await this.prisma.user.findUnique({
+        where: { id: ownerId },
+        select: { email: true },
+      });
+      if (!owner) continue;
+      const body = `Se recibió el pedido "${request.order.title}". Conviértelo en orden para asignarlo.`;
+      await this.dispatch.sendNoticeIfEnabled({ userId: ownerId }, 'order_created', {
+        to: owner.email,
+        subject: `Nuevo pedido de trabajo: "${request.order.title}"`,
+        text: `${body}\n\nConviértelo en orden para asignarlo desde la plataforma.\n`,
+        html: `<p>${body}</p><p>Conviértelo en orden para asignarlo desde la plataforma.</p>`,
+      });
+    }
+
+    return { id: request.order.id, title: request.order.title, status: request.order.status };
   }
 
   /** Converts a `requested` order into a real one (§5.1, AC-4.5). */
