@@ -74,7 +74,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 **Criterio de salida:** una orden recorre su vida completa hasta cierre (§6.4, §20); las fotos/documentos respetan los permisos de quien los solicita; el historial conserva todo lo que §12 manda conservar (sin borrados silenciosos, §1.1.8).
 
-**Entregable:** `docs/especificacion/etapa-3.md` (**borrador generado el 17/10/2026, pendiente de aprobación**; 7 preguntas para el dueño — la contradicción `proyect.md` §5.6 ↔ §20.1 se resolvió enmendando la §5.6 el 17/10/2026, quedan 6 preguntas abiertas). Sin implementación hasta aprobar la spec (regla SDD en `AGENTS.md`).
+**Entregable:** `docs/especificacion/etapa-3.md` (**aprobada el 17/10/2026**, 7/7 preguntas resueltas — incluye la enmienda de `proyect.md` §5.6 alineada a §20.1 y el cambio aprobado sobre la Etapa 2: aceptar deja el job en `accepted` y el inicio es `start` explícito). **Implementación en curso** (regla SDD en `AGENTS.md`).
 
 ---
 

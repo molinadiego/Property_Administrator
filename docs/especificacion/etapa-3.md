@@ -1,15 +1,17 @@
 # Especificación técnica — Etapa 3: Seguimiento, archivos e historial
 
-> **Borrador generado el 17/10/2026** — pendiente de aprobación del dueño (condición previa a
-> implementar, regla SDD en `AGENTS.md`). Decisiones ya confirmadas: (1) almacenamiento
-> S3-compatible con **mock S3 en proceso** (`s3rver`) para dev/test y endpoint S3 real por
-> variable de entorno en producción, tras una interfaz `StorageService` (17/10/2026);
-> (2) alineación de `proyect.md` §5.6 con §20.1 (enmienda del 17/10/2026): tras un rechazo
-> se crea una **nueva** orden que referencia la rechazada; la rechazada no se reabre.
-> Decisiones de diseño que este borrador propone se listan en §1 y se aprueban o rechazan en
-> «Preguntas para aprobar antes de implementar». Derivada de `docs/plan.md` §Etapa 3 =
-> `proyect.md` §17 (Etapa 3). Las reglas de negocio se referencian por § a `proyect.md`,
-> nunca se copian.
+> **Aprobada el 17/10/2026** por el dueño (7/7 preguntas resueltas, ver «Decisiones
+> resueltas» al final). Decisiones confirmadas: (1) almacenamiento S3-compatible con **mock
+> S3 en proceso** (`s3rver`) para dev/test y endpoint S3 real por variable de entorno en
+> producción, tras una interfaz `StorageService`; (2) alineación de `proyect.md` §5.6 con
+> §20.1 (enmienda del 17/10/2026): tras un rechazo se crea una **nueva** orden que
+> referencia la rechazada; la rechazada no se reabre; (3) «responsable» = miembro activo de
+> la empresa dueña de la orden/job, y cierre = cualquier miembro activo de la empresa
+> originadora; (4) cambio aprobado sobre la Etapa 2: aceptar la asignación deja el job en
+> `accepted` y el inicio es `start` explícito; (5) rechazo de órdenes a nivel de orden y
+> notificaciones in-app: fuera de alcance; (6) supuesto de retención §18.4 documentado
+> (borrado lógico, conserva indefinida en v1, retiro auditado).
+> Derivada de `docs/plan.md` §Etapa 3 = `proyect.md` §17 (Etapa 3).
 
 ---
 
@@ -42,25 +44,29 @@ Según `docs/plan.md` §Etapa 3, esta etapa implementa:
   «orden enviada a otra empresa» (solo orden propia + asignaciones, ver etapa-2 §2.12). La
   **contradicción detectada** entre §5.6 y §20.1 quedó **resuelta el 17/10/2026** en la
   fuente de verdad: `proyect.md` §5.6 enmendada para alinearse a §20.1 (nueva orden que
-  referencia la rechazada; la rechazada no se reabre). Sigue **abierta** solo la decisión de
-  implementar aquí el rechazo de órdenes (pregunta 2); mientras tanto, fuera de alcance.
+  referencia la rechazada; la rechazada no se reabre). El dueño decidió además el
+  17/10/2026 dejar el rechazo de órdenes **fuera de alcance** de esta etapa (ver «Decisiones
+  resueltas»).
 - **Costos en el historial** (§7.2–§7.4 mencionan «costos registrados/comunicados/presentados»):
   llegan en la **Etapa 4**; el historial de esta etapa cubre trabajos, fechas, estados y
   resultados, y los campos de costo se agregan cuando existan (plan.md §Etapa 4).
 - **Notificaciones in-app de los eventos de seguimiento**: `plan.md` no las lista en el alcance
-  de la Etapa 3 (las avanzadas son Etapa 6, §14). Los eventos quedan visibles en el detalle de
-  la orden y en el historial. *Opcional a aprobar:* agregar tipos de `NotificationType` para
-  `job_incomplete` / `order_closed` (ver preguntas).
+  de la Etapa 3 (las avanzadas son Etapa 6, §14) y el dueño confirmó el 17/10/2026 dejarlas
+  **fuera de alcance**. Los eventos quedan visibles en el detalle de la orden y en el
+  historial.
 - **Cuentas con acceso limitado (§4.3) sobre archivos e historial**: sus endpoints siguen
   devolviendo solo estado de órdenes (etapa-2 §4.4); no reciben fotos, documentos ni historial.
 - **Retención de documentos con periodo definido**: los «requisitos detallados para la
-  conservación de documentos» siguen abiertos en §18.4. Supuesto pendiente (ver §10): borrado
-  lógico y conserva indefinida en la v1; el retiro queda documentado en el audit log (§1.1.8).
+  conservación de documentos» siguen abiertos en §18.4. Supuesto **aprobado** por el dueño
+  el 17/10/2026 (ver §10): borrado lógico y conserva indefinida en la v1; el retiro queda
+  documentado en el audit log (§1.1.8).
 - Presupuestos (§5.4), garantías (§13), costos/autorizaciones (§8), facturas (§11): etapas 4-6.
 
-### Decisiones de diseño que este borrador propone (requieren aprobación)
+### Decisiones de diseño (aprobadas por el dueño el 17/10/2026)
 
-Son modelado técnico, no reglas de negocio nuevas; se detallan en las secciones indicadas:
+Son modelado técnico, no reglas de negocio nuevas; se detallan en las secciones indicadas.
+Los ítems 1, 7 y 8 corresponden a preguntas que el dueño resolvió explícitamente (ver
+«Decisiones resueltas»):
 
 1. **`JobStatus` gana `accepted` e `incomplete`** (§2.1) para respetar las transiciones
    §20.2 «Aceptado → En curso» e «En curso → Incompleto». Esto **refina un comportamiento de la
@@ -91,7 +97,8 @@ Son modelado técnico, no reglas de negocio nuevas; se detallan en las secciones
    dueña es la originadora (o el contratista dueño de la orden derivada). Las decisiones del
    profesional sobre **su** job son las de §6.1 (`start`, `progress`, `complete`, `incomplete`).
 8. **Cierre permitido a cualquier miembro activo de la empresa originadora** (§6.4 «usuario
-   autorizado de esa administradora»); alternativa más estricta: solo `owner`. Ver preguntas.
+   autorizado de esa administradora»); el dueño eligió el 17/10/2026 esta opción y descartó
+   la alternativa más estricta (solo `owner`).
 9. **Compartir antecedentes (§7.5) modelado como `history_shares`** (§2.8): la empresa dueña de
    los antecedentes concede a una membresía concreta lectura del historial (y descarga de
    archivos) de **una** propiedad; revocable, con auditoría.
@@ -475,7 +482,7 @@ Igual que el criterio de salida de la Etapa 3 en `docs/plan.md`:
 ## 10. Criterios de aceptación (Given/When/Then)
 
 Cada criterio se implementa como test (§8). Reglas por referencia (§x), no copia. **Supuesto**
-marca una decisión técnica propuesta que requiere aprobación (§1 y preguntas al final).
+marca una decisión técnica aprobada por el dueño (§1 y «Decisiones resueltas»).
 
 ### 10.1 Avances y finalización (§6.1, §20.2)
 
@@ -613,44 +620,35 @@ marca una decisión técnica propuesta que requiere aprobación (§1 y preguntas
 | Datos sensibles en payloads | Motivos, mensajes y filenames **nunca** en logs de la aplicación; en audit log solo ids, tipo y tamaño (§16.4); códigos de acceso e `entry_instructions` siguen sin aparecer en eventos nuevos. |
 | Revocación/membresía perdida con un upload o descarga en vuelo | El permiso se evalúa al recibir el request: el request en curso puede completar; todos los siguientes fallan (criterio aceptado en etapa-1 §11). |
 | `job_events` o `audit_log` intentando UPDATE/DELETE desde la app | Error de permiso de BD: ambos son append-only con grants restringidos (§1.1.8, §7). |
-| Retención de documentos con periodo | Sin periodo definido (§18.4 abierto): en la v1 no hay purga; el retiro es lógico y documentado. **Supuesto pendiente** — si se define una retención, se implementa como purga programada que también audita. |
+| Retención de documentos con periodo | Sin periodo definido (§18.4 abierto): en la v1 no hay purga; el retiro es lógico y documentado. **Supuesto aprobado por el dueño el 17/10/2026** — si se define una retención, se implementa como purga programada que también audita. |
 
 ---
 
-## Preguntas para aprobar antes de implementar
+## Decisiones resueltas (cierre de aprobación, 17/10/2026)
 
-**Resuelta:**
+Las 7 preguntas del borrador quedaron resueltas por el dueño; la spec queda **aprobada**:
 
-1. **Contradicción detectada en `proyect.md` §5.6 ↔ §20.1 — RESUELTA (17/10/2026, decisión
-   del dueño):** manda §20.1: si un contratista rechaza una orden, la administradora **crea
-   una nueva orden** para otro contratista conservando la referencia a la rechazada; la
-   rechazada **no se reabre**. Enmienda aplicada en `proyect.md` (§5.6 y nota en su
-   historial) y registrada en `MEMORY.md` §3. Queda retirada de §5.6 la opción «o cancelarla»,
-   que §20.1 no contempla entre sus transiciones. Efecto en esta etapa: **ninguno** mientras
-   el rechazo de órdenes siga fuera de alcance (pregunta 2).
-
-**Pendientes de decisión del dueño (2 a 7):**
-
-2. **¿Aceptación/rechazo de la orden a nivel de orden en esta etapa?** Mi propuesta: **no**
-   (fuera de alcance, §1): la Etapa 2 aprobó modelarlo a nivel de asignación y no existe el
-   modelo «orden enviada a otra empresa». Si lo quieres dentro, se agrega una sección a la
-   spec (el mecanismo ya está decidido en la pregunta 1: nueva orden que referencia la
-   rechazada).
-3. **Responsable de las decisiones (§1.7):** miembro activo de la empresa dueña de la
-   orden/job para `not_realized`/`resume`/`revoke`/`reassign`/`close`/`cancel`. ¿Apruebas? (§5.6
-   habla también de «el contratista que la gestiona»; en nuestros dos modelos ese contratista
-   **es** el dueño de la orden derivada — el caso de un contratista con asignación sobre la
-   orden de otra empresa queda como futura ampliación si la necesitas.)
-4. **Autoridad de cierre (§1.7/AC-3.17):** cualquier miembro activo de la empresa originadora,
-   o solo `owner`? (§6.4 dice «usuario autorizado» sin definir el rol.)
-5. **Cambio de comportamiento de la Etapa 2 (§1.1):** aceptar la asignación deja el job en
-   `accepted` (hoy salta a `in_progress`) y el inicio pasa a ser `start` explícito. Es
-   necesario para respetar §20.1-§20.2 y la regla de cancelación. Implica actualizar un aserto
-   del e2e de la Etapa 2. ¿Apruebas?
-6. **Notificaciones in-app de la Etapa 3 (§1):** fuera de alcance según `plan.md`. Si quieres
-   aviso al responsable cuando un profesional marca `incomplete` y al asignado cuando le
-   reasignan, se agregan tipos de `NotificationType` reutilizando la infra de la Etapa 2 —
-   dilo y lo incorporo a la spec.
-7. **Supuesto §18.4 (retención de documentos):** borrado lógico y conserva indefinida en la
-   v1, con retiro documentado en audit (§1.1.8). Cuando definas requisitos de retención, se
-   agrega la purga.
+1. **Contradicción detectada en `proyect.md` §5.6 ↔ §20.1:** manda §20.1 — si un contratista
+   rechaza una orden, la administradora **crea una nueva orden** para otro contratista
+   conservando la referencia a la rechazada; la rechazada **no se reabre**. Enmienda
+   aplicada en `proyect.md` (§5.6 y su historial) y registrada en `MEMORY.md` §3; se retiró
+   de §5.6 la opción «o cancelarla», que §20.1 no contempla entre sus transiciones.
+   ✔ sin efecto directo en esta etapa (ver 2).
+2. **Aceptación/rechazo de la orden a nivel de orden:** **fuera de alcance** de la Etapa 3
+   (decisión del dueño 17/10/2026): se mantiene el modelo de la Etapa 2 (aceptación/rechazo
+   a nivel de asignación). ✔ §1 (fuera de alcance).
+3. **«Responsable» (§1.7, §5.6):** **miembro activo de la empresa dueña de la orden/job**
+   para `not_realized`/`resume`/`revoke`/`reassign`/`close`/`cancel`; las decisiones del
+   profesional sobre **su** job son las de §6.1. ✔ decisión de diseño 7 (§1); cubierto por
+   la matriz de permisos (§9).
+4. **Autoridad de cierre (§6.4, AC-3.17):** **cualquier miembro activo de la empresa
+   originadora**; la alternativa «solo `owner`» quedó descartada. ✔ decisión de diseño 8
+   (§1); el audit registra quién cerró.
+5. **Cambio de comportamiento de la Etapa 2 (aprobado):** aceptar la asignación deja el job
+   en `accepted` y el inicio es `start` explícito (§20.2, §6.1). ✔ decisión de diseño 1
+   (§1); al implementar se actualiza el aserto del e2e de la Etapa 2
+   (`test/etapa2.e2e-spec.ts`).
+6. **Notificaciones in-app:** **fuera de alcance** (confirmado 17/10/2026). ✔ §1.
+7. **Supuesto §18.4 (retención):** **aprobado** — borrado lógico y conserva indefinida en
+   la v1, con retiro documentado en audit (§1.1.8); cuando se definan requisitos de
+   retención, se agrega purga programada que también audita. ✔ §1 y §10.
