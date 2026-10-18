@@ -4,7 +4,7 @@ Plataforma de administración de propiedades y trabajos de reparación
 
 Versión: 1.0 — Requisitos aprobados
 Estado: Aprobado (17/10/2026)
-Historial: v0.5 consolidación de reglas de alcance, autorizaciones y estados; v0.6 reglas de autorización unificadas, cuentas con acceso limitado, transiciones de factura y formato; v0.7 decisiones del 18.1-18.3 incorporadas (propiedad requerida, política de emergencia con override, acceso permanente a registros, facturación por orden, jurisdicción EE.UU., cobro de suscripciones); v1.0 aprobado para convertirse en especificación funcional y técnica. Enmienda 17/10/2026 (§5.6, aprobada por el dueño): ante el rechazo de una orden, la administradora crea una nueva orden para otro contratista conservando la referencia a la rechazada (§20.1; la rechazada no se reabre); se retiró de §5.6 la opción de cancelar la rechazada, que §20.1 no contempla entre sus transiciones.
+Historial: v0.5 consolidación de reglas de alcance, autorizaciones y estados; v0.6 reglas de autorización unificadas, cuentas con acceso limitado, transiciones de factura y formato; v0.7 decisiones del 18.1-18.3 incorporadas (propiedad requerida, política de emergencia con override, acceso permanente a registros, facturación por orden, jurisdicción EE.UU., cobro de suscripciones); v1.0 aprobado para convertirse en especificación funcional y técnica. Enmienda 17/10/2026 (§5.6, aprobada por el dueño): ante el rechazo de una orden, la administradora crea una nueva orden para otro contratista conservando la referencia a la rechazada (§20.1; la rechazada no se reabre); se retiró de §5.6 la opción de cancelar la rechazada, que §20.1 no contempla entre sus transiciones. Enmienda 18/10/2026 (§15, §18.3 y §18.4, aprobada por el dueño): cuestiones abiertas de suscripciones y diseño resueltas — planes sin límites ni funciones diferenciadas y con precios por definir, cobranza fuera del sistema, plazos y escalación para solicitudes urgentes, preferencias de notificación, corrección de registros (datos maestros editables con auditoría, historial siempre correctivo), conservación permanente de documentos y sin informes nuevos.
 Objetivo: Definir cómo debe funcionar el negocio antes de diseñar la arquitectura técnica o comenzar la implementación.
 
 ⸻
@@ -792,7 +792,7 @@ Los mensajes SMS quedan pospuestos hasta validar el funcionamiento de las asigna
 
 15. Suscripciones y modelo comercial
 
-La definición de los planes y precios se pospone hasta terminar el relevamiento funcional.
+La definición de los planes y precios quedó cerrada en 18.3, al terminar el relevamiento funcional.
 
 Se contemplarán al menos tres categorías:
 
@@ -806,7 +806,7 @@ El modelo deberá contemplar a las personas que tienen un negocio propio y, al m
 
 Regla acordada para eso: una persona que tiene su propio negocio y además participa en el espacio de otra empresa paga únicamente su plan propio; participar en el espacio de otra empresa no genera un cargo adicional. Cada empresa paga su propio plan según su categoría.
 
-Los precios, límites de uso y funciones de cada plan todavía no están definidos.
+Los planes no tienen límites de uso ni funciones diferenciadas en la primera versión; sus precios se fijarán cuando haya uso real (18.3).
 
 ⸻
 
@@ -903,20 +903,20 @@ La lista siguiente no significa que haya que decidir todo ahora. Sirve para dist
 - Establecer los requisitos fiscales de los documentos emitidos, según el estado.
 - Definir cómo se tratarán los impuestos según el tipo de emisor y destinatario.
 
-18.3. Suscripciones
+18.3. Suscripciones — resuelto el 18/10/2026
 
-- Definir precios y planes.
-- Establecer límites de uso, si corresponde.
-- Determinar qué funciones pertenecen a cada categoría.
+- Los planes no tienen límites de uso ni funciones diferenciadas: todas las categorías reciben todas las funciones; la diferencia entre categorías es la naturaleza del trabajo de cada una.
+- Los precios se fijarán cuando haya uso real. En la primera versión todos los planes están en cero y el importe de cada plan puede ajustarse sin cambiar el modelo.
+- El sistema administra los planes y a qué empresa corresponde cada uno. La cobranza se realiza fuera del sistema; integrar cobros automáticos es una decisión futura que requeriría un proveedor de pagos.
 
-18.4. Detalles de funcionamiento por definir durante el diseño
+18.4. Detalles de funcionamiento por definir durante el diseño — resueltos el 18/10/2026
 
-- Plazos de respuesta y escalación para solicitudes urgentes.
-- Reglas específicas de las notificaciones.
-- Procedimientos de corrección de registros erróneos.
-- Requisitos detallados para la conservación de documentos.
-- Necesidades concretas de informes y descargas.
-- Casos excepcionales de conciliación de pagos cuando los datos registrados por las partes no coinciden y no se puede confirmar automáticamente si se trata de la misma operación. En esos casos, los registros quedan señalados para revisión y no se duplican los importes contabilizados.
+- Plazos de respuesta y escalación para solicitudes urgentes: cada empresa configura el plazo de respuesta de una orden urgente, con 24 horas por defecto. A mitad del plazo se recuerda a quien debe responder y al vencer se escala al responsable de la empresa. La falta de respuesta no autoriza gastos ni trabajos adicionales (14.2).
+- Reglas específicas de las notificaciones: los avisos siempre quedan en la aplicación; cada usuario puede decidir, según el tipo de aviso, si además recibe correo. Los avisos transaccionales se envían por correo de manera predeterminada. Los SMS siguen pospuestos (14.3).
+- Procedimientos de corrección de registros erróneos: los datos de referencia —propiedad, inquilino, contactos, títulos de órdenes en borrador— pueden corregirse sobre el registro, dejando constancia en la auditoría. Los estados, el historial y los registros económicos nunca se modifican: se corrigen mediante un registro nuevo enlazado que indica el motivo, como ya ocurre con las facturas anuladas, las devoluciones y las asignaciones nuevas.
+- Requisitos detallados para la conservación de documentos: conservación permanente, sin borrado automático. Los respaldos se realizan mediante descargas.
+- Necesidades concretas de informes y descargas: se mantienen la descarga contable por periodo y las listas por entidad; no se agregan nuevos informes en la primera versión.
+- Casos excepcionales de conciliación de pagos: ya previstos en 11.1 y en uso — los registros que no pueden confirmarse quedan señalados para revisión y los importes no se duplican.
 
 Estas cuestiones deben resolverse cuando corresponda. No deben convertirse en obstáculos para revisar el funcionamiento general del negocio.
 

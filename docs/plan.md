@@ -115,12 +115,12 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 **Alcance**
 - Garantías y reparaciones repetidas (§13).
-- Notificaciones avanzadas (§14).
-- Suscripciones (§15 — requiere resolver precios/límites/funciones del §18.3).
+- Notificaciones avanzadas (§14 y §18.4 — preferencias por usuario y tipo; solicitudes urgentes con plazo configurable, recordatorio y escalación).
+- Suscripciones (§15 y §18.3 — resueltas el 18/10/2026: planes por categoría, sin límites de uso ni funciones diferenciadas, precios en $0 editables, cobranza fuera del sistema).
 - Integraciones y automatizaciones.
 - Interfaz web: producto nuevo, fuera del alcance del backend de las etapas 1-5 (§1).
 
-**Criterio de salida:** a definir al llegar, porque depende de decisiones de negocio aún abiertas (§18.3, §18.4).
+**Criterio de salida:** a definir al llegar; las decisiones de negocio que lo bloqueaban (§18.3 suscripciones y §18.4 detalles de diseño) quedaron resueltas el 18/10/2026 con la enmienda a `proyect.md`.
 
 ---
 
@@ -128,5 +128,5 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 - **Etapa 1 — proveedor de email decidido: Resend** (17/10/2026). Cuenta creada y funcionando en modo sandbox (`onboarding@resend.dev`); la API key vive solo en variable de entorno (`backend/.env`, gitignored). Verificar un dominio por DNS es opcional y solo hace falta para enviar a usuarios reales fuera del sandbox (ver `MEMORY.md` §8).
 - **Etapa 5** puede avanzar sin resolver todo el §18.2: la jurisdicción (EE.UU., solo PDF) ya está decidida; los requisitos fiscales por estado y el tratamiento de impuestos quedan abiertos y se tocan cuando se cierren.
-- **Etapa 6** depende de decisiones de negocio abiertas: precios y planes (§18.3), alcance de emergencias y políticas (§18.4).
+- **Etapa 6**: las decisiones que lo bloqueaban (§18.3 suscripciones, §18.4 detalles de diseño) quedaron resueltas el 18/10/2026 con la enmienda a `proyect.md`; el alcance ya puede especificarse. Sigue abierto únicamente §18.2 (impuestos), que no bloquea la Etapa 6.
 - El **§18.1** (procedimiento de autorización por teléfono) se resuelve en la Etapa 4, al diseñar el registro de autorizaciones.
