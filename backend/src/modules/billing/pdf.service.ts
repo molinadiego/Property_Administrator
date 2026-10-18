@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import type { TDocumentDefinitions, TFontDictionary } from 'pdfmake/interfaces';
-import PdfPrinter from 'pdfmake/js/printer';
+import PdfPrinter from 'pdfmake/js/Printer';
 import {
   AccountingExportData,
   INVOICE_LINE_KIND_LABELS,

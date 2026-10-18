@@ -50,6 +50,7 @@ Contexto que no vive en los otros documentos. `AGENTS.md` son reglas de trabajo,
 - Los documentos se **referencian, no se copian**: si un requisito cambia, primero `proyect.md`, después la especificación.
 - La matriz de permisos de `docs/especificacion/etapa-1.md` es condición de salida de la Etapa 1: sin sus tests verdes, no se avanza de etapa.
 - `stack.md` y `plan.md` son espejo de decisiones aprobadas (stack y §17): cambiarlos implica antes cambiar `proyect.md` si la causa es de negocio.
+- **Imports con el case exacto del disco**: macOS (APFS case-insensitive) resuelve cualquier case y oculta el error; Linux (CI, contenedores, producción) no. Ejemplo real (18/10/2026): `import PdfPrinter from 'pdfmake/js/printer'` (el archivo es `Printer.js`) pasaba build y e2e en la máquina del dueño, pero reventaba **todos** los e2e en ubuntu-latest con `Cannot find module`. El build de tsc no lo atrapa si los tipos vienen de una declaración ambiental. Revisar el case de los imports runtime al agregar dependencias.
 
 ## 5. Máquina y herramientas del dueño (peculiaridades)
 
