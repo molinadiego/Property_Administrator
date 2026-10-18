@@ -11,13 +11,16 @@ import { AuditModule } from './modules/audit/audit.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 import { EmailModule } from './modules/email/email.module';
+import { FilesModule } from './modules/files/files.module';
 import { HealthModule } from './modules/health/health.module';
+import { HistoryModule } from './modules/history/history.module';
 import { InvitationsModule } from './modules/invitations/invitations.module';
 import { LimitedModule } from './modules/limited/limited.module';
 import { MembershipsModule } from './modules/memberships/memberships.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PropertiesModule } from './modules/properties/properties.module';
+import { StorageModule } from './modules/storage/storage.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -43,6 +46,10 @@ import { UsersModule } from './modules/users/users.module';
     OrdersModule,
     NotificationsModule,
     LimitedModule,
+    // Etapa 3 (docs/especificacion/etapa-3.md)
+    StorageModule,
+    FilesModule,
+    HistoryModule,
   ],
   providers: [
     // Every route requires a valid session cookie unless marked @Public().
