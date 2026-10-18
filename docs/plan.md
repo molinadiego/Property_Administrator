@@ -36,7 +36,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 **Entregable:** `docs/especificacion/etapa-1.md` (ya escrito) + su implementación.
 
-> **Estado (17/10/2026): implementada y verde.** Auth, empresas, memberships, invitaciones, audit log y roles en `backend/`. Matriz de permisos como e2e (33 escenarios) ✓, contrato OpenAPI snapshot ✓. Pendiente para el cierre total: email real con Resend (cuenta + DNS) y seed de desarrollo.
+> **Estado (17/10/2026): implementada y verde.** Auth, empresas, memberships, invitaciones, audit log y roles en `backend/`. Matriz de permisos como e2e (33 escenarios) ✓, contrato OpenAPI snapshot ✓. Email con Resend operativa en modo sandbox (ver `MEMORY.md` §8); verificar dominio propio es opcional. Pendiente para el cierre total: seed de desarrollo.
 
 **Criterio de salida**
 - Toda operación verifica permisos en el servidor (§16.1) y toda query de datos de empresa pasa por el tenant guard (§16.2, §3.4).
@@ -118,7 +118,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 ## Dependencias y decisiones pendientes
 
-- **Etapa 1 — proveedor de email decidido: Resend** (17/10/2026). Pendiente operativo al implementar: crear la cuenta y verificar el dominio por DNS (la API key vive solo en variable de entorno).
+- **Etapa 1 — proveedor de email decidido: Resend** (17/10/2026). Cuenta creada y funcionando en modo sandbox (`onboarding@resend.dev`); la API key vive solo en variable de entorno (`backend/.env`, gitignored). Verificar un dominio por DNS es opcional y solo hace falta para enviar a usuarios reales fuera del sandbox (ver `MEMORY.md` §8).
 - **Etapa 5** puede avanzar sin resolver todo el §18.2: la jurisdicción (EE.UU., solo PDF) ya está decidida; los requisitos fiscales por estado y el tratamiento de impuestos quedan abiertos y se tocan cuando se cierren.
 - **Etapa 6** depende de decisiones de negocio abiertas: precios y planes (§18.3), alcance de emergencias y políticas (§18.4).
 - El **§18.1** (procedimiento de autorización por teléfono) se resuelve en la Etapa 4, al diseñar el registro de autorizaciones.

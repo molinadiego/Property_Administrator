@@ -27,7 +27,7 @@ Según `docs/plan.md` §Etapa 2, esta etapa implementa:
 - Costos, límites de gasto, autorizaciones económicas → **Etapa 4** (§8).
 - Facturas, PDF, pagos, saldos → **Etapa 5** (§11).
 - Presupuestos (§5.4): **no se implementan**; §5.4 solo exige *no* generar presupuestos automáticos.
-- Email real de asignación/órdenes (§14.1): la notificación de esta etapa es **in-app**; el correo con Resend queda pendiente operativo (cuenta + DNS) y no bloquea el criterio de salida.
+- Email real de asignación/órdenes (§14.1): la notificación de esta etapa es **in-app**; el correo con Resend queda operativo en modo sandbox (ver `MEMORY.md` §8) y no bloquea el criterio de salida.
 
 ### Decisiones de diseño que este borrador propone (requieren aprobación)
 
