@@ -70,3 +70,27 @@ export const AUDIT_ENTITIES_ETAPA3 = {
   FILE: 'file',
   HISTORY_SHARE: 'history_share',
 } as const;
+
+/** Audit actions of Etapa 4 (spec etapa-4.md §7). */
+export const AUDIT_ACTIONS_ETAPA4 = {
+  COMPANY_ECONOMIC_SETTINGS_CHANGED: 'company.economic_settings_changed',
+  ORDER_SPENDING_LIMIT_CHANGED: 'order.spending_limit_changed',
+  ORDER_MARGIN_CHANGED: 'order.margin_changed',
+  COST_REPORT_SUBMITTED: 'cost_report.submitted',
+  COST_REPORT_CORRECTED: 'cost_report.corrected',
+  AUTHORIZATION_REQUESTED: 'authorization.requested',
+  AUTHORIZATION_APPROVED: 'authorization.approved',
+  AUTHORIZATION_REJECTED: 'authorization.rejected',
+  ORDER_AUTHORIZATION_RECORDED: 'order_authorization.recorded',
+  COMMERCIAL_RELATION_CREATED: 'commercial_relation.created',
+  COMMERCIAL_RELATION_CHANGED: 'commercial_relation.changed',
+  COMMERCIAL_RELATION_ENDED: 'commercial_relation.ended',
+} as const;
+
+/** Audit entities of Etapa 4 (spec etapa-4.md §7). */
+export const AUDIT_ENTITIES_ETAPA4 = {
+  COST_REPORT: 'cost_report',
+  AUTHORIZATION_REQUEST: 'authorization_request',
+  ORDER_AUTHORIZATION: 'order_authorization',
+  COMMERCIAL_RELATION: 'commercial_relation',
+} as const;

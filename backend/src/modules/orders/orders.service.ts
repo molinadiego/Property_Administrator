@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Job, Order, Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -32,6 +33,8 @@ import {
   isTerminalJobStatus,
   orderStatusAfterJobStart,
 } from './job-rules';
+import { isValidMarginPercent } from '../economic-settings/spending-rules';
+import { isRelationAttachable, relationGovernsCompany } from '../economic-settings/relation-rules';
 
 /** Type of a `job_events` row as written inside a transaction (spec §2.5). */
 type JobEventData = {
@@ -84,6 +87,43 @@ export class OrdersService {
       throw new ConflictException('clientRelationshipId solo aplica a empresas de negocio propio.');
     }
 
+    // Etapa 4 (spec etapa-4 §4.2, §8.4–§8.6): economic policy at creation.
+    const marginPercent = dto.marginPercent?.trim() || null;
+    if (marginPercent !== null && !isValidMarginPercent(marginPercent)) {
+      throw new UnprocessableEntityException('El margen comercial no puede superar el 20 % (§8.5).');
+    }
+    const marginEnabled = dto.marginEnabled ?? false;
+    if (marginEnabled && marginPercent === null) {
+      throw new UnprocessableEntityException('El margen activo requiere un porcentaje (máx. 20 %).');
+    }
+    let commercialRelationId: string | null = null;
+    if (dto.commercialRelationId) {
+      const relation = await this.prisma.commercialRelation.findUnique({
+        where: { id: dto.commercialRelationId },
+      });
+      if (!relation || !relationGovernsCompany(relation, access.companyId)) {
+        throw new NotFoundException('Relación comercial no encontrada.');
+      }
+      if (!isRelationAttachable(relation)) {
+        throw new UnprocessableEntityException(
+          'La relación comercial está finalizada y no admite órdenes nuevas (§2.4).',
+        );
+      }
+      commercialRelationId = relation.id;
+    }
+    // Spending limit (§8.4): explicit value, explicit null («sin límite») or
+    // the company's general policy by default. Creation always *decides* the
+    // limit, so the audit marker records it — including the explicit «sin
+    // límite» of `applyCompanyDefault: false` (matrix #36, AC-4.6).
+    let spendingLimit: string | null;
+    if (dto.spendingLimit !== undefined) {
+      spendingLimit = dto.spendingLimit?.trim() || null;
+    } else if (dto.applyCompanyDefault === false) {
+      spendingLimit = null;
+    } else {
+      spendingLimit = company.defaultSpendingLimit?.toString() || null;
+    }
+
     const order = await this.prisma.$transaction(async (tx) => {
       const created = await tx.order.create({
         data: {
@@ -98,6 +138,15 @@ export class OrdersService {
           accessCommunityCode: dto.accessCommunityCode?.trim() || null,
           accessEntryInstructions: dto.accessEntryInstructions?.trim() || null,
           status: 'open',
+          spendingLimit,
+          spendingLimitSetBy: auth.userId,
+          spendingLimitSetAt: new Date(),
+          marginEnabled,
+          marginPercent,
+          ...(marginEnabled || marginPercent !== null
+            ? { marginSetBy: auth.userId, marginSetAt: new Date() }
+            : {}),
+          commercialRelationId,
         },
       });
       await tx.job.create({
@@ -116,7 +165,7 @@ export class OrdersService {
           action: AUDIT_ACTIONS_ETAPA2.ORDER_CREATED,
           entityType: AUDIT_ENTITIES_ETAPA2.ORDER,
           entityId: created.id,
-          payload: { title: created.title, propertyId: property.id, origin },
+          payload: { title: created.title, propertyId: property.id, origin, spendingLimit },
         },
         tx,
       );

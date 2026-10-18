@@ -461,7 +461,10 @@ model Order {
   cancelledAt         DateTime?   @map("cancelled_at") @db.Timestamptz()
   cancellationReason  String?     @map("cancellation_reason")
   // Etapa 4: política económica de la orden (spec etapa-4 §2.3, §8.4–§8.6)
-  /// null = «sin límite económico» (§8.4).
+  /// null = «sin límite económico» (§8.4). `spending_limit_set_at` marks an
+  /// explicit decision — including creation (any path) and an explicit null
+  /// («sin límite», matrix #36); only untouched orders inherit the company
+  /// default in the economic summary.
   spendingLimit      Decimal? @map("spending_limit") @db.Decimal(12, 2)
   spendingLimitSetBy String?  @map("spending_limit_set_by") @db.Uuid
   spendingLimitSetAt DateTime? @map("spending_limit_set_at") @db.Timestamptz()
