@@ -10,7 +10,7 @@ Documento de implementación de la **Etapa 0 (fundamentos)** y la **Etapa 1 (bas
 
 - [x] Proyecto NestJS + TypeScript (Node LTS), ESLint + Prettier.
 - [x] Docker compose: PostgreSQL 16 (MinIO queda para la Etapa 3: su distribución oficial de imágenes se discontinuó en 2026, ver `MEMORY.md`).
-- [x] Prisma: `schema.prisma` inicial, migración base. ~~seed de desarrollo~~ *(seed pendiente: fuera del alcance de Etapa 1, requiere decisión de runner)*.
+- [x] Prisma: `schema.prisma` inicial, migración base. ~~seed de desarrollo~~ *(fuera del alcance de Etapa 1; implementado después, ver `MEMORY.md` §9)*.
 - [x] ConfigModule con esquema de variables validado al arrancar (fallar si falta algo).
 - [x] pino + interceptor de logging con `requestId` por request.
 - [x] Exception filter global con formato RFC 7807 (ver §4).

@@ -36,7 +36,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 **Entregable:** `docs/especificacion/etapa-1.md` (ya escrito) + su implementación.
 
-> **Estado (17/10/2026): implementada y verde.** Auth, empresas, memberships, invitaciones, audit log y roles en `backend/`. Matriz de permisos como e2e (33 escenarios) ✓, contrato OpenAPI snapshot ✓. Email con Resend operativa en modo sandbox (ver `MEMORY.md` §8); verificar dominio propio es opcional. Pendiente para el cierre total: seed de desarrollo.
+> **Estado (17/10/2026): implementada y verde.** Auth, empresas, memberships, invitaciones, audit log y roles en `backend/`. Matriz de permisos como e2e (33 escenarios) ✓, contrato OpenAPI snapshot ✓. Email con Resend operativa en modo sandbox (ver `MEMORY.md` §8); verificar dominio propio es opcional. Seed de desarrollo implementado (`prisma/seed.ts`); sin pendientes de cierre para la Etapa 1.
 
 **Criterio de salida**
 - Toda operación verifica permisos en el servidor (§16.1) y toda query de datos de empresa pasa por el tenant guard (§16.2, §3.4).
