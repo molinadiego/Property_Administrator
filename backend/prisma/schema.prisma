@@ -68,13 +68,16 @@ enum OrderStatus {
   requested
   open
   assigned
+  in_progress
   completed
   cancelled
 }
 
 enum JobStatus {
   pending
+  accepted
   in_progress
+  incomplete
   done
   not_realized
 }
@@ -83,6 +86,26 @@ enum AssignmentStatus {
   pending
   accepted
   rejected
+  revoked
+}
+
+enum JobEventType {
+  progress_note
+  started
+  completed
+  incomplete
+  resumed
+  not_realized
+}
+
+enum FileKind {
+  photo
+  document
+}
+
+enum FileTargetType {
+  order
+  job
 }
 
 enum NotificationType {
@@ -127,6 +150,11 @@ model User {
   ordersOriginated     Order[]                @relation("OrderOriginator")
   assignmentsCreatedBy Assignment[]           @relation("AssignmentCreatedBy")
   notifications        Notification[]
+  jobEvents            JobEvent[]             @relation("JobEventActor")
+  filesUploaded        FileObject[]           @relation("FileUploadedBy")
+  historySharesCreated HistoryShare[]         @relation("HistoryShareCreatedBy")
+  ordersClosed         Order[]                @relation("OrderClosedBy")
+  ordersCancelled      Order[]                @relation("OrderCancelledBy")
 
   @@map("users")
 }
@@ -149,6 +177,9 @@ model Company {
   jobs          Job[]
   assignments   Assignment[]
   notifications Notification[]
+  jobEvents     JobEvent[]
+  fileObjects   FileObject[]
+  historyShares HistoryShare[]
 
   @@map("companies")
 }
@@ -167,6 +198,7 @@ model Membership {
   user          User    @relation(fields: [userId], references: [id])
   invitedByUser User?   @relation("MembershipInvitedBy", fields: [invitedBy], references: [id])
   assignments   Assignment[]
+  historyShares HistoryShare[] @relation("HistoryShareRecipient")
 
   @@unique([companyId, userId])
   @@index([companyId])
@@ -283,6 +315,7 @@ model Property {
   createdByUser  User             @relation("PropertyCreatedBy", fields: [createdBy], references: [id])
   propertyTenants PropertyTenant[]
   orders          Order[]
+  historyShares   HistoryShare[]
 
   @@index([companyId])
   @@index([companyId, createdAt])
@@ -364,6 +397,11 @@ model Order {
   accessCommunityCode String?     @map("access_community_code")
   accessEntryInstructions String? @map("access_entry_instructions")
   status              OrderStatus @default(open)
+  closedBy            String?     @map("closed_by") @db.Uuid
+  closedAt            DateTime?   @map("closed_at") @db.Timestamptz()
+  cancelledBy         String?     @map("cancelled_by") @db.Uuid
+  cancelledAt         DateTime?   @map("cancelled_at") @db.Timestamptz()
+  cancellationReason  String?     @map("cancellation_reason")
   createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt           DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -375,6 +413,9 @@ model Order {
   parentOrder       Order?             @relation("OrderHierarchy", fields: [parentOrderId], references: [id])
   childOrders       Order[]            @relation("OrderHierarchy")
   jobs              Job[]
+  files             FileObject[]
+  closedByUser      User?              @relation("OrderClosedBy", fields: [closedBy], references: [id])
+  cancelledByUser   User?              @relation("OrderCancelledBy", fields: [cancelledBy], references: [id])
 
   @@index([companyId, createdAt])
   @@index([propertyId])
@@ -390,15 +431,21 @@ model Job {
   description String
   sortOrder   Int       @map("sort_order")
   status      JobStatus @default(pending)
+  /// First time the work began (`start`). Never cleared: it is the "work was
+  /// performed" marker that decides order cancellation (spec etapa-3 §2.2).
+  startedAt   DateTime? @map("started_at") @db.Timestamptz()
+  completedAt DateTime? @map("completed_at") @db.Timestamptz()
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
 
   order       Order        @relation(fields: [orderId], references: [id])
   company     Company      @relation(fields: [companyId], references: [id])
   assignments Assignment[]
+  jobEvents   JobEvent[]
 
   @@unique([orderId, sortOrder])
   @@index([orderId])
+  @@index([orderId, status])
   @@index([companyId])
   @@map("jobs")
 }
@@ -462,4 +509,87 @@ model LimitedAccessToken {
 
   @@index([tenantId])
   @@map("limited_access_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Etapa 3: job events (tracking), file objects (photos/documents) and history
+// shares (docs/especificacion/etapa-3.md §2.5–§2.8)
+// ---------------------------------------------------------------------------
+
+// Append-only: the application role has no UPDATE/DELETE grants on this table
+// (grants in the etapa3 migration, spec §2.5 / matriz #49). Reasons and free
+// progress notes live here, not on the job row, because they can repeat
+// (incomplete → in_progress → incomplete).
+model JobEvent {
+  id          String        @id @default(uuid()) @db.Uuid
+  jobId       String        @map("job_id") @db.Uuid
+  companyId   String        @map("company_id") @db.Uuid
+  type        JobEventType
+  /// Free text: required for progress_note, incomplete and not_realized
+  /// (422 when missing), optional otherwise. Max 2000 chars (spec §2.5).
+  message     String?
+  actorUserId String?       @map("actor_user_id") @db.Uuid
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+
+  job       Job     @relation(fields: [jobId], references: [id])
+  company   Company @relation(fields: [companyId], references: [id])
+  actorUser User?   @relation("JobEventActor", fields: [actorUserId], references: [id])
+
+  @@index([jobId, createdAt])
+  @@index([companyId])
+  @@map("job_events")
+}
+
+/// Photographs and documents (spec §2.6). Bytes live outside Postgres (in the
+/// `StorageService`); this row is metadata + permissions.
+model FileObject {
+  id          String         @id @default(uuid()) @db.Uuid
+  companyId   String         @map("company_id") @db.Uuid
+  /// Every file belongs to an order even when its target is a job (spec §2.6).
+  orderId     String         @map("order_id") @db.Uuid
+  targetType  FileTargetType @map("target_type")
+  targetId    String         @map("target_id") @db.Uuid
+  kind        FileKind
+  /// Original name, sanitized; never echoed into audit payloads or logs.
+  filename    String
+  contentType String         @map("content_type")
+  sizeBytes   Int            @map("size_bytes")
+  /// Key in the object storage; the storage key is a generated UUID.
+  storageKey  String         @unique @map("storage_key")
+  uploadedBy  String         @map("uploaded_by") @db.Uuid
+  /// Logical delete (§1.1.8): the row is kept and the removal is audited.
+  deletedAt   DateTime?      @map("deleted_at") @db.Timestamptz()
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+
+  company  Company @relation(fields: [companyId], references: [id])
+  order    Order   @relation(fields: [orderId], references: [id])
+  uploader User    @relation("FileUploadedBy", fields: [uploadedBy], references: [id])
+
+  @@index([orderId])
+  @@index([targetType, targetId])
+  @@index([companyId, createdAt])
+  @@map("file_objects")
+}
+
+/// Share of a property's history with a concrete membership (spec §2.8, §7.5).
+/// Active-share uniqueness is enforced in the application (409).
+model HistoryShare {
+  id                     String    @id @default(uuid()) @db.Uuid
+  companyId              String    @map("company_id") @db.Uuid
+  propertyId             String    @map("property_id") @db.Uuid
+  sharedWithMembershipId String    @map("shared_with_membership_id") @db.Uuid
+  sharedBy               String    @map("shared_by") @db.Uuid
+  /// Why / which relevant antecedents (§7.5).
+  note                   String?
+  revokedAt              DateTime? @map("revoked_at") @db.Timestamptz()
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  company              Company    @relation(fields: [companyId], references: [id])
+  property             Property   @relation(fields: [propertyId], references: [id])
+  sharedWithMembership Membership @relation("HistoryShareRecipient", fields: [sharedWithMembershipId], references: [id])
+  sharedByUser         User       @relation("HistoryShareCreatedBy", fields: [sharedBy], references: [id])
+
+  @@index([propertyId, sharedWithMembershipId])
+  @@index([companyId])
+  @@map("history_shares")
 }
