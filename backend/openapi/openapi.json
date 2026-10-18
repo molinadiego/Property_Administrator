@@ -1348,9 +1348,440 @@
           },
           "404": {
             "description": "Asignación o asignado inexistente (404)"
+          },
+          "409": {
+            "description": "Trabajo en curso u otra restricción de estado (409)"
           }
         },
         "summary": "Reasigna el trabajo conservando el historial (§5.7)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/jobs/{jobId}/start": {
+      "post": {
+        "operationId": "OrdersController_startJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del trabajo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Trabajo iniciado"
+          },
+          "403": {
+            "description": "No es tu trabajo (403)"
+          },
+          "404": {
+            "description": "Trabajo inexistente o fuera de alcance (404)"
+          },
+          "409": {
+            "description": "Estado que no permite iniciar (409)"
+          }
+        },
+        "summary": "Comienza el trabajo: accepted → in_progress (§6.1, §20.2)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/jobs/{jobId}/progress": {
+      "post": {
+        "operationId": "OrdersController_recordProgress",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del trabajo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobProgressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Avance registrado en job_events"
+          },
+          "403": {
+            "description": "No es tu trabajo (403)"
+          },
+          "404": {
+            "description": "Trabajo inexistente o fuera de alcance (404)"
+          },
+          "422": {
+            "description": "Mensaje vacío o inválido (422)"
+          }
+        },
+        "summary": "Registra un avance del trabajo (§6.1)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/jobs/{jobId}/complete": {
+      "post": {
+        "operationId": "OrdersController_completeJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del trabajo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Trabajo terminado"
+          },
+          "403": {
+            "description": "No es tu trabajo (403)"
+          },
+          "404": {
+            "description": "Trabajo inexistente o fuera de alcance (404)"
+          },
+          "409": {
+            "description": "Solo un trabajo en curso puede completarse (409)"
+          }
+        },
+        "summary": "Marca el trabajo como terminado: in_progress → done (§6.1)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/jobs/{jobId}/incomplete": {
+      "post": {
+        "operationId": "OrdersController_reportIncomplete",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del trabajo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobIncompleteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Trabajo incompleto registrado"
+          },
+          "403": {
+            "description": "No es tu trabajo (403)"
+          },
+          "404": {
+            "description": "Trabajo inexistente o fuera de alcance (404)"
+          },
+          "409": {
+            "description": "Estado que no permite informar incompletud (409)"
+          },
+          "422": {
+            "description": "Motivo obligatorio (422)"
+          }
+        },
+        "summary": "Informa que no pudo terminar: in_progress → incomplete (§6.2)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/jobs/{jobId}/resume": {
+      "post": {
+        "operationId": "OrdersController_resumeJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del trabajo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Trabajo reanudado"
+          },
+          "403": {
+            "description": "Empresa no responsable (403)"
+          },
+          "404": {
+            "description": "Trabajo inexistente o sin relación (404)"
+          },
+          "409": {
+            "description": "Estado o asignación que no lo permite (409)"
+          }
+        },
+        "summary": "Autoriza continuar con el mismo profesional: incomplete → in_progress (§6.2, §20.2)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/jobs/{jobId}/not-realized": {
+      "post": {
+        "operationId": "OrdersController_notRealizeJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del trabajo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotRealizedDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Trabajo no realizado registrado"
+          },
+          "403": {
+            "description": "Empresa no responsable (403)"
+          },
+          "404": {
+            "description": "Trabajo inexistente o sin relación (404)"
+          },
+          "409": {
+            "description": "Trabajo ya finalizado (409)"
+          },
+          "422": {
+            "description": "Motivo obligatorio (422)"
+          }
+        },
+        "summary": "Registra «No pudo concretarse» con motivo (§6.3)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/assignments/{assignId}/revoke": {
+      "post": {
+        "operationId": "OrdersController_revokeAssignment",
+        "parameters": [
+          {
+            "name": "assignId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la asignación",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Asignación revocada"
+          },
+          "403": {
+            "description": "Empresa no responsable (403)"
+          },
+          "404": {
+            "description": "Asignación inexistente o sin relación (404)"
+          },
+          "409": {
+            "description": "Asignación inactiva o trabajo en curso (409)"
+          }
+        },
+        "summary": "Revoca una asignación activa; el job no iniciado vuelve a pending (§20.3)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}/close": {
+      "post": {
+        "operationId": "OrdersController_closeOrder",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Orden cerrada"
+          },
+          "403": {
+            "description": "Empresa no originadora (403)"
+          },
+          "404": {
+            "description": "Orden inexistente o sin relación (404)"
+          },
+          "409": {
+            "description": "Trabajos sin finalizar o orden ya cerrada (409)"
+          }
+        },
+        "summary": "Cierra la orden con todos los trabajos terminales (§6.4)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}/cancel": {
+      "post": {
+        "operationId": "OrdersController_cancelOrder",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Orden cancelada"
+          },
+          "403": {
+            "description": "Empresa no responsable (403)"
+          },
+          "404": {
+            "description": "Orden inexistente o sin relación (404)"
+          },
+          "409": {
+            "description": "Trabajo realizado o estado no cancelable (409)"
+          },
+          "422": {
+            "description": "Motivo obligatorio (422)"
+          }
+        },
+        "summary": "Cancela la orden completa con motivo, sin trabajo realizado (§20.1)",
         "tags": [
           "orders"
         ]
@@ -1519,6 +1950,377 @@
         "summary": "Convierte un pedido requested en orden real (§5.1, AC-4.5)",
         "tags": [
           "limited-access"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/orders/{orderId}/files": {
+      "post": {
+        "operationId": "FilesController_uploadToOrder",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadFileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Archivo guardado"
+          },
+          "403": {
+            "description": "Sin permiso sobre la orden (403)"
+          },
+          "404": {
+            "description": "Orden inexistente o fuera de alcance (404)"
+          },
+          "415": {
+            "description": "Tipo fuera de la allowlist (415)"
+          },
+          "422": {
+            "description": "Tamaño, campos o archivo inválidos (422)"
+          }
+        },
+        "summary": "Sube un archivo (foto/documento) a la orden (§7.6)",
+        "tags": [
+          "files"
+        ]
+      },
+      "get": {
+        "operationId": "FilesController_listOrderFiles",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la orden",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metadata de archivos (los borrados con deleted_at)"
+          },
+          "403": {
+            "description": "Sin permiso sobre la orden (403)"
+          },
+          "404": {
+            "description": "Orden inexistente o fuera de alcance (404)"
+          }
+        },
+        "summary": "Lista la metadata visible de los archivos de la orden (§4.4)",
+        "tags": [
+          "files"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/jobs/{jobId}/files": {
+      "post": {
+        "operationId": "FilesController_uploadToJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del trabajo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadFileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Archivo guardado"
+          },
+          "403": {
+            "description": "Sin permiso sobre el trabajo (403)"
+          },
+          "404": {
+            "description": "Trabajo inexistente o fuera de alcance (404)"
+          },
+          "415": {
+            "description": "Tipo fuera de la allowlist (415)"
+          },
+          "422": {
+            "description": "Tamaño, campos o archivo inválidos (422)"
+          }
+        },
+        "summary": "Sube evidencia (foto/documento) al trabajo (§7.1)",
+        "tags": [
+          "files"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/files/{fileId}": {
+      "get": {
+        "operationId": "FilesController_download",
+        "parameters": [
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del archivo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bytes del archivo"
+          },
+          "404": {
+            "description": "Archivo inexistente, borrado o fuera de alcance (404)"
+          },
+          "503": {
+            "description": "Fallo del storage (503, §11)"
+          }
+        },
+        "summary": "Descarga los bytes del archivo como stream (§4.4)",
+        "tags": [
+          "files"
+        ]
+      },
+      "delete": {
+        "operationId": "FilesController_remove",
+        "parameters": [
+          {
+            "name": "fileId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del archivo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Archivo borrado (lógicamente)"
+          },
+          "403": {
+            "description": "No es tu empresa ni lo subiste tú (403)"
+          },
+          "404": {
+            "description": "Archivo inexistente o fuera de alcance (404)"
+          }
+        },
+        "summary": "Borrado lógico del archivo con entrada en audit (§1.1.8)",
+        "tags": [
+          "files"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/history/properties/{propId}": {
+      "get": {
+        "operationId": "HistoryController_propertyHistory",
+        "parameters": [
+          {
+            "name": "propId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la propiedad",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial con órdenes, jobs y archivos visibles"
+          },
+          "404": {
+            "description": "Propiedad inexistente o sin acceso (404)"
+          }
+        },
+        "summary": "Historial de la propiedad: completo, compartido o solo tus trabajos (§7.2)",
+        "tags": [
+          "history"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/history/orders": {
+      "get": {
+        "operationId": "HistoryController_managedOrders",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Órdenes con jobs y resultados, incl. cerradas"
+          }
+        },
+        "summary": "Órdenes gestionadas por el espacio: propias y de las que tuvo asignación (§7.3)",
+        "tags": [
+          "history"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/history/shares": {
+      "post": {
+        "operationId": "HistoryController_createShare",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShareDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Share creado"
+          },
+          "403": {
+            "description": "No es dueña de los antecedentes (403)"
+          },
+          "404": {
+            "description": "Propiedad o membresía inexistente (404)"
+          },
+          "409": {
+            "description": "Share activo duplicado (409)"
+          },
+          "422": {
+            "description": "Membresía destino inactiva (422)"
+          }
+        },
+        "summary": "Comparte los antecedentes de una propiedad a una membresía (§7.5)",
+        "tags": [
+          "history"
+        ]
+      }
+    },
+    "/api/v1/companies/{id}/history/shares/{shareId}": {
+      "delete": {
+        "operationId": "HistoryController_revokeShare",
+        "parameters": [
+          {
+            "name": "shareId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del share",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Identificador del espacio (empresa)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Share revocado"
+          },
+          "404": {
+            "description": "Share inexistente o de otra empresa (404)"
+          }
+        },
+        "summary": "Revoca el share (§7.5): el ex-beneficiario pierde acceso de inmediato (§16.6)",
+        "tags": [
+          "history"
+        ]
+      }
+    },
+    "/api/v1/me/job-history": {
+      "get": {
+        "operationId": "MeHistoryController_myJobHistory",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Trabajos propios con orden, propiedad, fechas y motivos"
+          }
+        },
+        "summary": "Historial propio de trabajos: solo los tuyos, incluso cerrados (§7.2)",
+        "tags": [
+          "history"
         ]
       }
     }
@@ -2043,6 +2845,68 @@
           }
         }
       },
+      "JobProgressDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Avance a registrar (§6.1)",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "CompleteJobDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "description": "Resultado del trabajo (§6.1)",
+            "maxLength": 2000
+          }
+        }
+      },
+      "JobIncompleteDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Motivo por el que no pudo terminar (§6.2)",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "NotRealizedDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Motivo por el que no pudo concretarse (§6.3)",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "CancelOrderDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Motivo de la cancelación (§20.1)",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
       "CreateRequestDto": {
         "type": "object",
         "properties": {
@@ -2062,6 +2926,40 @@
         "required": [
           "title",
           "description"
+        ]
+      },
+      "UploadFileDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "Tipo de archivo: photo (fotos de campo) o document (§7.6)",
+            "enum": [
+              "photo",
+              "document"
+            ]
+          }
+        }
+      },
+      "CreateShareDto": {
+        "type": "object",
+        "properties": {
+          "propertyId": {
+            "type": "string",
+            "description": "Propiedad cuyos antecedentes se comparten"
+          },
+          "sharedWithMembershipId": {
+            "type": "string",
+            "description": "Membresía beneficiaria (rol activo)"
+          },
+          "note": {
+            "type": "string",
+            "description": "Motivo / antecedentes relevantes (§7.5)"
+          }
+        },
+        "required": [
+          "propertyId",
+          "sharedWithMembershipId"
         ]
       }
     }
