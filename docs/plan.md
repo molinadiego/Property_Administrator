@@ -92,7 +92,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 **Criterio de salida:** los tests demuestran que ningún trabajo fuera de regla avanza sin autorización de la entidad originadora; todo cambio de costo queda en el historial (§12).
 
-**Entregable:** `docs/especificacion/etapa-4.md` (**aprobada el 18/10/2026**, 9/9 decisiones resueltas — incluye la creación de la entidad `commercial_relations` para el override de emergencias de §8.6 y el procedimiento §18.1 de autorizaciones offline en un paso). **Implementación en curso** (regla SDD en `AGENTS.md`).
+**Entregable:** `docs/especificacion/etapa-4.md` (**aprobada el 18/10/2026**, 9/9 decisiones resueltas — incluye la creación de la entidad `commercial_relations` para el override de emergencias de §8.6 y el procedimiento §18.1 de autorizaciones offline en un paso). **Implementada el 18/10/2026** (regla SDD en `AGENTS.md`): módulos `economic-settings`, `costs` y `authorizations`, matriz e2e de 52 escenarios + grants en `backend/test/etapa4.e2e-spec.ts`, `npm run check` verde (lint + build + 75 unit + 165 e2e).
 
 ---
 
