@@ -74,7 +74,9 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 
 **Criterio de salida:** una orden recorre su vida completa hasta cierre (§6.4, §20); las fotos/documentos respetan los permisos de quien los solicita; el historial conserva todo lo que §12 manda conservar (sin borrados silenciosos, §1.1.8).
 
-**Entregable:** `docs/especificacion/etapa-3.md` (**aprobada el 17/10/2026**, 7/7 preguntas resueltas — incluye la enmienda de `proyect.md` §5.6 alineada a §20.1 y el cambio aprobado sobre la Etapa 2: aceptar deja el job en `accepted` y el inicio es `start` explícito). **Implementación en curso** (regla SDD en `AGENTS.md`).
+**Entregable:** `docs/especificacion/etapa-3.md` (**aprobada el 17/10/2026**, 7/7 preguntas resueltas — incluye la enmienda de `proyect.md` §5.6 alineada a §20.1 y el cambio aprobado sobre la Etapa 2: aceptar deja el job en `accepted` y el inicio es `start` explícito).
+
+> **Estado (17/10/2026): implementada y verde.** Seguimiento de jobs (máquina de estados §20.2, `start/progress/complete/incomplete/resume/not-realized`), decisiones del responsable (`revoke/reassign/close/cancel`), archivos (`StorageService`, mock `s3rver` en dev/test, allowlist 10 MB, borrado lógico auditado), historiales (`full/shared/own_jobs`, `/me/job-history`) y `history_shares`. Matriz de permisos de 49 escenarios como e2e ✓, 12 acciones de audit, `job_events` append-only a nivel de BD. `npm run check` verde; cambio aprobado incorporado en el e2e de la Etapa 2.
 
 ---
 
@@ -89,6 +91,8 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 - Regla unificada de alcance ejecutable (§5.3, §8.8, §9): dentro del límite y consecuente con lo pedido, avanza; si no, solo la entidad originadora autoriza (§8.4).
 
 **Criterio de salida:** los tests demuestran que ningún trabajo fuera de regla avanza sin autorización de la entidad originadora; todo cambio de costo queda en el historial (§12).
+
+**Entregable:** `docs/especificacion/etapa-4.md` (**aprobada el 18/10/2026**, 9/9 decisiones resueltas — incluye la creación de la entidad `commercial_relations` para el override de emergencias de §8.6 y el procedimiento §18.1 de autorizaciones offline en un paso). **Implementación en curso** (regla SDD en `AGENTS.md`).
 
 ---
 
