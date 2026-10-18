@@ -18,7 +18,7 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 - Setup de pruebas: Jest + supertest + Testcontainers (Postgres real).
 - Tenant guard base (`company_id` en el contexto de request).
 - Swagger (`/api/docs`).
-- Gate de chequeo local: `npm run check` (lint + build + tests + e2e). Sin CI remota (ver decisión en `docs/stack.md`); el workflow de GitHub queda en `.github/` por si se decide activar.
+- Gate de chequeo: `npm run check` (lint + build + tests + e2e), local y en CI. CI remota activada el 18/10/2026 a petición del dueño (ver decisión en `docs/stack.md`): el workflow de GitHub Actions (`.github/workflows/ci.yml`) corre el mismo gate en cada push a `main` y en cada pull request.
 
 **Criterio de salida:** `docker compose up` levanta el entorno; un endpoint health-check documentado en Swagger responde; `npm run check` verde, con un test de integración contra Postgres real.
 
