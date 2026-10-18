@@ -12,6 +12,18 @@ import { TooManyAttemptsException } from '../exceptions/too-many-attempts.except
 
 const ERROR_BASE_URL = 'https://api.home-management.dev/errors';
 
+/**
+ * Multer's multipart failures (`LIMIT_FILE_SIZE`, `LIMIT_FILE_COUNT`, …) are
+ * client input problems, not server faults: they map to 422 (spec etapa-3.md
+ * §11, matriz #33). Duck-typed on purpose so the filter does not depend on
+ * multer's internals.
+ */
+function isMulterError(exception: unknown): exception is Error & { code: string } {
+  if (!(exception instanceof Error)) return false;
+  const code = (exception as Error & { code?: unknown }).code;
+  return typeof code === 'string' && code.startsWith('LIMIT_');
+}
+
 /** RFC 7807 problem detail returned for every error response. */
 export interface ProblemDetail {
   type: string;
@@ -42,11 +54,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request & { id?: string }>();
 
-    const status =
+    let status =
       exception instanceof HttpException
         ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
-    const detail = this.resolveDetail(exception, status);
+        : isMulterError(exception)
+          ? HttpStatus.UNPROCESSABLE_ENTITY
+          : HttpStatus.INTERNAL_SERVER_ERROR;
+    // Nest maps multer's LIMIT_FILE_SIZE to a 413 PayloadTooLarge; in multipart
+    // uploads the spec (etapa-3.md §11, matriz #33) demands a 422, so the two
+    // are reconciled here — JSON payload limits keep their 413.
+    const isMultipart = String(request.headers['content-type'] ?? '').includes(
+      'multipart/form-data',
+    );
+    const multipartSizeExceeded = status === HttpStatus.PAYLOAD_TOO_LARGE && isMultipart;
+    if (multipartSizeExceeded) {
+      status = HttpStatus.UNPROCESSABLE_ENTITY;
+    }
+    const detail = multipartSizeExceeded
+      ? 'El archivo supera el máximo permitido de 10 MB.'
+      : this.resolveDetail(exception, status);
     const title = STATUS_CODES[status] ?? 'Error';
 
     if (status >= 500) {
@@ -97,6 +123,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
         return 'An unexpected error occurred.';
       }
       return exception.message;
+    }
+
+    if (isMulterError(exception)) {
+      return exception.code === 'LIMIT_FILE_SIZE'
+        ? 'El archivo supera el máximo permitido de 10 MB.'
+        : `Archivo multipart inválido: ${exception.message}.`;
     }
 
     // Unknown (non-HTTP) exceptions never expose internal details.
