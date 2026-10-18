@@ -19,6 +19,7 @@ enum CompanyType {
   property_management
   contractor
   profesional
+  own_business
 }
 
 enum MembershipRole {
@@ -44,6 +45,62 @@ enum ActorType {
 }
 
 // ---------------------------------------------------------------------------
+// Etapa 2 enums (docs/especificacion/etapa-2.md §2.10)
+// ---------------------------------------------------------------------------
+
+enum PropertyOccupancy {
+  occupied
+  vacant
+}
+
+enum PropertyTenantKind {
+  owner
+  tenant
+}
+
+enum OrderOrigin {
+  management
+  contractor
+  own_business
+}
+
+enum OrderStatus {
+  requested
+  open
+  assigned
+  completed
+  cancelled
+}
+
+enum JobStatus {
+  pending
+  in_progress
+  done
+  not_realized
+}
+
+enum AssignmentStatus {
+  pending
+  accepted
+  rejected
+}
+
+enum NotificationType {
+  order_created
+  order_assigned
+  assignment_requested
+  assignment_accepted
+  assignment_rejected
+  job_added
+}
+
+enum LimitedAccessStatus {
+  active
+  revoked
+  expired
+}
+
+// ---------------------------------------------------------------------------
 // Identity tables (no company_id: a person belongs to several companies)
 // ---------------------------------------------------------------------------
 
@@ -66,6 +123,10 @@ model User {
   invitationsSent      Invitation[]           @relation("InvitationSentBy")
   invitationsAccepted  Invitation[]           @relation("InvitationAcceptedBy")
   auditEntries         AuditLog[]             @relation("AuditActor")
+  propertiesCreated    Property[]             @relation("PropertyCreatedBy")
+  ordersOriginated     Order[]                @relation("OrderOriginator")
+  assignmentsCreatedBy Assignment[]           @relation("AssignmentCreatedBy")
+  notifications        Notification[]
 
   @@map("users")
 }
@@ -82,6 +143,12 @@ model Company {
   memberships   Membership[]
   invitations   Invitation[]
   auditEntries  AuditLog[]   @relation("AuditCompany")
+  properties    Property[]
+  clientRelationships ClientRelationship[]
+  orders        Order[]
+  jobs          Job[]
+  assignments   Assignment[]
+  notifications Notification[]
 
   @@map("companies")
 }
@@ -99,6 +166,7 @@ model Membership {
   company       Company @relation(fields: [companyId], references: [id])
   user          User    @relation(fields: [userId], references: [id])
   invitedByUser User?   @relation("MembershipInvitedBy", fields: [invitedBy], references: [id])
+  assignments   Assignment[]
 
   @@unique([companyId, userId])
   @@index([companyId])
@@ -179,4 +247,219 @@ model AuditLog {
   @@index([companyId, createdAt(sort: Desc)])
   @@index([entityType, entityId])
   @@map("audit_log")
+}
+
+// ---------------------------------------------------------------------------
+// Etapa 2: propiedades, inquilinos, órdenes, trabajos, asignaciones,
+// notificaciones y acceso limitado (docs/especificacion/etapa-2.md §2)
+// ---------------------------------------------------------------------------
+
+model Property {
+  id                    String             @id @default(uuid()) @db.Uuid
+  companyId             String             @map("company_id") @db.Uuid
+  ownerName             String?            @map("owner_name")
+  ownerPhone            String?            @map("owner_phone")
+  ownerEmail            String?            @map("owner_email")
+  ownerAddress          String?            @map("owner_address")
+  ownerCity             String?            @map("owner_city")
+  ownerState            String?            @map("owner_state")
+  ownerPostalCode       String?            @map("owner_postal_code")
+  addressLine           String             @map("address_line")
+  city                  String
+  state                 String
+  postalCode            String?            @map("postal_code")
+  occupancy             PropertyOccupancy @default(vacant)
+  communityName         String?            @map("community_name")
+  communityAccessCode   String?            @map("community_access_code")
+  entryInstructions     String?            @map("entry_instructions")
+  allowUnattendedEntry  Boolean            @default(false) @map("allow_unattended_entry")
+  petsInfo              String?            @map("pets_info")
+  otherInstructions     String?            @map("other_instructions")
+  createdBy             String             @map("created_by") @db.Uuid
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamptz()
+
+  company        Company          @relation(fields: [companyId], references: [id])
+  createdByUser  User             @relation("PropertyCreatedBy", fields: [createdBy], references: [id])
+  propertyTenants PropertyTenant[]
+  orders          Order[]
+
+  @@index([companyId])
+  @@index([companyId, createdAt])
+  @@map("properties")
+}
+
+/// Cuenta con acceso limitado (spec §2.3): no inicia sesión con credencial
+/// propia; accede mediante un token opaco revocable (LimitedAccessToken).
+model Tenant {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  /// Delivery channel for the limited-access token (spec etapa-2 §3, approved
+  /// decision). Not part of §4.3's operational fields; optional.
+  email        String?  @unique
+  phones       Json     @default("[]")
+  address      String?
+  availability String?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  propertyTenants     PropertyTenant[]
+  clientRelationships ClientRelationship[]
+  accessTokens        LimitedAccessToken[]
+  requests            Order[]             @relation("TenantRequestedOrder")
+
+  @@map("tenants")
+}
+
+model PropertyTenant {
+  id         String             @id @default(uuid()) @db.Uuid
+  propertyId String             @map("property_id") @db.Uuid
+  tenantId   String             @map("tenant_id") @db.Uuid
+  kind       PropertyTenantKind
+  createdBy  String             @map("created_by") @db.Uuid
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+
+  property Property @relation(fields: [propertyId], references: [id])
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([propertyId, tenantId])
+  @@index([propertyId])
+  @@index([tenantId])
+  @@map("property_tenants")
+}
+
+model ClientRelationship {
+  id        String   @id @default(uuid()) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  company Company @relation(fields: [companyId], references: [id])
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+
+  orders Order[]
+
+  @@unique([companyId, tenantId])
+  @@index([companyId])
+  @@index([tenantId])
+  @@map("client_relationships")
+}
+
+model Order {
+  id                  String      @id @default(uuid()) @db.Uuid
+  companyId           String      @map("company_id") @db.Uuid
+  propertyId          String      @map("property_id") @db.Uuid
+  title               String
+  description         String
+  origin              OrderOrigin
+  /// Creator of the order; null while it's still a `requested` order placed by
+  /// a limited-access account (assigned on conversion, spec §5.1 / AC-4.5).
+  originatorId        String?     @map("originator_id") @db.Uuid
+  clientRelationshipId String?    @map("client_relationship_id") @db.Uuid
+  requestedByTenantId String?     @map("requested_by_tenant_id") @db.Uuid
+  parentOrderId       String?     @map("parent_order_id") @db.Uuid
+  accessLockbox       String?     @map("access_lockbox")
+  accessCommunityCode String?     @map("access_community_code")
+  accessEntryInstructions String? @map("access_entry_instructions")
+  status              OrderStatus @default(open)
+  createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
+
+  company           Company            @relation(fields: [companyId], references: [id])
+  property          Property           @relation(fields: [propertyId], references: [id])
+  originatorUser    User?              @relation("OrderOriginator", fields: [originatorId], references: [id])
+  clientRelationship ClientRelationship? @relation(fields: [clientRelationshipId], references: [id])
+  requestedByTenant Tenant?            @relation("TenantRequestedOrder", fields: [requestedByTenantId], references: [id])
+  parentOrder       Order?             @relation("OrderHierarchy", fields: [parentOrderId], references: [id])
+  childOrders       Order[]            @relation("OrderHierarchy")
+  jobs              Job[]
+
+  @@index([companyId, createdAt])
+  @@index([propertyId])
+  @@index([parentOrderId])
+  @@map("orders")
+}
+
+model Job {
+  id          String    @id @default(uuid()) @db.Uuid
+  orderId     String    @map("order_id") @db.Uuid
+  companyId   String    @map("company_id") @db.Uuid
+  title       String
+  description String
+  sortOrder   Int       @map("sort_order")
+  status      JobStatus @default(pending)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  order       Order        @relation(fields: [orderId], references: [id])
+  company     Company      @relation(fields: [companyId], references: [id])
+  assignments Assignment[]
+
+  @@unique([orderId, sortOrder])
+  @@index([orderId])
+  @@index([companyId])
+  @@map("jobs")
+}
+
+model Assignment {
+  id                   String           @id @default(uuid()) @db.Uuid
+  jobId                String           @map("job_id") @db.Uuid
+  companyId            String           @map("company_id") @db.Uuid
+  assigneeMembershipId String           @map("assignee_membership_id") @db.Uuid
+  status               AssignmentStatus @default(pending)
+  assignedBy           String           @map("assigned_by") @db.Uuid
+  respondedAt          DateTime?        @map("responded_at") @db.Timestamptz()
+  rejectionReason      String?          @map("rejection_reason")
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+
+  job               Job        @relation(fields: [jobId], references: [id])
+  company           Company    @relation(fields: [companyId], references: [id])
+  assigneeMembership Membership @relation(fields: [assigneeMembershipId], references: [id])
+  assignedByUser    User       @relation("AssignmentCreatedBy", fields: [assignedBy], references: [id])
+
+  @@index([jobId])
+  @@index([companyId])
+  @@index([assigneeMembershipId])
+  @@map("assignments")
+}
+
+model Notification {
+  id         String           @id @default(uuid()) @db.Uuid
+  userId     String           @map("user_id") @db.Uuid
+  companyId  String           @map("company_id") @db.Uuid
+  type       NotificationType
+  title      String
+  body       String
+  entityType String           @map("entity_type")
+  entityId   String           @map("entity_id") @db.Uuid
+  link       String?
+  readAt     DateTime?        @map("read_at") @db.Timestamptz()
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+
+  user    User    @relation(fields: [userId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+/// Token opaco de acceso limitado (spec etapa-2 §3, decisión aprobada
+/// 17/10/2026): solo se guarda su hash; se entrega por correo al vincular
+/// la cuenta. Revocable y con expiración.
+model LimitedAccessToken {
+  id        String             @id @default(uuid()) @db.Uuid
+  tenantId  String             @map("tenant_id") @db.Uuid
+  tokenHash String             @unique @map("token_hash")
+  status    LimitedAccessStatus @default(active)
+  expiresAt DateTime           @map("expires_at") @db.Timestamptz()
+  revokedAt DateTime?          @map("revoked_at") @db.Timestamptz()
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("limited_access_tokens")
 }
