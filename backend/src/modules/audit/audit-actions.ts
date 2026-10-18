@@ -94,3 +94,22 @@ export const AUDIT_ENTITIES_ETAPA4 = {
   ORDER_AUTHORIZATION: 'order_authorization',
   COMMERCIAL_RELATION: 'commercial_relation',
 } as const;
+
+/** Audit actions of Etapa 5 (spec etapa-5.md §7). */
+export const AUDIT_ACTIONS_ETAPA5 = {
+  INVOICE_CREATED: 'invoice.created',
+  INVOICE_UPDATED: 'invoice.updated',
+  INVOICE_EMITTED: 'invoice.emitted',
+  INVOICE_VOIDED: 'invoice.voided',
+  PAYMENT_REGISTERED: 'payment.registered',
+  PAYMENT_REFUNDED: 'payment.refunded',
+  PAYMENT_RECONCILED: 'payment.reconciled',
+  ACCOUNTING_EXPORTED: 'accounting.exported',
+} as const;
+
+/** Audit entities of Etapa 5 (spec etapa-5.md §7). */
+export const AUDIT_ENTITIES_ETAPA5 = {
+  INVOICE: 'invoice',
+  PAYMENT: 'payment',
+  ACCOUNTING_EXPORT: 'accounting_export',
+} as const;

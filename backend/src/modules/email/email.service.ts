@@ -225,6 +225,107 @@ export class EmailService {
     await this.send({ to, subject, html, text });
   }
 
+  /** Invoice emitted to this recipient (spec etapa-5 §14.1, decisión P2 — D10). */
+  async sendInvoiceIssued(
+    to: string,
+    params: {
+      invoiceNumber: number;
+      orderTitle: string;
+      total: string;
+      issuerName: string;
+      recipientName: string;
+    },
+  ): Promise<void> {
+    const subject = `Factura N.º ${params.invoiceNumber} — orden "${params.orderTitle}"`;
+    const text =
+      `${params.issuerName} emitió la factura N.º ${params.invoiceNumber} a ${params.recipientName} ` +
+      `por la orden "${params.orderTitle}" (total USD ${params.total}).\n\n` +
+      `Descarga el PDF desde la plataforma.\n`;
+    const html =
+      `<p>${escapeHtml(params.issuerName)} emitió la factura <strong>N.º ${params.invoiceNumber}</strong> ` +
+      `a <strong>${escapeHtml(params.recipientName)}</strong> por la orden ` +
+      `<strong>${escapeHtml(params.orderTitle)}</strong> (total USD ${escapeHtml(params.total)}).</p>` +
+      `<p>Descarga el PDF desde la plataforma.</p>`;
+    await this.send({ to, subject, html, text });
+  }
+
+  /** Voided invoice notice (spec etapa-5 §11.5, §14.1). */
+  async sendInvoiceVoided(
+    to: string,
+    params: { invoiceNumber: number; orderTitle: string; reason: string },
+  ): Promise<void> {
+    const subject = `Factura N.º ${params.invoiceNumber} anulada — orden "${params.orderTitle}"`;
+    const text =
+      `La factura N.º ${params.invoiceNumber} de la orden "${params.orderTitle}" fue anulada.\n` +
+      `Motivo: ${params.reason}\n\nConsulta el detalle en la plataforma.\n`;
+    const html =
+      `<p>La factura <strong>N.º ${params.invoiceNumber}</strong> de la orden ` +
+      `<strong>${escapeHtml(params.orderTitle)}</strong> fue <strong>anulada</strong>.</p>` +
+      `<p>Motivo: ${escapeHtml(params.reason)}</p><p>Consulta el detalle en la plataforma.</p>`;
+    await this.send({ to, subject, html, text });
+  }
+
+  /** Payment or refund registered against an invoice (§11.1, §14.1, P5). */
+  async sendPaymentRecorded(
+    to: string,
+    params: {
+      invoiceNumber: number;
+      orderTitle: string;
+      amount: string;
+      kind: 'charge' | 'refund';
+      paidAt: string;
+    },
+  ): Promise<void> {
+    const isRefund = params.kind === 'refund';
+    const subject = `${isRefund ? 'Devolución' : 'Pago'} registrado — factura N.º ${params.invoiceNumber}`;
+    const text =
+      `Se registró ${isRefund ? 'una devolución' : 'un pago'} de USD ${params.amount} el ${params.paidAt} ` +
+      `sobre la factura N.º ${params.invoiceNumber} de la orden "${params.orderTitle}".\n\n` +
+      `Consulta el detalle en la plataforma.\n`;
+    const html =
+      `<p>Se registró <strong>${isRefund ? 'una devolución' : 'un pago'}</strong> de USD ` +
+      `<strong>${escapeHtml(params.amount)}</strong> el ${escapeHtml(params.paidAt)} sobre la factura ` +
+      `<strong>N.º ${params.invoiceNumber}</strong> de la orden <strong>${escapeHtml(params.orderTitle)}</strong>.</p>` +
+      `<p>Consulta el detalle en la plataforma.</p>`;
+    await this.send({ to, subject, html, text });
+  }
+
+  /** Suspected duplicate: warns the registrant (§11.1, D6). */
+  async sendPaymentDuplicateSuspect(
+    to: string,
+    params: { invoiceNumber: number; amount: string; paidAt: string },
+  ): Promise<void> {
+    const subject = `Posible pago duplicado — factura N.º ${params.invoiceNumber}`;
+    const text =
+      `Se registró un pago de USD ${params.amount} el ${params.paidAt} que coincide con otro ya ` +
+      `registrado en la factura N.º ${params.invoiceNumber}. Quedó marcado como posible duplicado ` +
+      `y no suma hasta que una de las partes lo concilie.\n\n` +
+      `Consulta el detalle en la plataforma.\n`;
+    const html =
+      `<p>Se registró un pago de USD <strong>${escapeHtml(params.amount)}</strong> el ` +
+      `${escapeHtml(params.paidAt)} que coincide con otro ya registrado en la factura ` +
+      `<strong>N.º ${params.invoiceNumber}</strong>.</p>` +
+      `<p>Quedó marcado como <strong>posible duplicado</strong> y no suma hasta que una de las partes lo concilie.</p>`;
+    await this.send({ to, subject, html, text });
+  }
+
+  /** Cost correction notice (spec etapa-5 D9, proyect.md §8.2). */
+  async sendCostCorrectionNotice(
+    to: string,
+    params: { orderTitle: string; invoiceNumber: number },
+  ): Promise<void> {
+    const subject = `Costos corregidos — factura N.º ${params.invoiceNumber} sin cambios`;
+    const text =
+      `Se corrigieron los costos de la orden "${params.orderTitle}". ` +
+      `La factura N.º ${params.invoiceNumber} ya emitida no cambió; solo recibe este aviso (§8.2).\n\n` +
+      `Consulta el detalle en la plataforma.\n`;
+    const html =
+      `<p>Se corrigieron los costos de la orden <strong>${escapeHtml(params.orderTitle)}</strong>.</p>` +
+      `<p>La factura <strong>N.º ${params.invoiceNumber}</strong> ya emitida <strong>no cambió</strong>; ` +
+      `solo recibe este aviso (§8.2).</p>`;
+    await this.send({ to, subject, html, text });
+  }
+
   private async send(message: EmailMessage): Promise<void> {
     await this.transport.send(message);
     this.capturedEmails.push({ ...message, sentAt: new Date() });

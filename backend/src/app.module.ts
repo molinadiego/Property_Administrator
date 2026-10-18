@@ -26,6 +26,7 @@ import { UsersModule } from './modules/users/users.module';
 import { EconomicSettingsModule } from './modules/economic-settings/economic-settings.module';
 import { CostsModule } from './modules/costs/costs.module';
 import { AuthorizationsModule } from './modules/authorizations/authorizations.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -58,6 +59,8 @@ import { AuthorizationsModule } from './modules/authorizations/authorizations.mo
     EconomicSettingsModule,
     CostsModule,
     AuthorizationsModule,
+    // Etapa 5 (docs/especificacion/etapa-5.md)
+    BillingModule,
   ],
   providers: [
     // Every route requires a valid session cookie unless marked @Public().

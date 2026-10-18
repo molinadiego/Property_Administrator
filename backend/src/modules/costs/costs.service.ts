@@ -10,6 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { EmailService } from '../email/email.service';
 import { AUDIT_ACTIONS_ETAPA4, AUDIT_ENTITIES_ETAPA4 } from '../audit/audit-actions';
+import { BillingService } from '../billing/billing.service';
 import { AuthContext, CompanyAccess } from '../../common/request-context';
 import { PutCostItemsDto, SubmitCostReportDto } from './dto/cost-items.dto';
 import {
@@ -50,6 +51,7 @@ export class CostsService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly email: EmailService,
+    private readonly billing: BillingService,
   ) {}
 
   async getCostReport(access: CompanyAccess, assignmentId: string) {
@@ -241,6 +243,9 @@ export class CostsService {
         });
       }
     }
+    // Spec etapa-5 D9 (proyect.md §8.2): a cost correction never touches an
+    // emitted invoice — it only notifies the parties that have one.
+    await this.billing.notifyCostCorrection(order.id, emitterCompanyId);
     return this.serializeReport(report);
   }
 
