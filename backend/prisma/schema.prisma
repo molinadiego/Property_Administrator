@@ -124,6 +124,43 @@ enum LimitedAccessStatus {
 }
 
 // ---------------------------------------------------------------------------
+// Etapa 4 enums (docs/especificacion/etapa-4.md §2.1)
+// ---------------------------------------------------------------------------
+
+enum EmergencyPolicy {
+  prior_authorization
+  resolve_without_authorization
+  emergency_amount
+}
+
+enum CostCategory {
+  material
+  labor
+  other
+}
+
+enum CostReportStatus {
+  draft
+  submitted
+}
+
+enum AuthorizationRequestType {
+  exceed_spending_limit
+  additional_work
+}
+
+enum AuthorizationRequestStatus {
+  pending
+  approved
+  rejected
+}
+
+enum AuthorizationSource {
+  platform_request
+  offline
+}
+
+// ---------------------------------------------------------------------------
 // Identity tables (no company_id: a person belongs to several companies)
 // ---------------------------------------------------------------------------
 
@@ -155,6 +192,13 @@ model User {
   historySharesCreated HistoryShare[]         @relation("HistoryShareCreatedBy")
   ordersClosed         Order[]                @relation("OrderClosedBy")
   ordersCancelled      Order[]                @relation("OrderCancelledBy")
+  // Etapa 4 (docs/especificacion/etapa-4.md §2)
+  commercialRelationsCreated CommercialRelation[]   @relation("CommercialRelationCreatedBy")
+  costReportsSubmitted       CostReport[]           @relation("CostReportSubmittedBy")
+  authorizationsGranted      OrderAuthorization[]   @relation("OrderAuthorizationGrantedBy")
+  authorizationsRegistered   OrderAuthorization[]   @relation("OrderAuthorizationAuthorizedBy")
+  authRequestsCreated        AuthorizationRequest[] @relation("AuthRequestRequestedBy")
+  authRequestsResolved       AuthorizationRequest[] @relation("AuthRequestResolvedBy")
 
   @@map("users")
 }
@@ -166,6 +210,14 @@ model Company {
   createdBy String      @map("created_by") @db.Uuid
   createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
+  /// General spending-limit policy (spec etapa-4 §2.2, §8.4): null = «sin
+  /// límite económico». Applied by default when a new order doesn't set one.
+  defaultSpendingLimit Decimal? @map("default_spending_limit") @db.Decimal(12, 2)
+  /// General emergency policy (§8.6); orders can be governed by a commercial
+  /// relation that overrides it.
+  emergencyPolicy      EmergencyPolicy @default(prior_authorization) @map("emergency_policy")
+  /// Pre-authorized emergency amount for the `emergency_amount` policy (§8.6).
+  emergencyExtraAmount Decimal?        @map("emergency_extra_amount") @db.Decimal(12, 2)
 
   createdByUser User        @relation("CompanyCreatedBy", fields: [createdBy], references: [id])
   memberships   Membership[]
@@ -180,6 +232,11 @@ model Company {
   jobEvents     JobEvent[]
   fileObjects   FileObject[]
   historyShares HistoryShare[]
+  // Etapa 4 (docs/especificacion/etapa-4.md §2.2, §2.4)
+  commercialRelations       CommercialRelation[]     @relation("CommercialRelationOwner")
+  counterpartyRelations     CommercialRelation[]     @relation("CommercialRelationCounterparty")
+  costReports               CostReport[]
+  authorizationRequestsSent AuthorizationRequest[]   @relation("AuthRequestCompany")
 
   @@map("companies")
 }
@@ -373,6 +430,7 @@ model ClientRelationship {
   tenant  Tenant  @relation(fields: [tenantId], references: [id])
 
   orders Order[]
+  commercialRelations CommercialRelation[]
 
   @@unique([companyId, tenantId])
   @@index([companyId])
@@ -402,6 +460,19 @@ model Order {
   cancelledBy         String?     @map("cancelled_by") @db.Uuid
   cancelledAt         DateTime?   @map("cancelled_at") @db.Timestamptz()
   cancellationReason  String?     @map("cancellation_reason")
+  // Etapa 4: política económica de la orden (spec etapa-4 §2.3, §8.4–§8.6)
+  /// null = «sin límite económico» (§8.4).
+  spendingLimit      Decimal? @map("spending_limit") @db.Decimal(12, 2)
+  spendingLimitSetBy String?  @map("spending_limit_set_by") @db.Uuid
+  spendingLimitSetAt DateTime? @map("spending_limit_set_at") @db.Timestamptz()
+  /// Commercial margin up to 20 %, enabled explicitly (§8.5). Private to the
+  /// originating company; never raises the authorized spending ceiling.
+  marginEnabled Boolean  @default(false) @map("margin_enabled")
+  marginPercent Decimal? @map("margin_percent") @db.Decimal(5, 2)
+  marginSetBy   String?  @map("margin_set_by") @db.Uuid
+  marginSetAt   DateTime? @map("margin_set_at") @db.Timestamptz()
+  /// Commercial relation governing this order's emergency policy (§8.6).
+  commercialRelationId String? @map("commercial_relation_id") @db.Uuid
   createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt           DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -409,6 +480,7 @@ model Order {
   property          Property           @relation(fields: [propertyId], references: [id])
   originatorUser    User?              @relation("OrderOriginator", fields: [originatorId], references: [id])
   clientRelationship ClientRelationship? @relation(fields: [clientRelationshipId], references: [id])
+  commercialRelation CommercialRelation? @relation(fields: [commercialRelationId], references: [id])
   requestedByTenant Tenant?            @relation("TenantRequestedOrder", fields: [requestedByTenantId], references: [id])
   parentOrder       Order?             @relation("OrderHierarchy", fields: [parentOrderId], references: [id])
   childOrders       Order[]            @relation("OrderHierarchy")
@@ -416,6 +488,8 @@ model Order {
   files             FileObject[]
   closedByUser      User?              @relation("OrderClosedBy", fields: [closedBy], references: [id])
   cancelledByUser   User?              @relation("OrderCancelledBy", fields: [cancelledBy], references: [id])
+  orderAuthorizations      OrderAuthorization[]
+  authorizationRequests    AuthorizationRequest[]
 
   @@index([companyId, createdAt])
   @@index([propertyId])
@@ -442,6 +516,7 @@ model Job {
   company     Company      @relation(fields: [companyId], references: [id])
   assignments Assignment[]
   jobEvents   JobEvent[]
+  authorizations OrderAuthorization[]
 
   @@unique([orderId, sortOrder])
   @@index([orderId])
@@ -465,6 +540,7 @@ model Assignment {
   company           Company    @relation(fields: [companyId], references: [id])
   assigneeMembership Membership @relation(fields: [assigneeMembershipId], references: [id])
   assignedByUser    User       @relation("AssignmentCreatedBy", fields: [assignedBy], references: [id])
+  costReports       CostReport[]
 
   @@index([jobId])
   @@index([companyId])
@@ -592,4 +668,163 @@ model HistoryShare {
   @@index([propertyId, sharedWithMembershipId])
   @@index([companyId])
   @@map("history_shares")
+}
+
+// ---------------------------------------------------------------------------
+// Etapa 4: costos, autorizaciones y relación comercial
+// (docs/especificacion/etapa-4.md §2.4–§2.8)
+// ---------------------------------------------------------------------------
+
+/// Real commercial relation (company↔company or professional↔own client) that
+/// can override the company's general emergency policy (spec etapa-4 §2.4,
+/// §8.6). Rows are created by the company whose orders they govern (role
+/// `owner`, decision 7); the counterparty doesn't confirm in v1. `endedAt`
+/// prevents attaching to new orders; existing orders keep their reference.
+model CommercialRelation {
+  id                    String    @id @default(uuid()) @db.Uuid
+  companyId             String    @map("company_id") @db.Uuid
+  counterpartyCompanyId String?   @map("counterparty_company_id") @db.Uuid
+  clientRelationshipId  String?   @map("client_relationship_id") @db.Uuid
+  label                 String?
+  /// Emergency-policy override; null = the company's general policy applies.
+  emergencyPolicy       EmergencyPolicy? @map("emergency_policy")
+  emergencyExtraAmount  Decimal?  @map("emergency_extra_amount") @db.Decimal(12, 2)
+  endedAt               DateTime? @map("ended_at") @db.Timestamptz()
+  createdBy             String    @map("created_by") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  company             Company             @relation("CommercialRelationOwner", fields: [companyId], references: [id])
+  counterpartyCompany Company?            @relation("CommercialRelationCounterparty", fields: [counterpartyCompanyId], references: [id])
+  clientRelationship  ClientRelationship? @relation(fields: [clientRelationshipId], references: [id])
+  createdByUser       User                @relation("CommercialRelationCreatedBy", fields: [createdBy], references: [id])
+  orders              Order[]
+
+  @@unique([companyId, counterpartyCompanyId])
+  @@unique([companyId, clientRelationshipId])
+  @@index([companyId])
+  @@map("commercial_relations")
+}
+
+/// Versioned cost report of one assignment (the commercial relation that
+/// emits costs, spec etapa-4 §2.5, §8.1–§8.3): one editable `draft` at most
+/// and any number of immutable `submitted` versions. Corrections open the
+/// next version linked to the previous one (§8.2).
+model CostReport {
+  id               String          @id @default(uuid()) @db.Uuid
+  assignmentId     String          @map("assignment_id") @db.Uuid
+  /// Emitter = the company of the assignee membership (§2.5, decision 3).
+  companyId        String          @map("company_id") @db.Uuid
+  version          Int
+  status           CostReportStatus @default(draft)
+  notes            String?
+  /// Sum of the items, computed on submit; null while in draft.
+  total            Decimal?        @db.Decimal(12, 2)
+  submittedBy      String?         @map("submitted_by") @db.Uuid
+  submittedAt      DateTime?       @map("submitted_at") @db.Timestamptz()
+  previousReportId String?         @map("previous_report_id") @db.Uuid
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+
+  assignment     Assignment   @relation(fields: [assignmentId], references: [id])
+  company        Company      @relation(fields: [companyId], references: [id])
+  submittedByUser User?       @relation("CostReportSubmittedBy", fields: [submittedBy], references: [id])
+  previousReport CostReport?  @relation("CostReportPrevious", fields: [previousReportId], references: [id])
+  nextReports    CostReport[] @relation("CostReportPrevious")
+  items          CostItem[]
+
+  @@unique([assignmentId, version])
+  @@index([assignmentId, status])
+  @@index([companyId])
+  @@map("cost_reports")
+}
+
+/// Cost line of a report (spec etapa-4 §2.6, §8.1). Editable only while the
+/// report is in draft; the server enforces it (§16.1).
+model CostItem {
+  id           String       @id @default(uuid()) @db.Uuid
+  costReportId String       @map("cost_report_id") @db.Uuid
+  category     CostCategory
+  description  String
+  amount       Decimal      @db.Decimal(12, 2)
+  /// Registered inside an emergency intervention (§8.6); compared against
+  /// the pre-authorized emergency amount in the economic summary.
+  isEmergency  Boolean      @default(false) @map("is_emergency")
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+
+  costReport CostReport @relation(fields: [costReportId], references: [id])
+
+  @@index([costReportId])
+  @@map("cost_items")
+}
+
+/// Append-only ledger of economic authorizations of an order (spec etapa-4
+/// §2.7, §8.4, §8.7, §18.1): platform approvals and off-platform records
+/// (telephone). The app role has no UPDATE/DELETE grants (migration
+/// etapa4_order_authorizations_grants, §7). A record never rewrites costs or
+/// states by itself; it is the «quién autorizó, cuándo, qué» evidence.
+model OrderAuthorization {
+  id                     String                  @id @default(uuid()) @db.Uuid
+  orderId                String                  @map("order_id") @db.Uuid
+  type                   AuthorizationRequestType
+  source                 AuthorizationSource
+  /// Approver in the platform; null for off-platform records (§18.1).
+  grantedByUserId        String?                 @map("granted_by_user_id") @db.Uuid
+  /// Name/role of who granted it (required for `offline`, §18.1).
+  grantedByDescription   String?                 @map("granted_by_description")
+  grantedAt              DateTime                @map("granted_at") @db.Timestamptz()
+  /// Who registered the record (in `offline`, the member who wrote it down).
+  authorizedByUserId     String                  @map("authorized_by_user_id") @db.Uuid
+  /// For `exceed_spending_limit`: additional amount authorized on top of the
+  /// effective spending limit (§8.4).
+  amountCap              Decimal?                @map("amount_cap") @db.Decimal(12, 2)
+  description            String
+  /// At most one authorization per originating request (1-1, §4.4).
+  authorizationRequestId String?                 @unique @map("authorization_request_id") @db.Uuid
+  /// Job created by approving an `additional_work` request (§8.4, §9).
+  jobId                  String?                 @map("job_id") @db.Uuid
+  createdAt              DateTime                @default(now()) @map("created_at") @db.Timestamptz()
+
+  order                Order                @relation(fields: [orderId], references: [id])
+  grantedByUser        User?                @relation("OrderAuthorizationGrantedBy", fields: [grantedByUserId], references: [id])
+  authorizedByUser     User                 @relation("OrderAuthorizationAuthorizedBy", fields: [authorizedByUserId], references: [id])
+  authorizationRequest AuthorizationRequest? @relation("AuthorizationForRequest", fields: [authorizationRequestId], references: [id])
+  job                  Job?                 @relation(fields: [jobId], references: [id])
+  createdFromRequest   AuthorizationRequest? @relation("AuthorizationFromRequest")
+
+  @@index([orderId])
+  @@map("order_authorizations")
+}
+
+/// Authorization request raised by an assignee company and resolved only by
+/// the originating company (spec etapa-4 §2.8, §8.4, §9, §14.1).
+model AuthorizationRequest {
+  id                  String                    @id @default(uuid()) @db.Uuid
+  orderId             String                    @map("order_id") @db.Uuid
+  requestingCompanyId String                    @map("requesting_company_id") @db.Uuid
+  requestedByUserId   String                    @map("requested_by_user_id") @db.Uuid
+  type                AuthorizationRequestType
+  description         String
+  requestedAmount     Decimal?                  @map("requested_amount") @db.Decimal(12, 2)
+  status              AuthorizationRequestStatus @default(pending)
+  resolvedByUserId    String?                   @map("resolved_by_user_id") @db.Uuid
+  resolvedAt          DateTime?                 @map("resolved_at") @db.Timestamptz()
+  /// Mandatory when rejecting (§9).
+  resolutionNote      String?                   @map("resolution_note")
+  /// At most one authorization is created from a request (1-1, §4.4).
+  authorizationId     String?                   @unique @map("authorization_id") @db.Uuid
+  createdAt           DateTime                  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime                  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  order             Order              @relation(fields: [orderId], references: [id])
+  requestingCompany Company            @relation("AuthRequestCompany", fields: [requestingCompanyId], references: [id])
+  requestedByUser   User               @relation("AuthRequestRequestedBy", fields: [requestedByUserId], references: [id])
+  resolvedByUser    User?              @relation("AuthRequestResolvedBy", fields: [resolvedByUserId], references: [id])
+  authorization     OrderAuthorization? @relation("AuthorizationFromRequest", fields: [authorizationId], references: [id])
+  authorizations    OrderAuthorization[] @relation("AuthorizationForRequest")
+
+  @@index([orderId, status])
+  @@index([requestingCompanyId])
+  @@map("authorization_requests")
 }
