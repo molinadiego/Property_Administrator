@@ -10,6 +10,13 @@ export interface Env {
   EMAIL_FROM?: string;
   /** Base URL used to build email links (invitations, password reset). */
   FRONTEND_URL: string;
+  /** Optional S3-compatible endpoint; when absent the app boots the in-process
+   * s3rver mock (dev/test, spec etapa-3 §2.6 / stack §1). */
+  STORAGE_ENDPOINT?: string;
+  STORAGE_REGION?: string;
+  STORAGE_BUCKET?: string;
+  STORAGE_ACCESS_KEY_ID?: string;
+  STORAGE_SECRET_ACCESS_KEY?: string;
 }
 
 const NODE_ENV_VALUES = ['development', 'test', 'production'] as const;
@@ -85,6 +92,19 @@ export function validateEnv(config: Record<string, unknown>): Env {
       ? config.FRONTEND_URL.replace(/\/+$/, '')
       : 'http://localhost:3000';
 
+  const optionalString = (value: unknown): string | undefined =>
+    typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
+
+  const storageEndpoint = optionalString(config.STORAGE_ENDPOINT)?.replace(/\/+$/, '');
+  const storageRegion = optionalString(config.STORAGE_REGION);
+  const storageBucket = optionalString(config.STORAGE_BUCKET);
+  const storageAccessKeyId = optionalString(config.STORAGE_ACCESS_KEY_ID);
+  const storageSecretAccessKey = optionalString(config.STORAGE_SECRET_ACCESS_KEY);
+
+  if (storageEndpoint && (!storageAccessKeyId || !storageSecretAccessKey)) {
+    errors.push('STORAGE_ACCESS_KEY_ID and STORAGE_SECRET_ACCESS_KEY are required when STORAGE_ENDPOINT is set');
+  }
+
   if (errors.length > 0) {
     throw new Error(`Invalid environment configuration:\n- ${errors.join('\n- ')}`);
   }
@@ -98,5 +118,10 @@ export function validateEnv(config: Record<string, unknown>): Env {
     FRONTEND_URL: frontendUrl,
     ...(resendApiKey ? { RESEND_API_KEY: resendApiKey } : {}),
     ...(emailFrom ? { EMAIL_FROM: emailFrom } : {}),
+    ...(storageEndpoint ? { STORAGE_ENDPOINT: storageEndpoint } : {}),
+    ...(storageRegion ? { STORAGE_REGION: storageRegion } : {}),
+    ...(storageBucket ? { STORAGE_BUCKET: storageBucket } : {}),
+    ...(storageAccessKeyId ? { STORAGE_ACCESS_KEY_ID: storageAccessKeyId } : {}),
+    ...(storageSecretAccessKey ? { STORAGE_SECRET_ACCESS_KEY: storageSecretAccessKey } : {}),
   };
 }
