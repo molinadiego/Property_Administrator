@@ -18,7 +18,7 @@ Jerarquía de documentos para el frontend: `proyect.md` > `docs/stack.md` (§6 F
 | **D4** | Despliegue | **Mismo dominio vía reverse proxy** (Caddy/Nginx sirve el build estático y proxya `/api` al backend): la cookie `mh_session` (SameSite=Lax) funciona sin CORS y sin cambios de backend. En dev, proxy de Vite a la API. |
 | **D5** | Idioma | **Solo español**, con i18next desde F0 (keys en inglés, valores en `es`): agregar otro idioma no toca código. |
 
-**Dependencia previa (BE-1):** spec e implementación en backend de filtros en `GET /companies/:id/orders` (estado de orden y «recibidas pendientes de aceptación por mí»), con tests de permisos (§16.1). Bloquea **solo a F2**; F0 y F1 pueden avanzar en paralelo. **Spec BE-1 aprobada el 19/10/2026:** `docs/especificacion/be-1-filtros-ordenes.md`.
+**Dependencia previa (BE-1):** spec e implementación en backend de filtros en `GET /companies/:id/orders` (estado de orden y «recibidas pendientes de aceptación por mí»), con tests de permisos (§16.1). Bloquea **solo a F2**; F0 y F1 pueden avanzar en paralelo. **Spec BE-1 aprobada e implementada el 19/10/2026:** `docs/especificacion/be-1-filtros-ordenes.md`.
 
 ---
 

@@ -195,3 +195,12 @@ documentada.
   render de la key cruda en producción.
 - Cliente API desactualizado respecto del backend: `npm run check` local y CI
   lo detectan vía `tsc` (AC-F0.9) antes de desplegar.
+
+### Validación F0-D5 (20/10/2026)
+
+- **Local (macOS Monterey):** el smoke de Playwright corrió con el Chrome del
+  sistema (`channel: 'chrome'`, Chrome 150): **verde en desktop-1280 y
+  mobile-360** (2/2). No hizo falta instalar el Chromium de Playwright.
+- **CI (ubuntu):** el job `frontend-e2e` instala Chromium propio y corre el
+  mismo smoke contra el backend + PostgreSQL levantados en la corrida (seed
+  `ana@demo.test`).

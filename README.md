@@ -21,7 +21,7 @@ Backend para administrar propiedades, órdenes de reparación, asignaciones de t
 | `frontend_plan.md` | Plan de construcción del frontend (etapas F0–F8), decisiones D1–D5 y criterio de salida de cada etapa. | Para saber en qué etapa del frontend estamos y qué sigue. |
 | `frontend/AGENTS.md` | Reglas de trabajo específicas del frontend (complementa al `AGENTS.md` raíz, que sigue vigente). | Siempre al trabajar en `frontend/`. |
 | `docs/especificacion/be-1-filtros-ordenes.md` | Especificación técnica de BE-1: filtros `status` y `assignment_status` en `GET /companies/{id}/orders` (prerequisito del dashboard F2). **Aprobada e implementada.** | Al implementar F2. |
-| `docs/especificacion/frontend/etapa-f0.md` | Especificación técnica de la Etapa F0 del frontend: scaffolding, design system, cliente API generado, sesión y selector de espacio. **Aprobada.** | Al implementar F0. |
+| `docs/especificacion/frontend/etapa-f0.md` | Especificación técnica de la Etapa F0 del frontend: scaffolding, design system, cliente API generado, sesión y selector de espacio. **Aprobada e implementada.** | Al revisar F0 o implementar F1. |
 
 Regla: los documentos se referencian entre sí, no se copian. Si un requisito cambia, se cambia primero en `proyect.md` y después en la especificación.
 
@@ -35,6 +35,8 @@ Regla: los documentos se referencian entre sí, no se copian. Si un requisito ca
 - Etapa 4 (costos y autorizaciones): **spec aprobada el 18/10/2026** (`docs/especificacion/etapa-4.md`, 9/9 decisiones resueltas). Cubre costos por asignación con correcciones versionadas, límites de gasto, margen ≤ 20 %, solicitudes/constancias de autorización (procedimiento §18.1 en un paso), entidad nueva `commercial_relations` para la política de emergencia (§8.6) y resumen económico de la orden. **Implementada el 18/10/2026** (módulos `economic-settings`, `costs` y `authorizations`; matriz e2e de 52 escenarios; `npm run check` verde).
 - Etapa 5 (facturación y pagos): **spec aprobada el 18/10/2026** (`docs/especificacion/etapa-5.md`, 6/6 decisiones resueltas: sin impuestos ni datos fiscales hasta cerrar §18.2; **facturación a cliente propio entra en v1** con visibilidad de solo lectura en su cuenta limitada; emitir/pagar cualquier miembro y anular solo `owner`; devoluciones de pago incluidas; precedencia de §11.2 sobre §20.4 en la tensión de «vencida»). **Implementada el 18/10/2026** (módulo `billing`; matriz e2e de 54 escenarios y 27 ACs; `npm run check` verde).
 - Etapa 6 (garantías, urgencias con preferencias y suscripciones): **spec aprobada el 18/10/2026** (`docs/especificacion/etapa-6.md`, 7/7 decisiones D1–D7 resueltas: ventana de respuesta sobre la asignación pendiente de la orden urgente; recordatorio al asignado y escalación a los owners de su empresa; `own_business` cae en el plan de profesional; precios ajustables por semilla sin rol admin de plataforma; reclamos solo sobre trabajos completados, privados de la empresa originadora; preferencias sobre todos los avisos excepto los correos de cuenta, que siempre se envían; barrido cada 15 min con `@nestjs/schedule`, cron deshabilitado en test). Integraciones y automatizaciones pospuestas por decisión del dueño (18/10/2026). **Implementada el 18/10/2026** (módulos `warranty`, `urgency` y `subscriptions`; matriz e2e de 34 escenarios; `npm run check` verde).
+- BE-1 (filtros `status`/`assignment_status` en órdenes, prerequisito de F2): **spec aprobada e implementada el 19/10/2026** (`docs/especificacion/be-1-filtros-ordenes.md`; unit 16 ✓, e2e 15 ✓, gate backend verde).
+- Frontend — Etapa F0 (fundamentos: SPA, design system, cliente API generado, sesión y selector de espacio): **spec aprobada e implementada el 20/10/2026** (`docs/especificacion/frontend/etapa-f0.md`). Gate `frontend/ npm run check` en verde (lint + typecheck + 43 unit) y smoke Playwright verde local con Chrome en 1280/360 (F0-D5, documentado en la spec §11). CI con los jobs `frontend-check` y `frontend-e2e` (smoke contra backend + PostgreSQL reales).
 
 ## Entorno
 
@@ -57,4 +59,18 @@ npm run lint                # ESLint
 npm test                    # tests unitarios (Jest)
 npm run test:e2e            # tests de integración (Testcontainers + PostgreSQL real)
 npm run check               # gate de etapa: lint + build + tests + e2e en secuencia
+```
+
+### Frontend (`frontend/`)
+
+La SPA (React + Vite) corre en `http://localhost:5173` y hace proxy de `/api`
+al backend de `:3000` (mismo origen, ver `frontend_plan.md` D4).
+
+```bash
+cd frontend
+npm install
+npm run dev                 # SPA en http://localhost:5173 (requiere el backend arriba)
+npm run check               # gate: lint + typecheck + unit (Vitest)
+npm run openapi:generate    # regenera el cliente desde backend/openapi/openapi.json
+npm run test:e2e            # smoke Playwright (en local usa el Chrome del sistema)
 ```
