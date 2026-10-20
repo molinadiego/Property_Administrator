@@ -4,7 +4,7 @@ Plataforma de administración de propiedades y trabajos de reparación
 
 Versión: 1.0 — Requisitos aprobados
 Estado: Aprobado (17/10/2026)
-Historial: v0.5 consolidación de reglas de alcance, autorizaciones y estados; v0.6 reglas de autorización unificadas, cuentas con acceso limitado, transiciones de factura y formato; v0.7 decisiones del 18.1-18.3 incorporadas (propiedad requerida, política de emergencia con override, acceso permanente a registros, facturación por orden, jurisdicción EE.UU., cobro de suscripciones); v1.0 aprobado para convertirse en especificación funcional y técnica. Enmienda 17/10/2026 (§5.6, aprobada por el dueño): ante el rechazo de una orden, la administradora crea una nueva orden para otro contratista conservando la referencia a la rechazada (§20.1; la rechazada no se reabre); se retiró de §5.6 la opción de cancelar la rechazada, que §20.1 no contempla entre sus transiciones. Enmienda 18/10/2026 (§15, §18.3 y §18.4, aprobada por el dueño): cuestiones abiertas de suscripciones y diseño resueltas — planes sin límites ni funciones diferenciadas y con precios de ejemplo ajustables, cobranza fuera del sistema, plazos y escalación para solicitudes urgentes, preferencias de notificación, corrección de registros (datos maestros editables con auditoría, historial siempre correctivo), conservación permanente de documentos y sin informes nuevos.
+Historial: v0.5 consolidación de reglas de alcance, autorizaciones y estados; v0.6 reglas de autorización unificadas, cuentas con acceso limitado, transiciones de factura y formato; v0.7 decisiones del 18.1-18.3 incorporadas (propiedad requerida, política de emergencia con override, acceso permanente a registros, facturación por orden, jurisdicción EE.UU., cobro de suscripciones); v1.0 aprobado para convertirse en especificación funcional y técnica. Enmienda 17/10/2026 (§5.6, aprobada por el dueño): ante el rechazo de una orden, la administradora crea una nueva orden para otro contratista conservando la referencia a la rechazada (§20.1; la rechazada no se reabre); se retiró de §5.6 la opción de cancelar la rechazada, que §20.1 no contempla entre sus transiciones. Enmienda 18/10/2026 (§15, §18.3 y §18.4, aprobada por el dueño): cuestiones abiertas de suscripciones y diseño resueltas — planes sin límites ni funciones diferenciadas y con precios de ejemplo ajustables, cobranza fuera del sistema, plazos y escalación para solicitudes urgentes, preferencias de notificación, corrección de registros (datos maestros editables con auditoría, historial siempre correctivo), conservación permanente de documentos y sin informes nuevos. Enmienda 19/10/2026 (§11.6, §18.2, aprobada por el dueño): impuestos de la v1 — jurisdicción Estados Unidos, estado de Nevada; perfil fiscal configurable por empresa (ID fiscal, dirección, tasa por defecto, exención) con tasa ajustable por factura al emitir; el emisor marca línea por línea qué conceptos son imponibles, sin reglas fijas por tipo de emisor y destinatario; el impuesto se calcula y congela al emitir, se muestra en el PDF y en la exportación contable; §18.2 queda resuelto.
 Objetivo: Definir cómo debe funcionar el negocio antes de diseñar la arquitectura técnica o comenzar la implementación.
 
 ⸻
@@ -705,7 +705,11 @@ El mecanismo exacto dependerá también de las obligaciones fiscales aplicables.
 
 Un PDF con apariencia de factura no garantiza por sí solo el cumplimiento de todos los requisitos fiscales.
 
-Para la primera versión, la jurisdicción aplicable es Estados Unidos. Las facturas se emiten como PDF con numeración propia, sin facturación electrónica. El detalle de las obligaciones por estado y el tratamiento de los impuestos según el tipo de emisor y destinatario quedan por definir (ver 18.2).
+Para la primera versión, la jurisdicción aplicable es Estados Unidos, estado de Nevada. Las facturas se emiten como PDF con numeración propia, sin facturación electrónica.
+
+Cada empresa tiene un perfil fiscal configurable por un usuario con rol de máxima jerarquía en la empresa: identificación fiscal, dirección fiscal, tasa de impuesto por defecto y bandera de exención. La tasa vive en la configuración —no en el código— y puede ajustarse por factura al emitir, porque Nevada aplica la tasa del lugar donde se recibe el servicio.
+
+Quien emite la factura marca línea por línea qué conceptos son imponibles; no hay reglas fijas por tipo de emisor y destinatario. Al emitir, la plataforma calcula el impuesto sobre las líneas imponibles, lo congela junto al subtotal y el total, y lo muestra en el PDF y en la exportación contable. Las facturas anteriores a esta regla conservan sus importes con impuesto cero. El registro y la presentación de declaraciones ante el departamento de impuestos quedan fuera del sistema, a cargo del emisor.
 
 ⸻
 
@@ -898,10 +902,10 @@ La lista siguiente no significa que haya que decidir todo ahora. Sirve para dist
 
 - Definir un procedimiento simple para registrar una autorización recibida por teléfono: quién autorizó, cuándo, qué autorizó y quién registró la constancia. El registro debe respetar la regla de que solo la entidad originadora de la orden puede autorizar trabajos adicionales y superar su límite de gasto.
 
-18.2. Facturación y obligaciones fiscales
+18.2. Facturación y obligaciones fiscales — resuelto el 19/10/2026
 
-- Establecer los requisitos fiscales de los documentos emitidos, según el estado.
-- Definir cómo se tratarán los impuestos según el tipo de emisor y destinatario.
+- Requisitos del documento: PDF con datos de emisor (incluido su ID fiscal), destinatario, número consecutivo propio, fechas, propiedades/trabajos, líneas, subtotal, impuesto (tasa e importe) y total.
+- Tratamiento de impuestos: perfil fiscal por empresa sobre Nevada; la imponibilidad la decide el emisor línea por línea; cálculo y congelado al emitir; cobranza y declaraciones fuera del sistema.
 
 18.3. Suscripciones — resuelto el 18/10/2026
 
