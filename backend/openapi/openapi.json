@@ -4168,11 +4168,27 @@
           "name": {
             "type": "string",
             "example": "Propiedades del Sur SRL"
+          },
+          "taxId": {
+            "type": "string",
+            "description": "Identificación fiscal del emisor (etapa-7.md §2.1, §11.6); cadena vacía la borra",
+            "example": "NV1234567"
+          },
+          "taxAddress": {
+            "type": "string",
+            "description": "Dirección fiscal (se muestra en el PDF); cadena vacía la borra"
+          },
+          "defaultTaxRate": {
+            "type": "object",
+            "description": "Tasa de impuesto por defecto en % (0–100, ≤ 3 decimales); null la borra",
+            "example": "8.375",
+            "nullable": true
+          },
+          "taxExempt": {
+            "type": "boolean",
+            "description": "Empresa exenta: el impuesto se congela en 0.00 (etapa-7.md D2)"
           }
-        },
-        "required": [
-          "name"
-        ]
+        }
       },
       "ChangeMemberRoleDto": {
         "type": "object",
@@ -4941,6 +4957,12 @@
           "dueDate": {
             "type": "string",
             "description": "Fecha de vencimiento (YYYY-MM-DD); default emisión + 30 días (D3)"
+          },
+          "taxRate": {
+            "type": "object",
+            "description": "Tasa de impuesto de esta factura en % (0–100, ≤ 3 decimales); default la del perfil fiscal. null limpia el ajuste (etapa-7.md D3, destination-based)",
+            "example": "8.375",
+            "nullable": true
           }
         }
       },
@@ -4970,6 +4992,11 @@
             "type": "string",
             "description": "Importe en USD con hasta 2 decimales",
             "example": "85.00"
+          },
+          "taxable": {
+            "type": "boolean",
+            "description": "Línea imponible por defecto; quítalo para conceptos no imponibles (etapa-7.md T4, §11.6)",
+            "default": true
           }
         },
         "required": [

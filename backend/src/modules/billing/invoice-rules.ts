@@ -254,6 +254,71 @@ export function defaultDueDate(issueDateIso: string): string {
   return date.toISOString().slice(0, 10);
 }
 
+// ---------------------------------------------------------------------------
+// Etapa 7 — sales tax (spec etapa-7.md §1, proyect.md §11.6, §18.2)
+// ---------------------------------------------------------------------------
+
+/** Thousandths of one percent: 8.375% → 8375 (integer math, no floats). */
+export const TAX_RATE_SCALE = 100_000;
+
+/**
+ * Taxable base of the invoice in cents (etapa-7.md D1): only lines the
+ * issuer marked as taxable add up; money never touches floats (§12).
+ */
+export function taxableBaseCents(lines: Array<{ amount: string; taxable: boolean }>): number {
+  return lines.reduce((sum, line) => (line.taxable ? sum + toCents(line.amount) : sum), 0);
+}
+
+/**
+ * Sales tax in cents: commercial half-up rounding of `base × rate` (D1).
+ * Rates are integer thousandths of percent — `8375` means 8.375% — so
+ * `tax_cents = round(base_cents × rate_milli / 100_000)`; `Math.round` is
+ * half-up for non-negative amounts. Values stay well inside 2^53.
+ */
+export function taxCentsFor(taxableBaseCentsValue: number, rateMilli: number): number {
+  return Math.round((taxableBaseCentsValue * rateMilli) / TAX_RATE_SCALE);
+}
+
+export interface EmissionTaxInput {
+  /** `companies.tax_exempt` of the issuer (etapa-7.md D2). */
+  exempt: boolean;
+  /** Draft override (`invoices.tax_rate`) in percent, or null. */
+  overrideRate: string | null;
+  /** `companies.default_tax_rate` of the issuer, or null. */
+  defaultRate: string | null;
+  taxableBaseCents: number;
+}
+
+export type EmissionTax = { rate: string | null; taxCents: number };
+
+/**
+ * Resolves the tax frozen at emission (etapa-7.md D2):
+ * - exempt issuers always freeze 0.00, whatever the rates or lines say;
+ * - no taxable lines (or a zero base) freeze 0.00 with the applied rate
+ *   (override ?? default, possibly null);
+ * - taxable lines without any available rate are an error: tax is never
+ *   silently charged nor silently skipped (§11.6). The message names the
+ *   three valid exits.
+ */
+export function resolveEmissionTax(input: EmissionTaxInput): EmissionTax | { error: string } {
+  const rate = input.overrideRate ?? input.defaultRate;
+  if (input.exempt) return { rate, taxCents: 0 };
+  if (input.taxableBaseCents <= 0) return { rate, taxCents: 0 };
+  if (rate === null) {
+    return {
+      error:
+        'Hay renglones imponibles pero la empresa no tiene tasa: fija una tasa en la factura, ' +
+        'configura la tasa por defecto del perfil fiscal o marca la empresa como exenta (§11.6).',
+    };
+  }
+  return { rate, taxCents: taxCentsFor(input.taxableBaseCents, taxRateMilli(rate)) };
+}
+
+/** Parses a percent rate string into integer thousandths ("8.375" → 8375). */
+export function taxRateMilli(rate: string): number {
+  return Math.round(Number(rate) * 1000);
+}
+
 /** Today in UTC as YYYY-MM-DD (dates of domain are calendar dates). */
 export function todayIso(): string {
   return new Date().toISOString().slice(0, 10);

@@ -11,6 +11,9 @@ export interface InvoicePdfData {
   orderTitle: string;
   orderId: string;
   issuerName: string;
+  /** Etapa 7 (etapa-7.md D6, §18.2): fiscal data of the issuer, if set. */
+  issuerTaxId: string | null;
+  issuerTaxAddress: string | null;
   recipientName: string;
   lines: Array<{
     kind: string;
@@ -19,6 +22,9 @@ export interface InvoicePdfData {
     amount: string;
   }>;
   subtotal: string;
+  /** Etapa 7: frozen at emission; the tax row renders only when > 0.00. */
+  taxRate: string | null;
+  taxTotal: string | null;
   total: string;
   payments: Array<{
     paidAt: string;
@@ -44,6 +50,10 @@ export interface AccountingExportData {
     dueDate: string | null;
     counterparty: string;
     orderTitle: string;
+    /** Etapa 7 (etapa-7.md D7): frozen fiscal columns of the invoice. */
+    subtotal: string | null;
+    taxRate: string | null;
+    taxTotal: string | null;
     total: string | null;
     paidNet: string;
     balance: string | null;

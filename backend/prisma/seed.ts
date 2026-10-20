@@ -75,6 +75,7 @@ const INV_4 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd04'; // #3 paid, then refunded
 const INV_5 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd05'; // #4 paid in full
 const INV_6 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd06'; // #5 overdue
 const INV_7 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd07'; // Gestión #1 → client T_2
+const INV_8 = 'dddddddd-dddd-4ddd-8ddd-dddddddddd08'; // Taller #6, with tax (etapa 7)
 
 const LINE = (n: number): string =>
   `eeeeeeee-eeee-4eee-8eee-eeeeeeeeee${String(n).padStart(2, '0')}`;
@@ -136,6 +137,25 @@ async function main(): Promise<void> {
           { id: C_GESTION, name: 'Gestión Demo', type: 'property_management', createdBy: U_ANA },
           { id: C_TALLER, name: 'Taller Carla', type: 'own_business', createdBy: U_CARLA },
         ],
+      }),
+      // Etapa 7 (spec etapa-7.md D8): fictitious Nevada fiscal profiles
+      // (§11.6). Filled only when absent so a re-seed never overwrites an
+      // owner's real configuration.
+      prisma.company.updateMany({
+        where: { id: C_GESTION, defaultTaxRate: null, taxId: null },
+        data: {
+          taxId: 'NV-DEMO-0001',
+          taxAddress: '1 Demo Blvd, Las Vegas, NV 89101',
+          defaultTaxRate: '8.375', // Clark County combined rate
+        },
+      }),
+      prisma.company.updateMany({
+        where: { id: C_TALLER, defaultTaxRate: null, taxId: null },
+        data: {
+          taxId: 'NV-DEMO-0002',
+          taxAddress: '22 Demo Way, Reno, NV 89501',
+          defaultTaxRate: '8.265', // Washoe County combined rate
+        },
       }),
       prisma.membership.createMany({
         skipDuplicates: true,
@@ -354,6 +374,7 @@ async function main(): Promise<void> {
             issueDate: daysFromNow(-10),
             dueDate: daysFromNow(20),
             subtotal: '450.00',
+            taxTotal: '0.00',
             total: '450.00',
             notes: 'Emitida tras la visita de emergencia.',
             createdById: U_CARLA,
@@ -369,6 +390,7 @@ async function main(): Promise<void> {
             issueDate: daysFromNow(-12),
             dueDate: daysFromNow(18),
             subtotal: '300.00',
+            taxTotal: '0.00',
             total: '300.00',
             createdById: U_CARLA,
           },
@@ -383,6 +405,7 @@ async function main(): Promise<void> {
             issueDate: daysFromNow(-15),
             dueDate: daysFromNow(15),
             subtotal: '250.00',
+            taxTotal: '0.00',
             total: '250.00',
             createdById: U_CARLA,
           },
@@ -397,6 +420,7 @@ async function main(): Promise<void> {
             issueDate: daysFromNow(-20),
             dueDate: daysFromNow(10),
             subtotal: '140.00',
+            taxTotal: '0.00',
             total: '140.00',
             createdById: U_CARLA,
           },
@@ -411,6 +435,7 @@ async function main(): Promise<void> {
             issueDate: daysFromNow(-45),
             dueDate: daysFromNow(-15),
             subtotal: '90.00',
+            taxTotal: '0.00',
             total: '90.00',
             notes: 'Vencida: Gestión pidió una prórroga que nunca llegó.',
             createdById: U_CARLA,
@@ -427,8 +452,28 @@ async function main(): Promise<void> {
             issueDate: daysFromNow(-8),
             dueDate: daysFromNow(22),
             subtotal: '220.00',
+            taxTotal: '0.00',
             total: '220.00',
             createdById: U_ANA,
+          },
+          // Etapa 7 demo (etapa-7.md D8): Taller #6 with Nevada tax — the
+          // labor line is not taxable, so the base is 100.00 and 8.265%
+          // freezes tax_total 8.27 (half-up of 8.265).
+          {
+            id: INV_8,
+            companyId: C_TALLER,
+            recipientCompanyId: C_GESTION,
+            orderId: O_4,
+            status: 'issued',
+            number: 6,
+            issueDate: daysFromNow(-2),
+            dueDate: daysFromNow(28),
+            subtotal: '300.00',
+            taxRate: '8.265',
+            taxTotal: '8.27',
+            total: '308.27',
+            notes: 'Factura con impuesto de Nevada (etapa 7).',
+            createdById: U_CARLA,
           },
         ],
       }),
@@ -436,13 +481,17 @@ async function main(): Promise<void> {
         skipDuplicates: true,
         data: [
           { id: LINE(1), invoiceId: INV_1, jobId: J_5, kind: 'material', description: 'Ventilador de techo', amount: '180.00' },
-          { id: LINE(2), invoiceId: INV_1, jobId: J_5, kind: 'labor', description: 'Instalación', amount: '120.00' },
+          // Etapa 7 T4: labor is not taxable in this draft (issuer's call).
+          { id: LINE(2), invoiceId: INV_1, jobId: J_5, kind: 'labor', description: 'Instalación', amount: '120.00', taxable: false },
           { id: LINE(3), invoiceId: INV_2, jobId: J_5, kind: 'labor', description: 'Servicio de emergencia', amount: '450.00' },
           { id: LINE(4), invoiceId: INV_3, jobId: J_5, kind: 'material', description: 'Filtros y refrigerante', amount: '300.00' },
           { id: LINE(5), invoiceId: INV_4, jobId: J_5, kind: 'labor', description: 'Instalación completa', amount: '250.00' },
           { id: LINE(6), invoiceId: INV_5, jobId: J_5, kind: 'labor', description: 'Visita técnica', amount: '140.00' },
           { id: LINE(7), invoiceId: INV_6, jobId: J_5, kind: 'other', description: 'Reposición de tornillería', amount: '90.00' },
-          { id: LINE(8), invoiceId: INV_7, jobId: J_6, kind: 'labor', description: 'Revisión eléctrica completa', amount: '220.00' },
+          { id: LINE(8), invoiceId: INV_7, jobId: J_6, kind: 'labor', description: 'Revisión eléctrica completa', amount: '220.00', taxable: false },
+          // Etapa 7 demo: taxable materials + non-taxable labor (base 100.00).
+          { id: LINE(9), invoiceId: INV_8, jobId: J_5, kind: 'material', description: 'Panel eléctrico', amount: '100.00' },
+          { id: LINE(10), invoiceId: INV_8, jobId: J_5, kind: 'labor', description: 'Instalación del panel', amount: '200.00', taxable: false },
         ],
       }),
       prisma.payment.createMany({
@@ -462,11 +511,11 @@ async function main(): Promise<void> {
           { id: PMT(7), companyId: C_GESTION, invoiceId: INV_7, kind: 'charge', status: 'recorded', amount: '100.00', paidAt: daysFromNow(-4), method: 'transfer', reference: 'TRF-DEMO-7', createdById: U_ANA },
         ],
       }),
-      // Gapless per-company series (D2): Taller is at 5, Gestión at 1.
+      // Gapless per-company series (D2): Taller is at 6, Gestión at 1.
       prisma.invoiceCounter.createMany({
         skipDuplicates: true,
         data: [
-          { companyId: C_TALLER, lastNumber: 5 },
+          { companyId: C_TALLER, lastNumber: 6 },
           { companyId: C_GESTION, lastNumber: 1 },
         ],
       }),

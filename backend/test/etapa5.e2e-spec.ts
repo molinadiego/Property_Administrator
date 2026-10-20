@@ -406,6 +406,19 @@ suite('etapa 5: matriz de facturación y pagos (e2e)', () => {
         .expect(201)
     ).body.id as string;
 
+    // Etapa 7 (etapa-7.md D2): taxable lines without any configured rate
+    // refuse to emit (422). These fixtures predate the fiscal profile, so
+    // the emitters are marked tax-exempt — tax freezes at 0.00 and every
+    // total of this approved matrix stays exactly as asserted.
+    await agents.ownerB
+      .patch(`${API}/companies/${companies.B}`)
+      .send({ taxExempt: true })
+      .expect(200);
+    await agents.ownerC
+      .patch(`${API}/companies/${companies.C}`)
+      .send({ taxExempt: true })
+      .expect(200);
+
     await inviteAndAccept('ownerA', companies.A, accounts.memberA, agents.memberA);
     await inviteAndAccept('ownerB', companies.B, accounts.memberB, agents.memberB);
 

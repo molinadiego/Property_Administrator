@@ -75,6 +75,9 @@ export class PdfService {
               stack: [
                 { text: 'Emisor', style: 'section' },
                 { text: data.issuerName, bold: true },
+                // Etapa 7 (etapa-7.md D6, §18.2): fiscal data when configured.
+                ...(data.issuerTaxId ? [{ text: `ID fiscal: ${data.issuerTaxId}` }] : []),
+                ...(data.issuerTaxAddress ? [{ text: data.issuerTaxAddress, style: 'muted' }] : []),
               ],
             },
             {
@@ -122,7 +125,17 @@ export class PdfService {
             widths: ['*', 'auto'],
             body: [
               ['Subtotal', { text: data.subtotal, alignment: 'right' as const }],
-              ['Total (sin impuestos en v1, §18.2)', { text: data.total, alignment: 'right' as const, bold: true }],
+              // Etapa 7 (§11.6): the tax row renders only when an amount was
+              // frozen; pre-etapa-7 invoices (0.00) keep the original layout.
+              ...(data.taxTotal !== null && Number(data.taxTotal) > 0
+                ? [
+                    [
+                      `Impuesto (${data.taxRate ?? '0.000'}%)`,
+                      { text: data.taxTotal, alignment: 'right' as const },
+                    ],
+                  ]
+                : []),
+              ['Total', { text: data.total, alignment: 'right' as const, bold: true }],
             ],
           },
           layout: 'noBorders',

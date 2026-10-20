@@ -290,6 +290,14 @@ model Company {
   /// Etapa 6: explicit subscription plan (§15); null = plan by company
   /// category (etapa-6.md §2.4, D3).
   planId              String?          @map("plan_id") @db.Uuid
+  /// Etapa 7 (spec etapa-7.md §2.1, proyect.md §11.6): fiscal profile.
+  /// Fictitious in seeds; edited only by the company's highest role (D5).
+  taxId               String?          @map("tax_id") @db.VarChar(64)
+  taxAddress          String?          @map("tax_address") @db.Text
+  /// Default sales-tax rate in percent (0–100, ≤ 3 decimals, Nevada 6.85–8.375).
+  defaultTaxRate      Decimal?         @map("default_tax_rate") @db.Decimal(5, 3)
+  /// Exempt issuers freeze tax_total = 0.00 at emission (etapa-7.md D2).
+  taxExempt           Boolean          @default(false) @map("tax_exempt")
 
   createdByUser             User                   @relation("CompanyCreatedBy", fields: [createdBy], references: [id])
   plan                      Plan?                  @relation(fields: [planId], references: [id])
@@ -957,6 +965,11 @@ model Invoice {
   dueDate            DateTime?     @map("due_date") @db.Date
   /// Frozen totals snapshot taken at emission (D5); null while draft.
   subtotal           Decimal?      @db.Decimal(12, 2)
+  /// Etapa 7 (etapa-7.md §2.2, §11.6): rate applied and tax frozen at
+  /// emission (invoice override ?? company default); null while draft and on
+  /// pre-etapa-7 invoices (backfilled with tax_total = 0.00).
+  taxRate            Decimal?      @map("tax_rate") @db.Decimal(5, 3)
+  taxTotal           Decimal?      @map("tax_total") @db.Decimal(12, 2)
   total              Decimal?      @db.Decimal(12, 2)
   notes              String?
   voidedAt           DateTime?     @map("voided_at") @db.Timestamptz()
@@ -995,6 +1008,9 @@ model InvoiceLine {
   description String
   /// ≥ 0; the invoice total is the sum of lines (CHECK).
   amount      Decimal         @db.Decimal(12, 2)
+  /// Etapa 7 (etapa-7.md §2.3, T4): taxable by default; the issuer removes
+  /// the flag per line (§11.6 — no hardcoded rules by party types).
+  taxable     Boolean         @default(true)
   createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
 

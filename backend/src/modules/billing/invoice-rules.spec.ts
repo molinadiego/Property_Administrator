@@ -9,7 +9,11 @@ import {
   paidNetCents,
   paymentAmountError,
   paymentRegistrationError,
+  resolveEmissionTax,
   statusAfterPayment,
+  taxCentsFor,
+  taxableBaseCents,
+  taxRateMilli,
   todayIso,
 } from './invoice-rules';
 
@@ -258,6 +262,125 @@ describe('invoice-rules (etapa-5 §1.2 D1–D7)', () => {
 
     it('formats today as YYYY-MM-DD', () => {
       expect(todayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+  });
+});
+
+/**
+ * Etapa 7 — sales tax (spec etapa-7.md §8, proyect.md §11.6, §18.2): every
+ * calculation moves integer cents and integer thousandths of a percent;
+ * money never touches floats (§12).
+ */
+describe('invoice-rules — etapa 7 tax (etapa-7.md D1/D2)', () => {
+  describe('taxableBaseCents', () => {
+    it('adds only the lines the issuer marked as taxable', () => {
+      expect(
+        taxableBaseCents([
+          { amount: '100.00', taxable: true },
+          { amount: '200.00', taxable: false },
+          { amount: '0.10', taxable: true },
+        ]),
+      ).toBe(10010);
+    });
+
+    it('returns 0 without taxable lines', () => {
+      expect(taxableBaseCents([{ amount: '999.99', taxable: false }])).toBe(0);
+    });
+  });
+
+  describe('taxCentsFor — commercial half-up rounding (D1)', () => {
+    it('matches the documented Nevada examples', () => {
+      expect(taxCentsFor(10010, taxRateMilli('8.375'))).toBe(838); // 100.10 → 8.38
+      expect(taxCentsFor(5, taxRateMilli('8.375'))).toBe(0); // 0.05 → 0.00
+      expect(taxCentsFor(10000, taxRateMilli('8.265'))).toBe(827); // half of 8.265 rounds up
+    });
+
+    it('rounds .5 upward at the exact boundary', () => {
+      // 10.00 at 6.25% = 0.625 → 0.63; 2.00 at 12.5% = 0.25 exactly.
+      expect(taxCentsFor(1000, taxRateMilli('6.25'))).toBe(63);
+      expect(taxCentsFor(200, taxRateMilli('12.5'))).toBe(25);
+    });
+
+    it('stays exact on amounts far beyond safe-float territory (§12)', () => {
+      // 99,999,999.99 at 8.375% = 8,374,999.9994125 → 8,375,000.00
+      expect(taxCentsFor(9999999999, taxRateMilli('8.375'))).toBe(837500000);
+    });
+  });
+
+  describe('taxRateMilli', () => {
+    it('parses percent strings into integer thousandths', () => {
+      expect(taxRateMilli('8.375')).toBe(8375);
+      expect(taxRateMilli('6.85')).toBe(6850);
+      expect(taxRateMilli('0')).toBe(0);
+      expect(taxRateMilli('100')).toBe(100000);
+    });
+  });
+
+  describe('resolveEmissionTax (D2)', () => {
+    const lines = [{ amount: '100.00', taxable: true }];
+
+    it('uses the draft override over the company default (destination-based)', () => {
+      const tax = resolveEmissionTax({
+        exempt: false,
+        overrideRate: '8.265',
+        defaultRate: '8.375',
+        taxableBaseCents: taxableBaseCents(lines),
+      });
+      expect(tax).toEqual({ rate: '8.265', taxCents: 827 });
+    });
+
+    it('falls back to the company default when the draft has no override', () => {
+      const tax = resolveEmissionTax({
+        exempt: false,
+        overrideRate: null,
+        defaultRate: '8.375',
+        taxableBaseCents: taxableBaseCents(lines),
+      });
+      expect(tax).toEqual({ rate: '8.375', taxCents: 838 });
+    });
+
+    it('freezes 0.00 for exempt issuers whatever the rates say (§11.6)', () => {
+      const tax = resolveEmissionTax({
+        exempt: true,
+        overrideRate: '8.375',
+        defaultRate: '8.375',
+        taxableBaseCents: taxableBaseCents(lines),
+      });
+      expect(tax).toEqual({ rate: '8.375', taxCents: 0 });
+    });
+
+    it('freezes 0.00 with the applied rate when nothing is taxable', () => {
+      const tax = resolveEmissionTax({
+        exempt: false,
+        overrideRate: null,
+        defaultRate: '8.375',
+        taxableBaseCents: 0,
+      });
+      expect(tax).toEqual({ rate: '8.375', taxCents: 0 });
+    });
+
+    it('freezes 0.00 with a null rate when no rate exists at all', () => {
+      const tax = resolveEmissionTax({
+        exempt: false,
+        overrideRate: null,
+        defaultRate: null,
+        taxableBaseCents: 0,
+      });
+      expect(tax).toEqual({ rate: null, taxCents: 0 });
+    });
+
+    it('refuses to emit taxable lines without any available rate (D2)', () => {
+      const tax = resolveEmissionTax({
+        exempt: false,
+        overrideRate: null,
+        defaultRate: null,
+        taxableBaseCents: taxableBaseCents(lines),
+      });
+      expect('error' in tax).toBe(true);
+      if ('error' in tax) {
+        expect(tax.error).toContain('tasa');
+        expect(tax.error).toContain('exenta');
+      }
     });
   });
 });

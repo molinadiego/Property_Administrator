@@ -125,3 +125,8 @@ export const AUDIT_ACTIONS_ETAPA6 = {
 export const AUDIT_ENTITIES_ETAPA6 = {
   WARRANTY_CLAIM: 'warranty_claim',
 } as const;
+
+/** Audit actions of Etapa 7 (spec etapa-7.md §7). */
+export const AUDIT_ACTIONS_ETAPA7 = {
+  COMPANY_TAX_PROFILE_UPDATED: 'company.tax_profile_updated',
+} as const;

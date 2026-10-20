@@ -39,7 +39,9 @@ import {
   lineTotalCents,
   paidNetCents,
   paymentAmountError,
+  resolveEmissionTax,
   statusAfterPayment,
+  taxableBaseCents,
   todayIso,
 } from './invoice-rules';
 import { AccountingExportData, InvoicePdfData } from './types';
@@ -64,6 +66,10 @@ const centsOf = (decimal: Prisma.Decimal): number => toCents(decimal.toFixed(2))
 
 /** `fromCents` with a non-null guarantee for known-cents callers (§12). */
 const money = (cents: number): string => fromCents(cents) ?? '0.00';
+
+/** Frozen tax rates always serialize with the 3 decimals of Decimal(5,3). */
+const rateStr = (decimal: Prisma.Decimal | null): string | null =>
+  decimal ? decimal.toFixed(3) : null;
 
 /**
  * Invoices, payments and accounting downloads (spec etapa-5.md, proyect.md
@@ -184,8 +190,8 @@ export class BillingService {
 
   /** Edits the mutable fields of a draft (§11.5). */
   async updateDraft(access: CompanyAccess, auth: AuthContext, invoiceId: string, dto: PatchInvoiceDto) {
-    if (dto.notes === undefined && dto.dueDate === undefined) {
-      throw new UnprocessableEntityException('Envía al menos notes o dueDate (422).');
+    if (dto.notes === undefined && dto.dueDate === undefined && dto.taxRate === undefined) {
+      throw new UnprocessableEntityException('Envía al menos notes, dueDate o taxRate (422).');
     }
     const { invoice, role } = await this.loadInvoice(invoiceId, access);
     if (role !== 'issuer') {
@@ -197,9 +203,11 @@ export class BillingService {
 
     const notes = dto.notes !== undefined ? dto.notes.trim() || null : invoice.notes;
     const dueDate = dto.dueDate !== undefined ? new Date(`${dto.dueDate.slice(0, 10)}T00:00:00.000Z`) : invoice.dueDate;
+    // D3: per-invoice rate override (destination-based); null clears it.
+    const taxRate = dto.taxRate !== undefined ? dto.taxRate : rateStr(invoice.taxRate);
     const updated = await this.prisma.invoice.update({
       where: { id: invoice.id },
-      data: { notes, dueDate },
+      data: { notes, dueDate, taxRate },
       include: this.invoiceInclude(),
     });
 
@@ -212,6 +220,7 @@ export class BillingService {
       payload: {
         notes: dto.notes !== undefined ? 'changed' : 'unchanged',
         dueDate: dto.dueDate ?? null,
+        taxRate: dto.taxRate !== undefined ? dto.taxRate : 'unchanged',
       } as Prisma.InputJsonValue,
     });
 
@@ -260,6 +269,8 @@ export class BillingService {
           kind: line.kind,
           description: line.description,
           amount: line.amount,
+          // T4: lines are taxable by default; the issuer opts out per line.
+          taxable: line.taxable ?? true,
         })),
       });
     });
@@ -307,6 +318,21 @@ export class BillingService {
         throw new UnprocessableEntityException('El total de la factura debe ser mayor que cero (§11.1).');
       }
 
+      // Etapa 7 D1/D2 (§11.6): tax over the taxable lines, frozen at
+      // emission; taxable lines without any rate are an explicit 422.
+      const tax = resolveEmissionTax({
+        exempt: invoice.company.taxExempt,
+        overrideRate: rateStr(invoice.taxRate),
+        defaultRate: rateStr(invoice.company.defaultTaxRate),
+        taxableBaseCents: taxableBaseCents(
+          invoice.lines.map((line) => ({ amount: line.amount.toFixed(2), taxable: line.taxable })),
+        ),
+      });
+      if ('error' in tax) {
+        throw new UnprocessableEntityException(tax.error);
+      }
+      const grandTotalCents = totalCents + tax.taxCents;
+
       // The order must still be billable at emission time (§20.1, D1).
       const context = await this.eligibilityContext(invoice.orderId, invoice.companyId, tx);
       const eligibility = evaluateInvoiceEligibility({
@@ -345,7 +371,9 @@ export class BillingService {
           issueDate: new Date(`${issueDate}T00:00:00.000Z`),
           dueDate: new Date(`${dueDate}T00:00:00.000Z`),
           subtotal: (totalCents / 100).toFixed(2),
-          total: (totalCents / 100).toFixed(2),
+          taxRate: tax.rate,
+          taxTotal: (tax.taxCents / 100).toFixed(2),
+          total: (grandTotalCents / 100).toFixed(2),
         },
         include: this.invoiceInclude(),
       });
@@ -357,12 +385,19 @@ export class BillingService {
           action: AUDIT_ACTIONS_ETAPA5.INVOICE_EMITTED,
           entityType: AUDIT_ENTITIES_ETAPA5.INVOICE,
           entityId: invoice.id,
-          payload: { number, total: money(totalCents), dueDate } as Prisma.InputJsonValue,
+          payload: {
+            number,
+            subtotal: money(totalCents),
+            taxRate: tax.rate,
+            taxTotal: money(tax.taxCents),
+            total: money(grandTotalCents),
+            dueDate,
+          } as Prisma.InputJsonValue,
         },
         tx,
       );
 
-      return { issued, totalCents };
+      return { issued, totalCents: grandTotalCents };
     });
 
     const { issued, totalCents } = result;
@@ -847,6 +882,8 @@ export class BillingService {
       issueDate: isoDate(invoice.issueDate),
       dueDate: isoDate(invoice.dueDate),
       subtotal: invoice.subtotal ? money(centsOf(invoice.subtotal)) : null,
+      taxRate: rateStr(invoice.taxRate),
+      taxTotal: invoice.taxTotal ? money(centsOf(invoice.taxTotal)) : null,
       total: totalCents === null ? null : money(totalCents),
       notes: invoice.notes,
       paidNet: money(netPaid),
@@ -888,6 +925,7 @@ export class BillingService {
               kind: line.kind,
               description: line.description,
               amount: money(centsOf(line.amount)),
+              taxable: line.taxable,
             })),
           }
         : {}),
@@ -1118,6 +1156,9 @@ export class BillingService {
               ? (invoice.recipientCompany?.name ?? invoice.recipientTenant?.name ?? '—')
               : invoice.company.name,
           orderTitle: invoice.order.title,
+          subtotal: invoice.subtotal ? money(centsOf(invoice.subtotal)) : null,
+          taxRate: rateStr(invoice.taxRate),
+          taxTotal: invoice.taxTotal ? money(centsOf(invoice.taxTotal)) : null,
           total: totalCents === null ? null : money(totalCents),
           paidNet: money(netPaid),
           balance: totalCents === null ? null : money(totalCents - netPaid),
@@ -1153,6 +1194,7 @@ export class BillingService {
       throw new ConflictException('La factura aún es un borrador: emítela para descargar el PDF (§11.1).');
     }
     const totalCents = invoice.total ? centsOf(invoice.total) : null;
+    const subtotalCents = invoice.subtotal ? centsOf(invoice.subtotal) : totalCents;
     const netPaid = paidNetCents(this.paymentFacts(invoice));
     const data: InvoicePdfData = {
       number: invoice.number!,
@@ -1162,6 +1204,8 @@ export class BillingService {
       orderTitle: invoice.order.title,
       orderId: invoice.order.id,
       issuerName: invoice.company.name,
+      issuerTaxId: invoice.company.taxId,
+      issuerTaxAddress: invoice.company.taxAddress,
       recipientName: invoice.recipientCompany?.name ?? invoice.recipientTenant?.name ?? '—',
       lines: invoice.lines.map((line) => ({
         kind: line.kind,
@@ -1169,7 +1213,11 @@ export class BillingService {
         jobTitle: line.job.title,
         amount: money(centsOf(line.amount)),
       })),
-      subtotal: totalCents === null ? '0.00' : money(totalCents),
+      // §11.6: pre-etapa-7 invoices keep their amounts; taxTotal 0.00 hides
+      // the tax row so their PDF renders exactly as before (etapa-7.md D6).
+      subtotal: subtotalCents === null ? '0.00' : money(subtotalCents),
+      taxRate: rateStr(invoice.taxRate),
+      taxTotal: invoice.taxTotal ? money(centsOf(invoice.taxTotal)) : null,
       total: totalCents === null ? '0.00' : money(totalCents),
       payments: invoice.payments.map((payment) => ({
         paidAt: isoDate(payment.paidAt)!,

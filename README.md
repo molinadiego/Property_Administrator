@@ -17,6 +17,7 @@ Backend para administrar propiedades, órdenes de reparación, asignaciones de t
 | `docs/especificacion/etapa-4.md` | Especificación técnica de la Etapa 4: costos por asignación (borrador → envío → corrección), límites de gasto, margen, solicitudes y constancias de autorización (§18.1), relación comercial (`commercial_relations`) y política de emergencia. **Aprobada e implementada.** | Al revisar la Etapa 4. |
 | `docs/especificacion/etapa-5.md` | Especificación técnica de la Etapa 5: facturas (borrador → emitida → pagos/saldo → anulada), PDF con `pdfmake`, pagos con detección de duplicados y conciliación, facturación a cliente propio con visibilidad en cuenta limitada, descargas contables PDF/Excel. **Aprobada e implementada.** | Al revisar la Etapa 5. |
 | `docs/especificacion/etapa-6.md` | Especificación técnica de la Etapa 6: reclamos de garantía (§13), urgencias con ventana/recordatorio/escalación y preferencias de notificación (§14, §18.4), planes de suscripción (§15, §18.3). **Aprobada e implementada.** | Al revisar la Etapa 6. |
+| `docs/especificacion/etapa-7.md` | Especificación técnica de la Etapa 7: impuestos de la v1 sobre Nevada — perfil fiscal por empresa, renglones imponibles, tasa ajustable por factura, cálculo y congelado al emitir, PDF y Excel contables (§11.6, §18.2 resuelto). **Aprobada e implementada.** | Al revisar la Etapa 7. |
 
 Regla: los documentos se referencian entre sí, no se copian. Si un requisito cambia, se cambia primero en `proyect.md` y después en la especificación.
 

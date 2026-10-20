@@ -129,6 +129,21 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 ## Dependencias y decisiones pendientes
 
 - **Etapa 1 — proveedor de email decidido: Resend** (17/10/2026). Cuenta creada y funcionando en modo sandbox (`onboarding@resend.dev`); la API key vive solo en variable de entorno (`backend/.env`, gitignored). Verificar un dominio por DNS es opcional y solo hace falta para enviar a usuarios reales fuera del sandbox (ver `MEMORY.md` §8).
-- **Etapa 5** puede avanzar sin resolver todo el §18.2: la jurisdicción (EE.UU., solo PDF) ya está decidida; los requisitos fiscales por estado y el tratamiento de impuestos quedan abiertos y se tocan cuando se cierren.
-- **Etapa 6**: spec aprobada e implementada el 18/10/2026 (`docs/especificacion/etapa-6.md`). Las decisiones que la bloqueaban (§18.3 suscripciones, §18.4 detalles de diseño) quedaron resueltas con la enmienda a `proyect.md`. Sigue abierto únicamente §18.2 (impuestos), que no bloquea ninguna etapa restante.
+- **§18.2 (impuestos) — resuelto el 19/10/2026** con enmienda (`proyect.md` §11.6, §18.2): jurisdicción Nevada; perfil fiscal por empresa (ID fiscal, dirección, tasa por defecto, exención) con tasa ajustable por factura; imponibilidad marcada línea por línea por el emisor (nace imponible por defecto); cálculo y congelado al emitir, mostrado en PDF y export contable. Implementado en la **Etapa 7** (`docs/especificacion/etapa-7.md`, aprobada e implementada el 19/10/2026).
+- **Etapa 6**: spec aprobada e implementada el 18/10/2026 (`docs/especificacion/etapa-6.md`). Con el cierre de §18.2 (19/10/2026), **§18 queda entero resuelto**. Las etapas nuevas que siguen fuera de la propuesta original del §17 son dos: **impuestos** (§18.2) y **interfaz web** (producto nuevo, §1).
 - El **§18.1** (procedimiento de autorización por teléfono) se resuelve en la Etapa 4, al diseñar el registro de autorizaciones.
+
+---
+
+## Etapa 7 — Impuestos (Nevada) *(fuera de la propuesta original del §17; cierra §18.2)*
+
+**Alcance** (`docs/especificacion/etapa-7.md` §1.1)
+- Perfil fiscal por empresa: ID fiscal, dirección, tasa por defecto y exención; edición solo por el rol de máxima jerarquía, con auditoría (§11.6).
+- Renglones de factura con marca de imponibilidad (imponibles por defecto) y tasa ajustable por factura al emitir (*destination-based*, T4/T5).
+- Cálculo half-up en centavos y congelado al emitir (`tax_rate`, `tax_total`, `total = subtotal + tax_total`); facturas antiguas con impuesto 0.00 (backfill).
+- PDF con fila de impuesto y datos fiscales del emisor; Excel contable con columnas Subtotal/Tasa/Impuesto (§18.2).
+- Sin proveedor externo de impuestos y sin reglas hardcodeadas por tipo de emisor/destinatario (§11.6).
+
+**Criterio de salida:** definido en `docs/especificacion/etapa-7.md` §9 (perfil fiscal con edición owner-only auditada, congelado en emisión sin romper inmutabilidad, PDF/Excel con impuesto, matriz de 20 escenarios verde en `npm run check`, semilla Nevada y CI verde).
+
+**Entregable:** `docs/especificacion/etapa-7.md` (**aprobada e implementada el 19/10/2026**: gate `npm run check` en verde, matriz de 20 escenarios en `test/etapa7.e2e-spec.ts` —incluida la verificación de texto del PDF decodificando los ToUnicode CMaps de pdfmake—, migración aditiva `20261019234805_etapa7_taxes_nevada` con backfill de impuesto 0.00, OpenAPI y semilla Nevada actualizados; decisiones de negocio T1–T5 aprobadas el 19/10/2026 junto con la enmienda de §11.6/§18.2).

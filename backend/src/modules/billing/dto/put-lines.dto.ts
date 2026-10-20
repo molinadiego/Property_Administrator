@@ -1,9 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsIn,
+  IsOptional,
   IsString,
   IsUUID,
   MaxLength,
@@ -37,6 +39,15 @@ export class InvoiceLineDto {
   @ApiProperty({ description: 'Importe en USD con hasta 2 decimales', example: '85.00' })
   @IsMoneyAmount()
   amount: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Línea imponible por defecto; quítalo para conceptos no imponibles (etapa-7.md T4, §11.6)',
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  taxable?: boolean;
 }
 
 /** Replaces the whole draft's lines (put-list pattern, spec §4.1). */
