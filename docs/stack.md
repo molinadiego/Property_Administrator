@@ -43,7 +43,7 @@ No se instala todo el primer día. Cada pieza entra cuando hay una necesidad con
 | Generación de PDF de factura | pdfmake | 5 |
 | Descargas contables Excel | exceljs | 5 |
 | Barrido de urgencias (recordatorio a mitad de ventana y escalación al vencer, spec etapa-6.md §4.2/D7) | `@nestjs/schedule` — cron de 15 min; bajo `NODE_ENV=test` el cron queda deshabilitado y las suites e2e invocan el barrido directamente | 6 |
-| Interfaz web | Frontend TypeScript (a definir) | 6 (producto nuevo, fuera del backend) |
+| Interfaz web | React 19 + Vite + Tailwind v4 + shadcn/ui (ver §6) | Frontend F0 (producto nuevo, `frontend_plan.md`) |
 
 ## 4. Arquitectura
 
@@ -84,3 +84,40 @@ Cada módulo tiene controlador (HTTP + DTOs), servicio (reglas de negocio y perm
 | Microservicios | El §17 avanza por etapas; un monolito modular bien estructurado gana hasta que exista una razón real de escala. |
 | MinIO (almacenamiento original de la Etapa 3) | Dejó de distribuir imágenes: oct 2025 pasó a source-only, sep 2026 borró `minio/minio` de Docker Hub y oct 2026 Quay exige login (ver `MEMORY.md` §5). Sin imagen fiable que levantar. |
 | Garage / S3 gestionado (Cloudflare R2, AWS S3) para dev y test (decidido 17/10/2026) | Garage agregaba un servicio Docker más y setup de buckets/claves en una máquina limitada; R2/AWS exigían cuenta, credenciales y costo desde el desarrollo. El mock en proceso `s3rver` cubre dev/test y el driver S3 es el mismo; si algún día hace falta un S3 "de verdad" en self-hosting o prod, se apunta `STORAGE_ENDPOINT` a Garage/R2/S3 sin tocar código. |
+
+## 6. Stack del frontend (producto nuevo, aprobado 19/10/2026)
+
+El frontend es un producto nuevo fuera del alcance del backend (`proyect.md` §1). Su plan de etapas es `frontend_plan.md`; sus reglas de trabajo, `frontend/AGENTS.md`; sus specs, `docs/especificacion/frontend/`.
+
+| Capa | Elección | Por qué |
+|---|---|---|
+| Lenguaje | TypeScript + Node 24 | Mismo lenguaje que el backend; un solo toolchain. |
+| Framework | React 19 + Vite (SPA) | El backend ya es la fuente de verdad; SSR/Next.js suma un servidor y problemas de caché de sesión sin beneficio (sin SEO público tras login). Vite: build rápido y DX. |
+| Estilo | Tailwind CSS v4 + shadcn/ui (Radix) | Componentes accesibles (WCAG) copiados al repo: control total del diseño profesional sin dependencia de un UI kit pesado. |
+| Datos | TanStack Query | Caché, reintentos e invalidación de queries; evita estado global inventado. |
+| Router | React Router v7 (modo librería) | Rutas anidadas por espacio de trabajo, sin servidor propio. |
+| Formularios | react-hook-form + zod | Validación espejo de los DTO; manda el servidor (422 con formato RFC 7807). |
+| Contrato de API | openapi-typescript + openapi-fetch, **generado** de `backend/openapi/openapi.json` | Sin deriva de tipos; se regenera cuando cambia el contrato (`npm run openapi:generate`). |
+| i18n | i18next, locale `es` desde F0 | UI solo en español hoy, textos externalizados: agregar otro idioma no toca código. |
+| Identidad visual | Design tokens (CSS variables) propios: paleta neutra + acento, Inter self-hosted, modo claro/oscuro | Sin marca existente (decisión del dueño 19/10/2026): identidad definida desde cero y consistente entre pantallas. |
+| Pruebas | Vitest + Testing Library (gate local) + Playwright (e2e en CI) | Espejo del estándar del backend. **Monterey (gotcha):** Chrome 150 es el último que soporta macOS 12 (Chrome 151+ exige macOS 13) y WebKit dejó de actualizarse para Monterey desde Playwright 1.45 → los e2e completos corren en CI (ubuntu); en local se valida la combinación en F0 (pin de versión o `channel: 'chrome'`). |
+| Lint/formato | ESLint + Prettier + `tsc --noEmit`, gate `npm run check` en `frontend/` | Mismo criterio de gate que el backend. |
+| Despliegue | Mismo dominio vía reverse proxy (Caddy/Nginx): sirve los estáticos y proxya `/api` al backend | Cookie `mh_session` (SameSite=Lax) funciona sin CORS y sin cambios de backend. En dev, proxy de Vite a la API. |
+
+Decisiones transversales del frontend:
+
+- **La UI nunca sustituye al servidor**: ocultar botones según rol no es control de acceso (§3.4, §16.1); toda operación nueva verifica permisos en servidor y se prueba contra la API real.
+- **Cliente API solo generado** desde el contrato OpenAPI; los tipos no se escriben a mano.
+- **Dinero sin Float** (§12): importes como string/decimal del backend, formateo sin punto flotante.
+- **Responsive mobile-first**: 360 / 768 / 1280+, diseñado desde el móvil.
+
+### 6.1 Decisiones descartadas del frontend (y por qué)
+
+| Descartada | Motivo |
+|---|---|
+| Next.js (SSR) | La app es tras login y el estado vive en el backend; SSR agrega un segundo servidor y complejidad de caché de sesión sin beneficio (sin SEO público). Se reevalúa si aparecen páginas públicas con SEO. |
+| Angular / Vue / Svelte | Rompen "un solo lenguaje con el backend" y el ecosistema shadcn/ui + Radix sobre el que se apoya el diseño. |
+| MUI / Bootstrap / UI kits pesados | Menos control del diseño propio; shadcn/ui copia los componentes al repo (accesibles y modificables). |
+| Redux / estado global de servidor | TanStack Query cubre caché y reintentos; el estado de UI local no justifica Redux. |
+| Despliegue en subdominio separado (CORS) | Exigiría habilitar CORS con credenciales en el backend y ajustar cookies: cambios de backend innecesarios. Mismo dominio con reverse proxy los evita. |
+| Filtrado del dashboard en el cliente | Decisión D2 (19/10/2026): los filtros van en backend (BE-1); filtrar en cliente descarga todo el listado y no escala. |
