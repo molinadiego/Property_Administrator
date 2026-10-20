@@ -1033,6 +1033,30 @@
         "operationId": "OrdersController_list",
         "parameters": [
           {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Estado(s) de orden separados por coma (§20.1); admite requested, open, assigned, in_progress, completed, cancelled",
+            "schema": {
+              "example": "open,assigned,in_progress",
+              "type": "string"
+            }
+          },
+          {
+            "name": "assignment_status",
+            "required": false,
+            "in": "query",
+            "description": "Restringe a órdenes con una asignación del llamador en ese estado (§5.6, §2.12); solo pending|accepted",
+            "schema": {
+              "example": "pending",
+              "type": "string",
+              "enum": [
+                "pending",
+                "accepted"
+              ]
+            }
+          },
+          {
             "name": "id",
             "required": true,
             "in": "path",
@@ -1043,9 +1067,12 @@
         "responses": {
           "200": {
             "description": "Lista de órdenes"
+          },
+          "422": {
+            "description": "Filtro de consulta inválido (422)"
           }
         },
-        "summary": "Órdenes del espacio y las asignadas al usuario (§2.12)",
+        "summary": "Órdenes del espacio y las asignadas al usuario, con filtros opcionales (§2.12, BE-1)",
         "tags": [
           "orders"
         ]

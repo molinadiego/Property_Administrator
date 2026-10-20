@@ -20,7 +20,7 @@ Backend para administrar propiedades, órdenes de reparación, asignaciones de t
 | `docs/especificacion/etapa-7.md` | Especificación técnica de la Etapa 7: impuestos de la v1 sobre Nevada — perfil fiscal por empresa, renglones imponibles, tasa ajustable por factura, cálculo y congelado al emitir, PDF y Excel contables (§11.6, §18.2 resuelto). **Aprobada e implementada.** | Al revisar la Etapa 7. |
 | `frontend_plan.md` | Plan de construcción del frontend (etapas F0–F8), decisiones D1–D5 y criterio de salida de cada etapa. | Para saber en qué etapa del frontend estamos y qué sigue. |
 | `frontend/AGENTS.md` | Reglas de trabajo específicas del frontend (complementa al `AGENTS.md` raíz, que sigue vigente). | Siempre al trabajar en `frontend/`. |
-| `docs/especificacion/be-1-filtros-ordenes.md` | Especificación técnica de BE-1: filtros `status` y `assignment_status` en `GET /companies/{id}/orders` (prerequisito del dashboard F2). **Aprobada.** | Al implementar BE-1. |
+| `docs/especificacion/be-1-filtros-ordenes.md` | Especificación técnica de BE-1: filtros `status` y `assignment_status` en `GET /companies/{id}/orders` (prerequisito del dashboard F2). **Aprobada e implementada.** | Al implementar F2. |
 | `docs/especificacion/frontend/etapa-f0.md` | Especificación técnica de la Etapa F0 del frontend: scaffolding, design system, cliente API generado, sesión y selector de espacio. **Aprobada.** | Al implementar F0. |
 
 Regla: los documentos se referencian entre sí, no se copian. Si un requisito cambia, se cambia primero en `proyect.md` y después en la especificación.

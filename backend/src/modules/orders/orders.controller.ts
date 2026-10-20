@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -18,6 +19,7 @@ import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddJobDto } from './dto/add-job.dto';
+import { OrdersQueryDto } from './dto/orders.query.dto';
 import { CreateAssignmentDto, RejectAssignmentDto } from './dto/create-assignment.dto';
 import {
   CancelOrderDto,
@@ -49,10 +51,15 @@ export class OrdersController {
 
   @Get('companies/:id/orders')
   @UseGuards(CompanyAccessGuard)
-  @ApiOperation({ summary: 'Órdenes del espacio y las asignadas al usuario (§2.12)' })
+  @ApiOperation({ summary: 'Órdenes del espacio y las asignadas al usuario, con filtros opcionales (§2.12, BE-1)' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Lista de órdenes' })
-  list(@CurrentCompany() access: CompanyAccess, @CurrentUser() auth: AuthContext) {
-    return this.ordersService.list(access, auth);
+  @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'Filtro de consulta inválido (422)' })
+  list(
+    @CurrentCompany() access: CompanyAccess,
+    @CurrentUser() auth: AuthContext,
+    @Query() query: OrdersQueryDto,
+  ) {
+    return this.ordersService.list(access, auth, query);
   }
 
   @Get('companies/:id/orders/:orderId')

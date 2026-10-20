@@ -18,6 +18,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationDispatchService } from '../notifications/notification-dispatch.service';
 import { AuthContext, CompanyAccess } from '../../common/request-context';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { OrdersQueryDto } from './dto/orders.query.dto';
+import { buildOrderListWhere } from './order-filters';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddJobDto } from './dto/add-job.dto';
 import { CreateAssignmentDto, RejectAssignmentDto } from './dto/create-assignment.dto';
@@ -178,33 +180,39 @@ export class OrdersService {
     return this.serialize(order, { includeAccess: true, jobs: await this.jobsOf(order.id, 'all') });
   }
 
-  /** Orders of the company plus those assigned to the caller (§2.12). */
-  async list(access: CompanyAccess, auth: AuthContext) {
+  /**
+   * Orders of the company plus those assigned to the caller (§2.12), narrowed
+   * by the optional BE-1 filters (spec be-1 §4): `status` and
+   * `assignment_status` are extra AND terms, so they can only shrink the
+   * visible set; with no filters the response is unchanged (AC-BE1.6).
+   */
+  async list(access: CompanyAccess, auth: AuthContext, query: OrdersQueryDto) {
     const memberships = await this.prisma.membership.findMany({
       where: { userId: auth.userId, status: 'active' },
       select: { id: true },
     });
     const membershipIds = memberships.map((m) => m.id);
-    const rows = await this.prisma.order.findMany({
-      where: {
-        OR: [
-          { companyId: access.companyId },
-          {
-            jobs: {
-              some: {
-                assignments: {
-                  some: {
-                    assigneeMembershipId: { in: membershipIds },
-                    // Only active assignments grant visibility (§2.12); a
-                    // rejected one no longer exposes the order (matrix #10).
-                    status: { in: ['pending', 'accepted'] },
-                  },
+    const visibility: Prisma.OrderWhereInput = {
+      OR: [
+        { companyId: access.companyId },
+        {
+          jobs: {
+            some: {
+              assignments: {
+                some: {
+                  assigneeMembershipId: { in: membershipIds },
+                  // Only active assignments grant visibility (§2.12); a
+                  // rejected one no longer exposes the order (matrix #10).
+                  status: { in: ['pending', 'accepted'] },
                 },
               },
             },
           },
-        ],
-      },
+        },
+      ],
+    };
+    const rows = await this.prisma.order.findMany({
+      where: buildOrderListWhere(visibility, query, membershipIds),
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: 100,
     });
