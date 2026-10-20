@@ -8,6 +8,7 @@ import {
 import { RequireActiveCompany, RequireGuest, RequireSession } from '@/auth/guards';
 import { AppShell } from '@/layout/app-shell';
 import { ComingSoonStage } from '@/pages/coming-soon-stage';
+import { DashboardPage } from '@/pages/dashboard-page';
 import { ForgotPasswordPage } from '@/pages/forgot-password-page';
 import { InvitationPage } from '@/pages/invitation-page';
 import { LoginPage } from '@/pages/login-page';
@@ -24,8 +25,9 @@ import { MembersPage } from '@/pages/settings/members-page';
  * - `/invitations/:token`: public — works with or without a session;
  * - `/`: space picker / no-spaces screen (with space creation, F1) /
  *   auto-redirect with a single space;
- * - `/app/*`: authenticated shell; Ajustes opens on its first real panel,
- *   Miembros (F1-D7); the rest keeps the F0-D6 placeholders.
+ * - `/app/*`: authenticated shell; the index route is the F2 dashboard, Ajustes
+ *   opens on its first real panel, Miembros (F1-D7); the rest keeps the F0-D6
+ *   placeholders.
  */
 export const appRoutes: RouteObject[] = [
   {
@@ -82,7 +84,7 @@ export const appRoutes: RouteObject[] = [
       </RequireSession>
     ),
     children: [
-      { index: true, element: <ComingSoonStage labelKey="dashboard" stage="F2" /> },
+      { index: true, element: <DashboardPage /> },
       { path: 'orders', element: <ComingSoonStage labelKey="orders" stage="F4" /> },
       { path: 'catalogs', element: <ComingSoonStage labelKey="catalogs" stage="F3" /> },
       { path: 'billing', element: <ComingSoonStage labelKey="billing" stage="F7" /> },

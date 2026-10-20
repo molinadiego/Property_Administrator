@@ -72,7 +72,7 @@ describe('route guards', () => {
     });
     const { router } = renderApp(['/login']);
 
-    expect(await screen.findByRole('heading', { name: 'Panel' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Taller Carla', level: 1 })).toBeInTheDocument();
     expect(currentPath(router)).toBe('/app');
   });
 });

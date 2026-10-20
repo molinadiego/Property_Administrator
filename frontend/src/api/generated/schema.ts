@@ -1480,6 +1480,11 @@ export interface components {
         MembershipViewDto: {
             /**
              * Format: uuid
+             * @description Id de la membresía — la UI identifica así «sus» asignaciones (F2-D2)
+             */
+            id: string;
+            /**
+             * Format: uuid
              * @description Identificador del espacio (empresa)
              */
             companyId: string;
@@ -1807,6 +1812,86 @@ export interface components {
             /** @description Relación comercial que gobierna la emergencia de la orden (§8.6, decisión 4) */
             commercialRelationId?: string;
         };
+        OrderAccessViewDto: {
+            lockbox: string | null;
+            communityCode: string | null;
+            entryInstructions: string | null;
+        };
+        AssignmentViewDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Estado de la asignación (§20.3)
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "rejected" | "revoked";
+            /**
+             * Format: uuid
+             * @description Membresía del asignado
+             */
+            assigneeMembershipId: string;
+            /** Format: date-time */
+            respondedAt: string | null;
+            /** @description Motivo del rechazo si lo hay (§5.6) */
+            rejectionReason: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        JobViewDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            description: string;
+            sortOrder: number;
+            /**
+             * @description Estado del trabajo (§20.2)
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "in_progress" | "incomplete" | "done" | "not_realized";
+            /** Format: date-time */
+            startedAt: string | null;
+            /** Format: date-time */
+            completedAt: string | null;
+            assignments: components["schemas"]["AssignmentViewDto"][];
+        };
+        OrderViewDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            description: string;
+            /**
+             * @description Estado (mapeo §20.1, BE-2 R5)
+             * @enum {string}
+             */
+            status: "requested" | "open" | "in_progress" | "completed" | "cancelled";
+            /** @description Marca de urgencia (§14.2) */
+            urgent: boolean;
+            /** @enum {string} */
+            origin: "management" | "contractor" | "own_business";
+            /**
+             * Format: uuid
+             * @description Propiedad vinculada (§5.1)
+             */
+            propertyId: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            parentOrderId: string | null;
+            /** Format: uuid */
+            closedBy: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            cancelledBy: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            cancellationReason: string | null;
+            /** @description Acceso de la visita solo para quien está autorizado (§4.5/§5.8); null si no */
+            access: components["schemas"]["OrderAccessViewDto"] | null;
+            jobs: components["schemas"]["JobViewDto"][];
+            /** Format: date-time */
+            createdAt: string;
+        };
         UpdateOrderDto: {
             /** @example Revisar triturador de basura */
             title?: string;
@@ -1856,6 +1941,34 @@ export interface components {
         CancelOrderDto: {
             /** @description Motivo de la cancelación (§20.1) */
             reason: string;
+        };
+        NotificationViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            type: "order_created" | "order_assigned" | "assignment_requested" | "assignment_accepted" | "assignment_rejected" | "job_added" | "urgent_reminder" | "urgent_escalated";
+            title: string;
+            body: string;
+            /** @description Tipo de entidad relacionada (p. ej. assignment) */
+            entityType: string;
+            /** Format: uuid */
+            entityId: string;
+            /** @description Ruta a la entidad; hoy siempre null — la navegación llega con F4/F5 (F2-D6) */
+            link: string | null;
+            /** Format: date-time */
+            readAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: uuid
+             * @description Espacio al que pertenece la notificación (§2.4; la portada filtra por el activo, F2-D5)
+             */
+            companyId: string;
+        };
+        NotificationListViewDto: {
+            data: components["schemas"]["NotificationViewDto"][];
+            /** @description Cursor opaco para la siguiente página; null si no hay más */
+            nextCursor: string | null;
         };
         NotificationPreferenceEntryDto: {
             /**
@@ -3081,7 +3194,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["OrderViewDto"][];
+                };
             };
             /** @description Filtro de consulta inválido (422) */
             422: {
@@ -3852,7 +3967,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["NotificationListViewDto"];
+                };
             };
         };
     };

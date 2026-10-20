@@ -3,6 +3,7 @@ import { initReactI18next } from 'react-i18next';
 
 import auth from './locales/es/auth.json';
 import common from './locales/es/common.json';
+import dashboard from './locales/es/dashboard.json';
 import errors from './locales/es/errors.json';
 import nav from './locales/es/nav.json';
 import spaces from './locales/es/spaces.json';
@@ -32,6 +33,7 @@ void i18n.use(initReactI18next).init({
       spaces,
       errors,
       theme,
+      dashboard,
     },
   },
   interpolation: { escapeValue: false },

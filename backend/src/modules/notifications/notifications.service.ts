@@ -15,6 +15,8 @@ export interface NotificationPage {
     link: string | null;
     readAt: string | null;
     createdAt: string;
+    /** Space the notification belongs to (§2.4; frontend F2-D5 filters by it). */
+    companyId: string;
   }>;
   nextCursor: string | null;
 }
@@ -87,6 +89,7 @@ export class NotificationsService {
         link: row.link,
         readAt: row.readAt?.toISOString() ?? null,
         createdAt: row.createdAt.toISOString(),
+        companyId: row.companyId,
       })),
       nextCursor: hasMore && last ? encodeCursor(last.createdAt, last.id) : null,
     };

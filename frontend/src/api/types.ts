@@ -34,3 +34,9 @@ export const SELECTABLE_COMPANY_TYPES = [
   'own_business',
 ] as const satisfies readonly CompanyType[];
 
+/** F2 (spec F2-D5, Option A): typed responses for the endpoints the dashboard consumes. */
+export type OrderViewDto = components['schemas']['OrderViewDto'];
+export type OrderStatus = OrderViewDto['status'];
+export type NotificationViewDto = components['schemas']['NotificationViewDto'];
+export type NotificationListViewDto = components['schemas']['NotificationListViewDto'];
+

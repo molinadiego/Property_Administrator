@@ -1,0 +1,64 @@
+{
+  "spaceType": {
+    "property_management": "Administradora de propiedades",
+    "contractor": "Contratista",
+    "own_business": "Profesional independiente",
+    "profesional": "Profesional independiente"
+  },
+  "status": {
+    "requested": "Borrador",
+    "open": "Enviada",
+    "in_progress": "En curso",
+    "completed": "Cerrada",
+    "cancelled": "Cancelada"
+  },
+  "openOrders": {
+    "title": "Órdenes abiertas",
+    "count_one": "{{count}} orden",
+    "count_other": "{{count}} órdenes",
+    "countCapped": "Más de 100 órdenes",
+    "empty": "No hay órdenes abiertas.",
+    "error": "No pudimos cargar las órdenes abiertas.",
+    "urgent": "Urgente"
+  },
+  "pending": {
+    "title": "Pendientes de aceptar",
+    "count_one": "{{count}} asignación pendiente",
+    "count_other": "{{count}} asignaciones pendientes",
+    "empty": "No tienes asignaciones pendientes de respuesta.",
+    "error": "No pudimos cargar las asignaciones pendientes.",
+    "job": "Trabajo: {{title}}",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "acceptAria": "Aceptar: {{order}}",
+    "rejectAria": "Rechazar: {{order}}"
+  },
+  "acceptDialog": {
+    "title": "¿Aceptar este trabajo?",
+    "description": "Vas a aceptar «{{job}}» de la orden «{{order}}». Una vez aceptada, la asignación no vuelve a propuesta.",
+    "confirm": "Aceptar trabajo"
+  },
+  "rejectDialog": {
+    "title": "¿Rechazar este trabajo?",
+    "description": "El trabajo queda libre para una nueva asignación.",
+    "reason": "Motivo (opcional)",
+    "reasonTooLong": "El motivo puede tener hasta 1000 caracteres.",
+    "confirm": "Rechazar trabajo"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "unread_one": "{{count}} notificación sin leer",
+    "unread_other": "{{count}} notificaciones sin leer",
+    "empty": "No tienes notificaciones.",
+    "error": "No pudimos cargar las notificaciones.",
+    "markRead": "Marcar como leída",
+    "markReadAria": "Marcar como leída: {{title}}",
+    "readState": "Leída",
+    "loadMore": "Cargar más",
+    "limitNote": "El contador cubre las notificaciones cargadas; usa «Cargar más» para ampliar el conjunto."
+  },
+  "shortcuts": {
+    "title": "Accesos rápidos"
+  },
+  "actionFailed": "No se pudo completar la acción."
+}

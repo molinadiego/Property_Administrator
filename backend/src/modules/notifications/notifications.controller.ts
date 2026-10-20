@@ -3,6 +3,7 @@ import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PaginationQueryDto } from '../../common/dto/pagination.query.dto';
 import { AuthContext } from '../../common/request-context';
+import { NotificationListViewDto } from './dto/notifications-responses.dto';
 import { NotificationsService } from './notifications.service';
 
 @ApiTags('notifications')
@@ -12,7 +13,7 @@ export class NotificationsController {
 
   @Get()
   @ApiOperation({ summary: 'Notificaciones in-app del usuario autenticado' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Lista paginada' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Lista paginada', type: NotificationListViewDto })
   listMine(@CurrentUser() auth: AuthContext, @Query() query: PaginationQueryDto) {
     return this.notificationsService.listMine(auth.userId, query);
   }

@@ -52,7 +52,7 @@ describe('space resolution (F0-D1)', () => {
     serveMe(ME_ONE_SPACE);
     const { router } = renderApp(['/']);
 
-    expect(await screen.findByText('Disponible en la etapa F2.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Gestión Demo', level: 1 })).toBeInTheDocument();
     expect(currentPath(router)).toBe('/app');
     expect(screen.getAllByRole('navigation').length).toBeGreaterThan(0);
   });
@@ -67,7 +67,7 @@ describe('space resolution (F0-D1)', () => {
     expect(screen.getByRole('button', { name: 'Gestión Demo' })).toHaveFocus();
     await user.keyboard('{Enter}');
 
-    expect(await screen.findByText('Disponible en la etapa F2.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Gestión Demo', level: 1 })).toBeInTheDocument();
     expect(currentPath(router)).toBe('/app');
     expect(window.localStorage.getItem(storageKeys.activeCompany)).toBe('c-1');
   });
@@ -100,7 +100,7 @@ describe('space resolution (F0-D1)', () => {
     serveMe(ME_TWO_SPACES);
     const { router } = renderApp(['/app']);
 
-    expect(await screen.findByText('Disponible en la etapa F2.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Taller Carla', level: 1 })).toBeInTheDocument();
     expect(currentPath(router)).toBe('/app');
     expect(screen.getByRole('combobox', { name: 'Cambiar de espacio' })).toBeInTheDocument();
   });
@@ -128,7 +128,7 @@ describe('space resolution (F0-D1)', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Gestión Demo' }));
 
-    expect(await screen.findByText('Disponible en la etapa F2.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Gestión Demo', level: 1 })).toBeInTheDocument();
     expect(currentPath(router)).toBe('/app');
   });
 });

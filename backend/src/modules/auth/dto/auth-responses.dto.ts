@@ -10,6 +10,12 @@ import { CompanyType, MembershipRole } from '../../../generated/prisma/enums';
 
 /** Active membership of the current user in a company (§5 memberships). */
 export class MembershipViewDto {
+  @ApiProperty({
+    format: 'uuid',
+    description: 'Id de la membresía — la UI identifica así «sus» asignaciones (F2-D2)',
+  })
+  id: string;
+
   @ApiProperty({ format: 'uuid', description: 'Identificador del espacio (empresa)' })
   companyId: string;
 

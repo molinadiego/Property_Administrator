@@ -143,6 +143,7 @@ export class AuthService {
       email: user.email,
       name: user.name,
       memberships: user.memberships.map((m) => ({
+        id: m.id,
         companyId: m.company.id,
         companyName: m.company.name,
         companyType: m.company.type,

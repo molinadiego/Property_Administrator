@@ -1146,7 +1146,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de órdenes"
+            "description": "Lista de órdenes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderViewDto"
+                  }
+                }
+              }
+            }
           },
           "422": {
             "description": "Filtro de consulta inválido (422)"
@@ -1920,7 +1930,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista paginada"
+            "description": "Lista paginada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListViewDto"
+                }
+              }
+            }
           }
         },
         "summary": "Notificaciones in-app del usuario autenticado",
@@ -4298,6 +4315,11 @@
       "MembershipViewDto": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id de la membresía — la UI identifica así «sus» asignaciones (F2-D2)"
+          },
           "companyId": {
             "type": "string",
             "format": "uuid",
@@ -4333,6 +4355,7 @@
           }
         },
         "required": [
+          "id",
           "companyId",
           "companyName",
           "companyType",
@@ -5003,6 +5026,245 @@
           "description"
         ]
       },
+      "OrderAccessViewDto": {
+        "type": "object",
+        "properties": {
+          "lockbox": {
+            "type": "string",
+            "nullable": true
+          },
+          "communityCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "entryInstructions": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "lockbox",
+          "communityCode",
+          "entryInstructions"
+        ]
+      },
+      "AssignmentViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected",
+              "revoked"
+            ],
+            "description": "Estado de la asignación (§20.3)"
+          },
+          "assigneeMembershipId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Membresía del asignado"
+          },
+          "respondedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Motivo del rechazo si lo hay (§5.6)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "assigneeMembershipId",
+          "respondedAt",
+          "rejectionReason",
+          "createdAt"
+        ]
+      },
+      "JobViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "in_progress",
+              "incomplete",
+              "done",
+              "not_realized"
+            ],
+            "description": "Estado del trabajo (§20.2)"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentViewDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "sortOrder",
+          "status",
+          "startedAt",
+          "completedAt",
+          "assignments"
+        ]
+      },
+      "OrderViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "open",
+              "in_progress",
+              "completed",
+              "cancelled"
+            ],
+            "description": "Estado (mapeo §20.1, BE-2 R5)"
+          },
+          "urgent": {
+            "type": "boolean",
+            "description": "Marca de urgencia (§14.2)"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "management",
+              "contractor",
+              "own_business"
+            ]
+          },
+          "propertyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Propiedad vinculada (§5.1)"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentOrderId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "closedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cancelledBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cancellationReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "access": {
+            "nullable": true,
+            "description": "Acceso de la visita solo para quien está autorizado (§4.5/§5.8); null si no",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderAccessViewDto"
+              }
+            ]
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobViewDto"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "status",
+          "urgent",
+          "origin",
+          "propertyId",
+          "companyId",
+          "parentOrderId",
+          "closedBy",
+          "closedAt",
+          "cancelledBy",
+          "cancelledAt",
+          "cancellationReason",
+          "access",
+          "jobs",
+          "createdAt"
+        ]
+      },
       "UpdateOrderDto": {
         "type": "object",
         "properties": {
@@ -5135,6 +5397,93 @@
         },
         "required": [
           "reason"
+        ]
+      },
+      "NotificationViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "order_created",
+              "order_assigned",
+              "assignment_requested",
+              "assignment_accepted",
+              "assignment_rejected",
+              "job_added",
+              "urgent_reminder",
+              "urgent_escalated"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string",
+            "description": "Tipo de entidad relacionada (p. ej. assignment)"
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "link": {
+            "type": "string",
+            "nullable": true,
+            "description": "Ruta a la entidad; hoy siempre null — la navegación llega con F4/F5 (F2-D6)"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Espacio al que pertenece la notificación (§2.4; la portada filtra por el activo, F2-D5)"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "body",
+          "entityType",
+          "entityId",
+          "link",
+          "readAt",
+          "createdAt",
+          "companyId"
+        ]
+      },
+      "NotificationListViewDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationViewDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cursor opaco para la siguiente página; null si no hay más"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ]
       },
       "NotificationPreferenceEntryDto": {

@@ -67,7 +67,7 @@ Jerarquía de documentos para el frontend: `proyect.md` > `docs/stack.md` (§6 F
 
 **Criterio de salida:** la portada muestra los dos listados correctos por tipo de espacio; aceptar/rechazar funciona extremo a extremo con la notificación correspondiente; sin BE-1 aprobado e implementado, esta etapa no arranca.
 
-**Entregable:** `docs/especificacion/frontend/etapa-f2.md`.
+**Entregable:** `docs/especificacion/frontend/etapa-f2.md` (**aprobada e implementada el 20/10/2026**).
 
 ---
 
@@ -171,7 +171,7 @@ Jerarquía de documentos para el frontend: `proyect.md` > `docs/stack.md` (§6 F
 
 ## Dependencias y decisiones pendientes
 
-- **BE-1 (filtros de órdenes en backend)**: spec pendiente de aprobación; bloquea F2.
-- **Playwright en Monterey**: validar en F0 la combinación que funcione localmente (pin de versión o `channel: 'chrome'`); e2e completos en CI (ubuntu). Documentar el resultado en la spec F0.
+- **BE-1 (filtros de órdenes en backend)**: **aprobada e implementada el 19/10/2026** (`docs/especificacion/be-1-filtros-ordenes.md`); desbloquea F2.
+- **Playwright en Monterey**: resuelto en F0 con `channel: 'chrome'` (F0-D5, documentado en la spec F0 §11); e2e completos en CI (ubuntu).
 - **Despliegue (D4)**: la config exacta del reverse proxy se documenta cuando se implemente el despliegue; fuera del alcance de F0–F8 salvo pedido explícito.
 - **Skills de terceros y MCP de browser (Playwright MCP)**: evaluar en F0 con justificación; instalar solo las que se usen.

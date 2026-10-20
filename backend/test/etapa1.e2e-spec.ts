@@ -360,6 +360,8 @@ suite('etapa 1: matriz de permisos y flujos (e2e)', () => {
     const me = await agents.solo.get(`${API}/auth/me`).expect(200);
     expect(me.body.memberships).toHaveLength(1);
     expect(me.body.memberships[0].companyId).toBe(companies.solo);
+    // F2-D5: the membership id lets the UI identify its own assignments.
+    expect(me.body.memberships[0].id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
 
     const meA = await agents.ownerA.get(`${API}/auth/me`).expect(200);
     expect(meA.body.memberships).toHaveLength(1);

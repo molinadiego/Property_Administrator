@@ -678,13 +678,24 @@ suite('etapa 2: matriz de permisos y flujos (e2e)', () => {
   it('#24 usuario ve solo sus notificaciones', async () => {
     // profB received an assignment_requested notification for O1 job1.
     const profBNotifs = await agents.profB.get(`${API}/notifications`).expect(200);
-    const types = (profBNotifs.body.data as Array<{ type: string }>).map((n) => n.type);
-    expect(types).toContain('assignment_requested');
+    const rows = profBNotifs.body.data as Array<{ type: string; companyId: string }>;
+    const requested = rows.find((n) => n.type === 'assignment_requested');
+    expect(requested).toBeDefined();
 
     // ownerA must not see profB's assignment notification.
     const ownerANotifs = await agents.ownerA.get(`${API}/notifications`).expect(200);
     const ownerTypes = (ownerANotifs.body.data as Array<{ type: string }>).map((n) => n.type);
     expect(ownerTypes).not.toContain('assignment_requested');
+  });
+
+  it('cada notificación declara su espacio (companyId, §2.4 / F2-D5)', async () => {
+    const profBNotifs = await agents.profB.get(`${API}/notifications`).expect(200);
+    const rows = profBNotifs.body.data as Array<{ type: string; companyId: string }>;
+    const requested = rows.find((n) => n.type === 'assignment_requested');
+    expect(requested?.companyId).toBe(companies.A);
+    for (const row of rows) {
+      expect(row.companyId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    }
   });
 
   it('notificación se marca como leída (idempotente)', async () => {

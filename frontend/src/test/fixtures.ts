@@ -9,6 +9,7 @@ export const ME_TWO_SPACES: MeResponseDto = {
   name: 'Ana Demo',
   memberships: [
     {
+      id: 'mem-ana-c1',
       companyId: 'c-1',
       companyName: 'Gestión Demo',
       companyType: 'property_management',
@@ -16,6 +17,7 @@ export const ME_TWO_SPACES: MeResponseDto = {
       joinedAt,
     },
     {
+      id: 'mem-ana-c2',
       companyId: 'c-2',
       companyName: 'Taller Carla',
       companyType: 'contractor',

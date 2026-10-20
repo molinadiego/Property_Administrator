@@ -24,7 +24,7 @@ test('login → picker → shell → logout', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Gestión Demo' }).click();
   await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByRole('heading', { name: 'Panel' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Gestión Demo', level: 1 })).toBeVisible();
 
   // Responsive (AC-F0.8): bottom nav <768, sidebar ≥768, no horizontal scroll.
   // Structural locators: `getByRole('navigation')` cannot tell the two apart
@@ -47,7 +47,7 @@ test('login → picker → shell → logout', async ({ page }) => {
   // Active space persists across reloads (AC-F0.5).
   await page.reload();
   await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByRole('heading', { name: 'Panel' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Gestión Demo', level: 1 })).toBeVisible();
 
   // Theme applies instantly and persists (AC-F0.7): system → light → dark.
   const html = page.locator('html');
