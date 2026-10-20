@@ -11,6 +11,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import { ProblemDetailDto } from '../../common/dto/problem-detail.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuthContext, AuthenticatedRequest } from '../../common/request-context';
@@ -20,6 +21,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { LoginResponseDto, MeResponseDto } from './dto/auth-responses.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -42,9 +44,10 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Inicia sesión y setea la cookie mh_session' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Sesión iniciada' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Credenciales inválidas (401 genérico)' })
-  @ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Demasiados intentos (429 con Retry-After)' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Sesión iniciada', type: LoginResponseDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Credenciales inválidas (401 genérico)', type: ProblemDetailDto })
+  @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'Cuerpo inválido (422 de validación)', type: ProblemDetailDto })
+  @ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, description: 'Demasiados intentos (429 con Retry-After)', type: ProblemDetailDto })
   async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.login(dto, {
       ip: (req as AuthenticatedRequest).ip ?? req.ip,
@@ -58,6 +61,7 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Revoca la sesión actual' })
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Sesión revocada' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Sesión ausente o inválida (401)', type: ProblemDetailDto })
   async logout(
     @CurrentUser() auth: AuthContext,
     @Res({ passthrough: true }) res: Response,
@@ -68,7 +72,8 @@ export class AuthController {
 
   @Get('me')
   @ApiOperation({ summary: 'Usuario actual y sus membresías activas con rol' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Datos del usuario' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Datos del usuario', type: MeResponseDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Sesión ausente o inválida (401)', type: ProblemDetailDto })
   me(@CurrentUser() auth: AuthContext) {
     return this.authService.me(auth);
   }

@@ -74,13 +74,44 @@
         },
         "responses": {
           "200": {
-            "description": "Sesión iniciada"
+            "description": "Sesión iniciada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Credenciales inválidas (401 genérico)"
+            "description": "Credenciales inválidas (401 genérico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Cuerpo inválido (422 de validación)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailDto"
+                }
+              }
+            }
           },
           "429": {
-            "description": "Demasiados intentos (429 con Retry-After)"
+            "description": "Demasiados intentos (429 con Retry-After)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailDto"
+                }
+              }
+            }
           }
         },
         "summary": "Inicia sesión y setea la cookie mh_session",
@@ -96,6 +127,16 @@
         "responses": {
           "204": {
             "description": "Sesión revocada"
+          },
+          "401": {
+            "description": "Sesión ausente o inválida (401)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailDto"
+                }
+              }
+            }
           }
         },
         "summary": "Revoca la sesión actual",
@@ -110,7 +151,24 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Datos del usuario"
+            "description": "Datos del usuario",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sesión ausente o inválida (401)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailDto"
+                }
+              }
+            }
           }
         },
         "summary": "Usuario actual y sus membresías activas con rol",
@@ -4134,6 +4192,160 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "AuthUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre visible del usuario"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "description": "Usuario autenticado",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthUserDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "user"
+        ]
+      },
+      "ProblemDetailDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Identificador del tipo de problema (URL RFC 7807)",
+            "example": "https://errors.example.com/unauthorized"
+          },
+          "title": {
+            "type": "string",
+            "description": "Título corto del estado HTTP",
+            "example": "Unauthorized"
+          },
+          "status": {
+            "type": "number",
+            "description": "Código de estado HTTP",
+            "example": 401
+          },
+          "detail": {
+            "type": "string",
+            "description": "Detalle legible para el usuario",
+            "example": "Credenciales inválidas."
+          },
+          "instance": {
+            "type": "string",
+            "description": "Ruta de la petición que falló",
+            "example": "/api/v1/auth/login"
+          },
+          "requestId": {
+            "type": "string",
+            "description": "Identificador correlacionable con los logs"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "instance"
+        ]
+      },
+      "MembershipViewDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identificador del espacio (empresa)"
+          },
+          "companyName": {
+            "type": "string",
+            "description": "Nombre del espacio"
+          },
+          "companyType": {
+            "type": "string",
+            "enum": [
+              "property_management",
+              "contractor",
+              "profesional",
+              "own_business"
+            ],
+            "description": "Tipo de espacio (§2.1)"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "member"
+            ],
+            "description": "Rol del usuario en el espacio (§5)"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de alta de la membresía (ISO 8601)",
+            "example": "2026-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "companyId",
+          "companyName",
+          "companyType",
+          "role",
+          "joinedAt"
+        ]
+      },
+      "MeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre visible del usuario"
+          },
+          "memberships": {
+            "description": "Membresías activas con rol (puede ser vacío)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MembershipViewDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "memberships"
         ]
       },
       "ForgotPasswordDto": {
