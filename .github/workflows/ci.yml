@@ -126,6 +126,9 @@ jobs:
           DATABASE_URL: postgresql://dev:dev@localhost:5432/home_management?schema=public
           APP_DATABASE_URL: postgresql://app:app_dev@localhost:5432/home_management?schema=public
           EMAIL_TRANSPORT: console
+          # Buzón de prueba (spec F1-D4/§12): los e2e leen los links de
+          # invitación y reset de este archivo JSONL (raíz del repo).
+          EMAIL_OUTBOX_FILE: ../e2e-outbox.jsonl
           FRONTEND_URL: http://localhost:5173
         run: |
           npm run build
@@ -148,6 +151,10 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run e2e smoke
+        env:
+          # Buzón de prueba (F1-D4/§12): explícito → los flujos con token
+          # (invitación y reset) siempre corren en CI, nunca se saltan.
+          E2E_OUTBOX_FILE: ../e2e-outbox.jsonl
         run: npx playwright test
 
       - name: Upload Playwright report on failure

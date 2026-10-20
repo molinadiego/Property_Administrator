@@ -5,6 +5,20 @@ import { afterEach, vi } from 'vitest';
 import { installFetchStub, resetApiCalls } from './fetch-stub';
 
 /**
+ * jsdom does not implement the pointer-capture / scroll APIs that Radix UI
+ * (e.g. Select) calls on its trigger: polyfill the minimal surface so the
+ * components work in unit tests.
+ */
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.releasePointerCapture = () => undefined;
+  Element.prototype.setPointerCapture = () => undefined;
+}
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => undefined;
+}
+
+/**
  * jsdom does not implement matchMedia: polyfill a static implementation that
  * tests can control via `mockMatchMedia`.
  */

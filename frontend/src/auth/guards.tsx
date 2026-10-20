@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 
 import { useActiveCompany } from '@/companies/active-company';
+import { safeInternalPath } from '@/lib/internal-path';
 
 import { useMe } from './session';
 
@@ -64,18 +65,21 @@ export function RequireSession({ children }: { children: ReactNode }) {
 }
 
 /**
- * For /login: an authenticated user is sent to their active space (or to the
- * picker when nothing is active yet) — F0-D2.
+ * For /login (and the other guest screens): an authenticated user is sent to
+ * their active space (or to the picker when nothing is active yet) — F0-D2.
+ * A validated `?next=` internal path wins over the default (spec F1-D6).
  */
 export function RequireGuest({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { data, isPending } = useMe();
   const { activeId } = useActiveCompany();
 
+  const state = location.state as { from?: string } | null;
+  const next = safeInternalPath(new URLSearchParams(location.search).get('next'));
+
   if (isPending) return <BootSplash />;
   if (data) {
-    const state = location.state as { from?: string } | null;
-    return <Navigate to={state?.from ?? (activeId ? '/app' : '/')} replace />;
+    return <Navigate to={state?.from ?? next ?? (activeId ? '/app' : '/')} replace />;
   }
   return <>{children}</>;
 }

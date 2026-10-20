@@ -7,7 +7,8 @@
     "retry": "Reintentar",
     "reload": "Recargar",
     "logout": "Cerrar sesión",
-    "back": "Volver"
+    "back": "Volver",
+    "cancel": "Cancelar"
   },
   "stage": {
     "soon": "Disponible en la etapa {{stage}}.",

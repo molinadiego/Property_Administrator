@@ -63,7 +63,18 @@ describe('validateEnv', () => {
   });
 
   it('rejects an unknown EMAIL_TRANSPORT', () => {
-    expect(() => validateEnv({ ...valid, EMAIL_TRANSPORT: 'smtp' })).toThrow(/EMAIL_TRANSPORT/);
+    expect(() =>
+      validateEnv({ ...valid, EMAIL_TRANSPORT: 'smtp' }),
+    ).toThrow(/EMAIL_TRANSPORT/);
+  });
+
+  it('accepts the dev/CI email outbox and rejects it in production (F1-D4/§12)', () => {
+    expect(validateEnv({ ...valid, EMAIL_OUTBOX_FILE: '/tmp/outbox.jsonl' }).EMAIL_OUTBOX_FILE).toBe(
+      '/tmp/outbox.jsonl',
+    );
+    expect(() =>
+      validateEnv({ ...valid, NODE_ENV: 'production', EMAIL_OUTBOX_FILE: '/tmp/outbox.jsonl' }),
+    ).toThrow(/EMAIL_OUTBOX_FILE/);
   });
 
   it('requires API key and from address when EMAIL_TRANSPORT=resend', () => {

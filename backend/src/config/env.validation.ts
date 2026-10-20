@@ -8,6 +8,10 @@ export interface Env {
   EMAIL_TRANSPORT: 'console' | 'resend';
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
+  /** Optional dev/CI test mailbox (frontend spec F1-D4/§12): the console
+   * transport appends each email in full (JSONL) to this file. Never in
+   * production (validated). */
+  EMAIL_OUTBOX_FILE?: string;
   /** Base URL used to build email links (invitations, password reset). */
   FRONTEND_URL: string;
   /** Optional S3-compatible endpoint; when absent the app boots the in-process
@@ -87,6 +91,15 @@ export function validateEnv(config: Record<string, unknown>): Env {
     if (!emailFrom) errors.push('EMAIL_FROM is required when EMAIL_TRANSPORT=resend');
   }
 
+  const emailOutboxFile =
+    typeof config.EMAIL_OUTBOX_FILE === 'string' && config.EMAIL_OUTBOX_FILE.trim() !== ''
+      ? config.EMAIL_OUTBOX_FILE.trim()
+      : undefined;
+
+  if (emailOutboxFile && rawNodeEnv === 'production') {
+    errors.push('EMAIL_OUTBOX_FILE is a dev/CI mailbox and is not allowed in production');
+  }
+
   const frontendUrl =
     typeof config.FRONTEND_URL === 'string' && config.FRONTEND_URL.trim() !== ''
       ? config.FRONTEND_URL.replace(/\/+$/, '')
@@ -118,6 +131,7 @@ export function validateEnv(config: Record<string, unknown>): Env {
     FRONTEND_URL: frontendUrl,
     ...(resendApiKey ? { RESEND_API_KEY: resendApiKey } : {}),
     ...(emailFrom ? { EMAIL_FROM: emailFrom } : {}),
+    ...(emailOutboxFile ? { EMAIL_OUTBOX_FILE: emailOutboxFile } : {}),
     ...(storageEndpoint ? { STORAGE_ENDPOINT: storageEndpoint } : {}),
     ...(storageRegion ? { STORAGE_REGION: storageRegion } : {}),
     ...(storageBucket ? { STORAGE_BUCKET: storageBucket } : {}),

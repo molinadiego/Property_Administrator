@@ -21,7 +21,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { LoginResponseDto, MeResponseDto } from './dto/auth-responses.dto';
+import { AuthUserDto, LoginResponseDto, MeResponseDto } from './dto/auth-responses.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -34,7 +34,7 @@ export class AuthController {
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Crea la cuenta personal (no crea espacio)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Cuenta creada' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Cuenta creada', type: AuthUserDto })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Email ya registrado (409)' })
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);

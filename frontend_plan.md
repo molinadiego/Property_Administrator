@@ -52,7 +52,7 @@ Jerarquía de documentos para el frontend: `proyect.md` > `docs/stack.md` (§6 F
 
 **Criterio de salida:** los flujos de cuenta y invitación funcionan de punta a punta con email real de prueba; la UI muestra/oculta acciones según el rol sin que eso sustituya la verificación del servidor (§3.4, §16.1).
 
-**Entregable:** `docs/especificacion/frontend/etapa-f1.md`.
+**Entregable:** `docs/especificacion/frontend/etapa-f1.md` (**aprobada el 20/10/2026**, con la enmienda F1-D4 de e2e vía buzón de prueba — §12 de la spec) + su implementación (**completada el 20/10/2026**).
 
 ---
 

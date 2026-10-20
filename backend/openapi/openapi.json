@@ -46,7 +46,14 @@
         },
         "responses": {
           "201": {
-            "description": "Cuenta creada"
+            "description": "Cuenta creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserDto"
+                }
+              }
+            }
           },
           "409": {
             "description": "Email ya registrado (409)"
@@ -236,15 +243,7 @@
     "/api/v1/companies": {
       "post": {
         "operationId": "CompaniesController_create",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Identificador del espacio (empresa)",
-            "schema": {}
-          }
-        ],
+        "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -257,7 +256,14 @@
         },
         "responses": {
           "201": {
-            "description": "Espacio creado"
+            "description": "Espacio creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCreatedDto"
+                }
+              }
+            }
           }
         },
         "summary": "Crea un espacio; el creador queda como owner",
@@ -267,15 +273,7 @@
       },
       "get": {
         "operationId": "CompaniesController_listMine",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Identificador del espacio (empresa)",
-            "schema": {}
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Lista de espacios con rol"
@@ -363,7 +361,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de miembros"
+            "description": "Lista de miembros",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyMemberDto"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Miembros activos del espacio con rol",
@@ -404,7 +412,14 @@
         },
         "responses": {
           "200": {
-            "description": "Rol actualizado"
+            "description": "Rol actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeMemberRoleResponseDto"
+                }
+              }
+            }
           },
           "409": {
             "description": "Intento sobre la última owner (409)"
@@ -475,7 +490,14 @@
         },
         "responses": {
           "201": {
-            "description": "Invitación creada y email enviado"
+            "description": "Invitación creada y email enviado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "Rol insuficiente (403)"
@@ -536,7 +558,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista paginada"
+            "description": "Lista paginada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationListViewDto"
+                }
+              }
+            }
           }
         },
         "summary": "Lista de invitaciones del espacio, paginada por cursor (owner)",
@@ -590,18 +619,18 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Identificador del espacio (empresa)",
-            "schema": {}
           }
         ],
         "responses": {
           "200": {
-            "description": "Datos públicos de la invitación"
+            "description": "Datos públicos de la invitación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationPreviewDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Token inválido o revocado (404)"
@@ -627,13 +656,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Identificador del espacio (empresa)",
-            "schema": {}
           }
         ],
         "requestBody": {
@@ -4178,22 +4200,6 @@
           "password"
         ]
       },
-      "LoginDto": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "example": "ana@example.com"
-          },
-          "password": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "password"
-        ]
-      },
       "AuthUserDto": {
         "type": "object",
         "properties": {
@@ -4214,6 +4220,22 @@
           "id",
           "email",
           "name"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "ana@example.com"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
         ]
       },
       "LoginResponseDto": {
@@ -4401,6 +4423,40 @@
           "type"
         ]
       },
+      "CompanyCreatedDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Propiedades del Sur"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "property_management",
+              "contractor",
+              "profesional",
+              "own_business"
+            ],
+            "description": "Tipo de espacio (§2.1)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "createdAt"
+        ]
+      },
       "UpdateCompanyDto": {
         "type": "object",
         "properties": {
@@ -4429,6 +4485,48 @@
           }
         }
       },
+      "CompanyMemberDto": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre visible del miembro"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "member"
+            ],
+            "description": "Rol en el espacio (§3)"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "membershipId",
+          "userId",
+          "name",
+          "email",
+          "role",
+          "joinedAt"
+        ]
+      },
       "ChangeMemberRoleDto": {
         "type": "object",
         "properties": {
@@ -4442,6 +4540,26 @@
           }
         },
         "required": [
+          "role"
+        ]
+      },
+      "ChangeMemberRoleResponseDto": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "member"
+            ]
+          }
+        },
+        "required": [
+          "membershipId",
           "role"
         ]
       },
@@ -4464,6 +4582,108 @@
         "required": [
           "email",
           "role"
+        ]
+      },
+      "InvitationViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "member"
+            ],
+            "description": "Rol que otorga (§3)"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "revoked",
+              "expired"
+            ],
+            "description": "Estado de la invitación"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-01T00:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "status",
+          "expiresAt",
+          "createdAt"
+        ]
+      },
+      "InvitationListViewDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvitationViewDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cursor opaco para la siguiente página; null si no hay más"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ]
+      },
+      "InvitationPreviewDto": {
+        "type": "object",
+        "properties": {
+          "companyName": {
+            "type": "string",
+            "description": "Nombre del espacio"
+          },
+          "emailMasked": {
+            "type": "string",
+            "description": "Email del destinatario enmascarado",
+            "example": "a****@demo.test"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "member"
+            ],
+            "description": "Rol que otorga la invitación"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "companyName",
+          "emailMasked",
+          "role",
+          "expiresAt"
         ]
       },
       "AcceptInvitationDto": {

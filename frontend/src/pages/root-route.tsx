@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router';
 
 import type { MembershipViewDto } from '@/api/types';
 import { useActiveCompany } from '@/companies/active-company';
+import { CreateSpaceDialog } from '@/companies/create-space-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -55,11 +56,14 @@ function SpacePicker({
           </li>
         ))}
       </ul>
+      <div className="mt-4 flex justify-end">
+        <CreateSpaceDialog triggerVariant="outline" />
+      </div>
     </div>
   );
 }
 
-/** 0 memberships: exit screen (space creation lands in F1). */
+/** 0 memberships: exit screen with the space-creation entry (spec F1 §2). */
 function NoSpacesScreen() {
   const { t } = useTranslation('spaces');
   return (
@@ -69,7 +73,8 @@ function NoSpacesScreen() {
           <CardTitle className="text-xl">{t('none.title')}</CardTitle>
           <CardDescription>{t('none.body')}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <CreateSpaceDialog />
           <LogoutButton variant="outline" withText />
         </CardContent>
       </Card>

@@ -1,17 +1,31 @@
-import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react-router';
+import {
+  createBrowserRouter,
+  createMemoryRouter,
+  Navigate,
+  type RouteObject,
+} from 'react-router';
 
 import { RequireActiveCompany, RequireGuest, RequireSession } from '@/auth/guards';
 import { AppShell } from '@/layout/app-shell';
 import { ComingSoonStage } from '@/pages/coming-soon-stage';
+import { ForgotPasswordPage } from '@/pages/forgot-password-page';
+import { InvitationPage } from '@/pages/invitation-page';
 import { LoginPage } from '@/pages/login-page';
 import { NotFoundPage } from '@/pages/not-found-page';
+import { RegisterPage } from '@/pages/register-page';
+import { ResetPasswordPage } from '@/pages/reset-password-page';
 import { RootRoute } from '@/pages/root-route';
+import { MembersPage } from '@/pages/settings/members-page';
 
 /**
- * Route table (spec F0 §7):
- * - `/login`: guest only; with a session it redirects to the active space;
- * - `/`: space picker / no-spaces screen / auto-redirect with a single space;
- * - `/app/*`: authenticated shell with a placeholder per section (F0-D6).
+ * Route table (specs F0 §7, F1 §2 / F1-D6):
+ * - `/login`, `/register`, `/forgot-password`, `/reset-password`: guest only;
+ *   with a session they redirect to the active space;
+ * - `/invitations/:token`: public — works with or without a session;
+ * - `/`: space picker / no-spaces screen (with space creation, F1) /
+ *   auto-redirect with a single space;
+ * - `/app/*`: authenticated shell; Ajustes opens on its first real panel,
+ *   Miembros (F1-D7); the rest keeps the F0-D6 placeholders.
  */
 export const appRoutes: RouteObject[] = [
   {
@@ -21,6 +35,34 @@ export const appRoutes: RouteObject[] = [
         <LoginPage />
       </RequireGuest>
     ),
+  },
+  {
+    path: '/register',
+    element: (
+      <RequireGuest>
+        <RegisterPage />
+      </RequireGuest>
+    ),
+  },
+  {
+    path: '/forgot-password',
+    element: (
+      <RequireGuest>
+        <ForgotPasswordPage />
+      </RequireGuest>
+    ),
+  },
+  {
+    path: '/reset-password',
+    element: (
+      <RequireGuest>
+        <ResetPasswordPage />
+      </RequireGuest>
+    ),
+  },
+  {
+    path: '/invitations/:token',
+    element: <InvitationPage />,
   },
   {
     path: '/',
@@ -44,7 +86,8 @@ export const appRoutes: RouteObject[] = [
       { path: 'orders', element: <ComingSoonStage labelKey="orders" stage="F4" /> },
       { path: 'catalogs', element: <ComingSoonStage labelKey="catalogs" stage="F3" /> },
       { path: 'billing', element: <ComingSoonStage labelKey="billing" stage="F7" /> },
-      { path: 'settings', element: <ComingSoonStage labelKey="settings" stage="F8" /> },
+      { path: 'settings', element: <Navigate to="/app/settings/members" replace /> },
+      { path: 'settings/members', element: <MembersPage /> },
     ],
   },
   { path: '*', element: <NotFoundPage /> },

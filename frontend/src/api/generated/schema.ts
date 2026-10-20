@@ -1431,11 +1431,6 @@ export interface components {
             /** @example contraseña-segura */
             password: string;
         };
-        LoginDto: {
-            /** @example ana@example.com */
-            email: string;
-            password: string;
-        };
         AuthUserDto: {
             /** Format: uuid */
             id: string;
@@ -1443,6 +1438,11 @@ export interface components {
             email: string;
             /** @description Nombre visible del usuario */
             name: string;
+        };
+        LoginDto: {
+            /** @example ana@example.com */
+            email: string;
+            password: string;
         };
         LoginResponseDto: {
             /** @description Usuario autenticado */
@@ -1531,6 +1531,22 @@ export interface components {
              */
             type: "property_management" | "contractor" | "profesional" | "own_business";
         };
+        CompanyCreatedDto: {
+            /** Format: uuid */
+            id: string;
+            /** @example Propiedades del Sur */
+            name: string;
+            /**
+             * @description Tipo de espacio (§2.1)
+             * @enum {string}
+             */
+            type: "property_management" | "contractor" | "profesional" | "own_business";
+            /**
+             * Format: date-time
+             * @example 2026-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+        };
         UpdateCompanyDto: {
             /** @example Propiedades del Sur SRL */
             name?: string;
@@ -1549,11 +1565,37 @@ export interface components {
             /** @description Empresa exenta: el impuesto se congela en 0.00 (etapa-7.md D2) */
             taxExempt?: boolean;
         };
+        CompanyMemberDto: {
+            /** Format: uuid */
+            membershipId: string;
+            /** Format: uuid */
+            userId: string;
+            /** @description Nombre visible del miembro */
+            name: string;
+            /** Format: email */
+            email: string;
+            /**
+             * @description Rol en el espacio (§3)
+             * @enum {string}
+             */
+            role: "owner" | "member";
+            /**
+             * Format: date-time
+             * @example 2026-01-15T10:30:00.000Z
+             */
+            joinedAt: string;
+        };
         ChangeMemberRoleDto: {
             /**
              * @example member
              * @enum {string}
              */
+            role: "owner" | "member";
+        };
+        ChangeMemberRoleResponseDto: {
+            /** Format: uuid */
+            membershipId: string;
+            /** @enum {string} */
             role: "owner" | "member";
         };
         CreateInvitationDto: {
@@ -1564,6 +1606,56 @@ export interface components {
              * @enum {string}
              */
             role: "owner" | "member";
+        };
+        InvitationViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: email */
+            email: string;
+            /**
+             * @description Rol que otorga (§3)
+             * @enum {string}
+             */
+            role: "owner" | "member";
+            /**
+             * @description Estado de la invitación
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "revoked" | "expired";
+            /**
+             * Format: date-time
+             * @example 2026-11-01T00:00:00.000Z
+             */
+            expiresAt: string;
+            /**
+             * Format: date-time
+             * @example 2026-10-15T10:30:00.000Z
+             */
+            createdAt: string;
+        };
+        InvitationListViewDto: {
+            data: components["schemas"]["InvitationViewDto"][];
+            /** @description Cursor opaco para la siguiente página; null si no hay más */
+            nextCursor: string | null;
+        };
+        InvitationPreviewDto: {
+            /** @description Nombre del espacio */
+            companyName: string;
+            /**
+             * @description Email del destinatario enmascarado
+             * @example a****@demo.test
+             */
+            emailMasked: string;
+            /**
+             * @description Rol que otorga la invitación
+             * @enum {string}
+             */
+            role: "owner" | "member";
+            /**
+             * Format: date-time
+             * @example 2026-11-01T00:00:00.000Z
+             */
+            expiresAt: string;
         };
         AcceptInvitationDto: {
             /**
@@ -2091,7 +2183,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuthUserDto"];
+                };
             };
             /** @description Email ya registrado (409) */
             409: {
@@ -2271,10 +2365,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Identificador del espacio (empresa) */
-                id: unknown;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -2292,10 +2383,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Identificador del espacio (empresa) */
-                id: unknown;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -2309,7 +2397,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["CompanyCreatedDto"];
+                };
             };
         };
     };
@@ -2390,7 +2480,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["CompanyMemberDto"][];
+                };
             };
         };
     };
@@ -2452,7 +2544,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ChangeMemberRoleResponseDto"];
+                };
             };
             /** @description Intento sobre la última owner (409) */
             409: {
@@ -2487,7 +2581,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["InvitationListViewDto"];
+                };
             };
         };
     };
@@ -2512,7 +2608,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["InvitationViewDto"];
+                };
             };
             /** @description Rol insuficiente (403) */
             403: {
@@ -2565,8 +2663,6 @@ export interface operations {
             header?: never;
             path: {
                 token: string;
-                /** @description Identificador del espacio (empresa) */
-                id: unknown;
             };
             cookie?: never;
         };
@@ -2577,7 +2673,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["InvitationPreviewDto"];
+                };
             };
             /** @description Token inválido o revocado (404) */
             404: {
@@ -2601,8 +2699,6 @@ export interface operations {
             header?: never;
             path: {
                 token: string;
-                /** @description Identificador del espacio (empresa) */
-                id: unknown;
             };
             cookie?: never;
         };

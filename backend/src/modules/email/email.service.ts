@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { appendFile } from 'node:fs/promises';
 import { Resend } from 'resend';
 
 export interface EmailMessage {
@@ -20,16 +21,62 @@ export abstract class EmailTransport {
   abstract send(message: EmailMessage): Promise<void>;
 }
 
-/** Prints the email to the application log; tokens are masked (spec §11). */
+/**
+ * Masks every token before printing (spec etapa-1 §11: passwords and tokens
+ * never reach the application log). Covers both styles: `token=<value>` query
+ * params and path tokens (`/invitations/<value>`).
+ */
+export function maskTokens(text: string): string {
+  return text
+    .replace(/token=[^&\s]+/g, 'token=***')
+    .replace(/\/invitations\/[A-Za-z0-9_-]+/g, '/invitations/***');
+}
+
+/**
+ * Prints the email to the application log with masked tokens (spec §11).
+ *
+ * Optional test mailbox (frontend spec F1-D4/§12): when EMAIL_OUTBOX_FILE is
+ * set (dev/CI only; production uses Resend), each email is also appended in
+ * full as one JSON line so out-of-process e2e tests can follow emailed links.
+ * The application log stays masked either way.
+ */
 @Injectable()
 export class ConsoleEmailTransport extends EmailTransport {
   private readonly logger = new Logger('email');
+  private readonly outboxFile?: string;
+
+  constructor(config?: ConfigService) {
+    super();
+    const outbox = config?.get<string>('EMAIL_OUTBOX_FILE');
+    this.outboxFile = outbox && outbox.trim() !== '' ? outbox.trim() : undefined;
+  }
 
   async send(message: EmailMessage): Promise<void> {
-    const maskedText = message.text.replace(/token=[^&\s]+/g, 'token=***');
+    const maskedText = maskTokens(message.text);
     this.logger.log(
       `[console-email] to=${message.to} subject="${message.subject}"\n${maskedText}`,
     );
+    if (this.outboxFile) await this.appendToOutbox(message);
+  }
+
+  private async appendToOutbox(message: EmailMessage): Promise<void> {
+    const file = this.outboxFile;
+    if (!file) return;
+    const line = JSON.stringify({
+      to: message.to,
+      subject: message.subject,
+      text: message.text,
+      sentAt: new Date().toISOString(),
+    });
+    try {
+      await appendFile(file, `${line}\n`, 'utf8');
+    } catch (error) {
+      // The outbox is a dev/CI artifact: a failed write is logged, never raised
+      // (an e2e nicety must not break the actual flow, same as a failed send).
+      this.logger.error(
+        `No se pudo escribir el buzón ${file}: ${(error as Error).message}`,
+      );
+    }
   }
 }
 

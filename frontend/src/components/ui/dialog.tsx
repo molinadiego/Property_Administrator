@@ -8,6 +8,21 @@ export const Dialog = DialogPrimitive.Root;
 export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
 
+export function DialogHeader({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
+  return (
+    <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props} />
+  );
+}
+
+export function DialogFooter({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
+  return (
+    <div
+      className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
+      {...props}
+    />
+  );
+}
+
 export const DialogOverlay = forwardRef<
   ElementRef<typeof DialogPrimitive.Overlay>,
   ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>

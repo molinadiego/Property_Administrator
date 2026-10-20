@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { apiCalls, jsonResponse, problemJson, setFetchHandler } from '@/test/fetch-stub';
 import { LOGIN_USER, ME_TWO_SPACES } from '@/test/fixtures';
-import { renderApp } from '@/test/render-app';
+import { currentPath, renderApp } from '@/test/render-app';
 
 const isLogin = (call: { url: string; method: string }) =>
   call.url.endsWith('/auth/login') && call.method === 'POST';
@@ -130,5 +130,28 @@ describe('LoginPage', () => {
 
     resolveLogin?.(jsonResponse(200, { user: LOGIN_USER }));
     await waitFor(() => expect(screen.getByText('Elige un espacio')).toBeInTheDocument());
+  });
+
+  it('returns to a validated internal ?next= after login (F1-D6)', async () => {
+    handlerWithSuccessfulLogin();
+    const user = userEvent.setup();
+    const { router } = renderApp(['/login?next=/app']);
+
+    await fillCredentials(user);
+    await user.click(await screen.findByRole('button', { name: 'Iniciar sesión' }));
+
+    await waitFor(() => expect(currentPath(router)).toBe('/app'));
+  });
+
+  it('ignores an external ?next= (protocol-relative URL, F1-D6)', async () => {
+    handlerWithSuccessfulLogin();
+    const user = userEvent.setup();
+    const { router } = renderApp(['/login?next=//evil.example.com']);
+
+    await fillCredentials(user);
+    await user.click(await screen.findByRole('button', { name: 'Iniciar sesión' }));
+
+    expect(await screen.findByText('Elige un espacio')).toBeInTheDocument();
+    expect(currentPath(router)).toBe('/');
   });
 });

@@ -23,7 +23,7 @@ import {
         const transport = config.getOrThrow<'console' | 'resend'>('EMAIL_TRANSPORT');
         return transport === 'resend'
           ? new ResendEmailTransport(config)
-          : new ConsoleEmailTransport();
+          : new ConsoleEmailTransport(config);
       },
       inject: [ConfigService],
     },
