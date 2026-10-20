@@ -18,7 +18,7 @@ Jerarquía de documentos para el frontend: `proyect.md` > `docs/stack.md` (§6 F
 | **D4** | Despliegue | **Mismo dominio vía reverse proxy** (Caddy/Nginx sirve el build estático y proxya `/api` al backend): la cookie `mh_session` (SameSite=Lax) funciona sin CORS y sin cambios de backend. En dev, proxy de Vite a la API. |
 | **D5** | Idioma | **Solo español**, con i18next desde F0 (keys en inglés, valores en `es`): agregar otro idioma no toca código. |
 
-**Dependencia previa (BE-1):** spec e implementación en backend de filtros en `GET /companies/:id/orders` (estado de orden y «recibidas pendientes de aceptación por mí»), con tests de permisos (§16.1). Bloquea **solo a F2**; F0 y F1 pueden avanzar en paralelo. La semántica exacta de los filtros se define en la spec BE-1.
+**Dependencia previa (BE-1):** spec e implementación en backend de filtros en `GET /companies/:id/orders` (estado de orden y «recibidas pendientes de aceptación por mí»), con tests de permisos (§16.1). Bloquea **solo a F2**; F0 y F1 pueden avanzar en paralelo. **Spec BE-1 aprobada el 19/10/2026:** `docs/especificacion/be-1-filtros-ordenes.md`.
 
 ---
 
@@ -35,7 +35,7 @@ Jerarquía de documentos para el frontend: `proyect.md` > `docs/stack.md` (§6 F
 - Proxy de dev de Vite → API (`/api` → `localhost:3000`).
 - Validar en esta etapa la combinación Playwright + navegador en Monterey 12.7.6 (ver `docs/stack.md` §6: Chrome/WebKit dejaron o dejan de soportar Monterey; si el navegador local no arranca, los e2e completos corren en CI — ubuntu — y el gate local se queda con unit/componente, documentando el motivo).
 
-**Entregable:** `docs/especificacion/frontend/etapa-f0.md` (aprobada) + su implementación.
+**Entregable:** `docs/especificacion/frontend/etapa-f0.md` (**aprobada el 19/10/2026**) + su implementación.
 
 **Criterio de salida:** login real contra la API con la app navegable en PC/tablet/celular; design system con modo oscuro; cliente API regenerable por script; gate local verde y CI verde.
 
