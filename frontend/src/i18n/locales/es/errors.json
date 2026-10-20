@@ -1,0 +1,12 @@
+{
+  "network": "No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+  "session": {
+    "expired": "Tu sesión expiró. Inicia sesión de nuevo."
+  },
+  "forbidden": "No tienes permiso para realizar esta acción.",
+  "notFound": "No encontramos lo que buscas.",
+  "unprocessable": "Revisa los datos e inténtalo de nuevo.",
+  "rateLimited": "Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.",
+  "server": "Ocurrió un problema en el servidor. Inténtalo de nuevo en unos minutos.",
+  "unknown": "Ocurrió un error inesperado. Inténtalo de nuevo."
+}

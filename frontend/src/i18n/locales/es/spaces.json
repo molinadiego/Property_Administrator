@@ -1,0 +1,23 @@
+{
+  "picker": {
+    "title": "Elige un espacio",
+    "subtitle": "Tienes acceso a varios espacios. Selecciona con cuál quieres trabajar.",
+    "activeBadge": "Activo"
+  },
+  "none": {
+    "title": "Sin espacios disponibles",
+    "body": "Tu cuenta todavía no tiene ningún espacio. Cuando crees un espacio o alguien te invite a uno, aparecerá aquí."
+  },
+  "switch": "Cambiar de espacio",
+  "switchLabel": "Espacio activo",
+  "type": {
+    "property_management": "Administradora de propiedades",
+    "contractor": "Contratista",
+    "profesional": "Profesional independiente",
+    "own_business": "Negocio propio"
+  },
+  "role": {
+    "owner": "Propietario",
+    "member": "Miembro"
+  }
+}

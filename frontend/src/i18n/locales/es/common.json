@@ -1,0 +1,23 @@
+{
+  "app": {
+    "name": "Home Management",
+    "skipToContent": "Saltar al contenido"
+  },
+  "action": {
+    "retry": "Reintentar",
+    "reload": "Recargar",
+    "logout": "Cerrar sesión",
+    "back": "Volver"
+  },
+  "stage": {
+    "soon": "Disponible en la etapa {{stage}}.",
+    "comingSoon": "Próximamente"
+  },
+  "boot": {
+    "loading": "Cargando tu cuenta…"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "back": "Volver al inicio"
+  }
+}

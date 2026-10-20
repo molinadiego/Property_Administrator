@@ -51,3 +51,111 @@ jobs:
           name: gate-output
           path: backend/gate-output.log
           retention-days: 7
+
+  # Gate del frontend (spec frontend/etapa-f0.md): lint + typecheck + unit.
+  frontend-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run gate (lint + typecheck + unit)
+        run: npm run check
+
+  # Smoke e2e del frontend contra el backend real + PostgreSQL (spec
+  # frontend/etapa-f0.md §8): login, selector de espacio, shell responsive,
+  # persistencia y logout. El smoke corre en CI aunque en local dependa del
+  # navegador del dueño (F0-D5).
+  frontend-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # El compose crea los roles dev/app (docker/postgres-init) que usa el
+      # backend en local y en esta corrida.
+      - name: Start PostgreSQL
+        run: docker compose -f ../backend/docker-compose.yml up -d --wait postgres
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npm run prisma:generate
+
+      - name: Apply migrations and seed
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://dev:dev@localhost:5432/home_management?schema=public
+          APP_DATABASE_URL: postgresql://app:app_dev@localhost:5432/home_management?schema=public
+        run: |
+          npm run prisma:deploy
+          npm run prisma:seed
+
+      - name: Build and start backend
+        working-directory: backend
+        env:
+          NODE_ENV: development
+          PORT: 3000
+          LOG_LEVEL: warn
+          DATABASE_URL: postgresql://dev:dev@localhost:5432/home_management?schema=public
+          APP_DATABASE_URL: postgresql://app:app_dev@localhost:5432/home_management?schema=public
+          EMAIL_TRANSPORT: console
+          FRONTEND_URL: http://localhost:5173
+        run: |
+          npm run build
+          nohup node dist/main.js > ../backend-e2e.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/api/v1/health > /dev/null; then
+              echo "backend is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "backend did not become healthy"
+          cat ../backend-e2e.log
+          exit 1
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run e2e smoke
+        run: npx playwright test
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-e2e-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          retention-days: 7

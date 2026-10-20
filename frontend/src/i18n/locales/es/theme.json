@@ -1,0 +1,8 @@
+{
+  "mode": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "toggle": "Cambiar tema (actual: {{mode}})"
+}
