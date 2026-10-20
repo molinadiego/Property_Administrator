@@ -148,3 +148,17 @@ Cada etapa define: alcance, entregables y **criterio de salida** (qué tiene que
 **Criterio de salida:** definido en `docs/especificacion/etapa-7.md` §9 (perfil fiscal con edición owner-only auditada, congelado en emisión sin romper inmutabilidad, PDF/Excel con impuesto, matriz de 20 escenarios verde en `npm run check`, semilla Nevada y CI verde).
 
 **Entregable:** `docs/especificacion/etapa-7.md` (**aprobada e implementada el 19/10/2026**: gate `npm run check` en verde, matriz de 20 escenarios en `test/etapa7.e2e-spec.ts` —incluida la verificación de texto del PDF decodificando los ToUnicode CMaps de pdfmake—, migración aditiva `20261019234805_etapa7_taxes_nevada` con backfill de impuesto 0.00, OpenAPI y semilla Nevada actualizados; decisiones de negocio T1–T5 aprobadas el 19/10/2026 junto con la enmienda de §11.6/§18.2).
+
+---
+
+## BE-2 — Retiro del estado `assigned` de órdenes *(corrección de modelo; decisión del dueño 20/10/2026)*
+
+**Alcance** (`docs/especificacion/be-2-orden-status-assigned.md` §1.1)
+- Eliminar `assigned` de `OrderStatus`: migración que recrea el enum de PostgreSQL con reclasificación de filas existentes (con job iniciado → `in_progress`; resto → `open`), cambio en `schema.prisma` y regeneración del cliente Prisma.
+- Retiro del valor del filtro `status` de BE-1 (pasa a 422), del DTO, de las ramas de `job-rules.ts`, del seed, de las fixtures e2e y de los tests.
+- Regeneración de `backend/openapi/openapi.json` y del cliente API del frontend; actualización de las specs aprobadas `etapa-2`, `etapa-3` y `be-1` (autorizada por el dueño con la aprobación del plan).
+- Sin enmienda a `proyect.md` (§20.1 no contempla «Asignada» de orden) y sin cambios de permisos ni de visibilidad.
+
+**Criterio de salida:** definido en `docs/especificacion/be-2-orden-status-assigned.md` §9 (enum con 5 valores y sin filas `assigned`, `?status=assigned` → 422, seed/fixtures sin SQL directo, gates backend y frontend verdes, CI verde, observación cerrada en `MEMORY.md` §1).
+
+**Entregable:** `docs/especificacion/be-2-orden-status-assigned.md` (**aprobada e implementada el 20/10/2026**: gate backend `npm run check` verde — lint + build + unit 131 ✓ + e2e 289 ✓ con la migración aplicada en BD fresca por Testcontainers—, gate frontend verde con el cliente regenerado; OpenAPI actualizado; specs aprobadas `etapa-2`, `etapa-3` y `be-1` actualizadas con sus enmiendas; nota de ejecución en la spec §12). Decisión de dirección del dueño 20/10/2026: quitar con migración dura.
