@@ -15,7 +15,7 @@ export type JobStatusValue =
   | 'done'
   | 'not_realized';
 
-export type OrderStatusValue = 'requested' | 'open' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
+export type OrderStatusValue = 'requested' | 'open' | 'in_progress' | 'completed' | 'cancelled';
 
 /** §20.2: «Completado es un estado final»; «No pudo concretarse» also closes the story. */
 export const JOB_TERMINAL_STATUSES: readonly JobStatusValue[] = ['done', 'not_realized'];
@@ -50,9 +50,10 @@ export function isTerminalJobStatus(status: JobStatusValue): boolean {
 /**
  * Order-level effect of a job starting: «Aceptada → En curso» (§20.1). Orders
  * in any other status keep it (a completed/cancelled order never reopens).
+ * BE-2: `assigned` was retired; acceptance lives on the assignment (§20.3).
  */
 export function orderStatusAfterJobStart(orderStatus: OrderStatusValue): OrderStatusValue {
-  return orderStatus === 'open' || orderStatus === 'assigned' ? 'in_progress' : orderStatus;
+  return orderStatus === 'open' ? 'in_progress' : orderStatus;
 }
 
 /**
@@ -71,15 +72,15 @@ export function canCloseOrder(
 }
 
 /**
- * Cancel precondition (§20.1): only from Borrador/Enviada (mapped `open`/
- * `assigned`) and only while **no** job has started (`started_at` null in all
- * of them — «si no se realizó ningún trabajo»).
+ * Cancel precondition (§20.1): only from Borrador/Enviada (mapped `open` —
+ * BE-2: `assigned` was retired) and only while **no** job has started
+ * (`started_at` null in all of them — «si no se realizó ningún trabajo»).
  */
 export function canCancelOrder(
   orderStatus: OrderStatusValue,
   jobs: ReadonlyArray<{ startedAt: Date | null }>,
 ): boolean {
-  if (orderStatus !== 'open' && orderStatus !== 'assigned') return false;
+  if (orderStatus !== 'open') return false;
   return jobs.every((job) => job.startedAt === null);
 }
 

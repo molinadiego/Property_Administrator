@@ -14,8 +14,8 @@ export class OrdersQueryDto {
   @ApiPropertyOptional({
     type: String,
     description:
-      'Estado(s) de orden separados por coma (§20.1); admite requested, open, assigned, in_progress, completed, cancelled',
-    example: 'open,assigned,in_progress',
+      'Estado(s) de orden separados por coma (§20.1); admite requested, open, in_progress, completed, cancelled',
+    example: 'open,in_progress',
   })
   @Transform(({ value }) => parseStatusFilter(value))
   @IsOptional()

@@ -21,8 +21,8 @@ const errorMessages = (errors: Awaited<ReturnType<typeof validate>>): string[] =
 
 describe('order filters parsing (BE-1 §4)', () => {
   it('splits and trims a comma-separated status list', () => {
-    expect(parseStatusFilter('open,assigned')).toEqual(['open', 'assigned']);
-    expect(parseStatusFilter(' open , assigned ')).toEqual(['open', 'assigned']);
+    expect(parseStatusFilter('open,in_progress')).toEqual(['open', 'in_progress']);
+    expect(parseStatusFilter(' open , in_progress ')).toEqual(['open', 'in_progress']);
   });
 
   it('accepts repeated params (array form) and splits each item', () => {
@@ -43,9 +43,20 @@ describe('order filters parsing (BE-1 §4)', () => {
   });
 
   it('parses a valid status list through the DTO', async () => {
-    const { dto, errors } = await parseQuery({ status: 'open, assigned, in_progress' });
+    const { dto, errors } = await parseQuery({ status: 'open, in_progress, completed' });
     expect(errors).toHaveLength(0);
-    expect(dto.status).toEqual(['open', 'assigned', 'in_progress']);
+    expect(dto.status).toEqual(['open', 'in_progress', 'completed']);
+  });
+
+  it('rejects the retired `assigned` status alone or inside a list (BE-2 AC-BE2.2/AC-BE2.3)', async () => {
+    for (const value of ['assigned', 'open,assigned']) {
+      const { errors } = await parseQuery({ status: value });
+      expect(errors).toHaveLength(1);
+      const message = errorMessages(errors)[0];
+      expect(message).toContain('status');
+      expect(message).toContain('in_progress');
+      expect(message).not.toContain('assigned');
+    }
   });
 
   it('accepts every §20.1 order status and the two assignment filters', async () => {
@@ -133,9 +144,9 @@ describe('buildOrderListWhere (BE-1 §5)', () => {
 
   it('ANDs a status clause on top of the visibility clause without mutating it', () => {
     const original = JSON.parse(JSON.stringify(visibility)) as Prisma.OrderWhereInput;
-    const where = buildOrderListWhere(visibility, { status: ['open', 'assigned'] }, membershipIds);
+    const where = buildOrderListWhere(visibility, { status: ['open', 'in_progress'] }, membershipIds);
     expect(where).toEqual({
-      AND: [visibility, { status: { in: ['open', 'assigned'] } }],
+      AND: [visibility, { status: { in: ['open', 'in_progress'] } }],
     });
     expect(visibility).toEqual(original);
   });

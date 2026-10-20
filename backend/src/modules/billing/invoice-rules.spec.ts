@@ -18,7 +18,7 @@ import {
 } from './invoice-rules';
 
 const baseOrder = {
-  orderStatus: 'assigned' as const,
+  orderStatus: 'in_progress' as const,
   orderCompanyId: 'order-company',
   clientTenantId: null,
   emitterCompanyId: 'emitter',

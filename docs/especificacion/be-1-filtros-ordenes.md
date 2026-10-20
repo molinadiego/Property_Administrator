@@ -14,6 +14,11 @@ Base normativa: `proyect.md` §2.12 (visibilidad de órdenes), §2.1–§2.3 (ti
 de usuario), §5.6 (aceptación/rechazo), §16.1, §16.8, §20.1, §20.3.
 
 > **Aprobada el 19/10/2026** por el dueño (spec-driven, `AGENTS.md`).
+> **Enmienda 20/10/2026 (BE-2, aprobada)**: el estado `assigned` se retiró de
+> `OrderStatus`
+> (`docs/especificacion/be-2-orden-status-assigned.md`); por eso las listas
+> `status` de este documento ya no lo incluyen y `status=assigned` responde
+> 422 como cualquier valor desconocido.
 
 ---
 
@@ -24,7 +29,7 @@ de usuario), §5.6 (aceptación/rechazo), §16.1, §16.8, §20.1, §20.3.
 **Entra:**
 
 - Query param `status` en `GET /companies/{id}/orders`: filtro por estado(s)
-  de orden, valores separados por coma (p. ej. `status=open,assigned,in_progress`).
+  de orden, valores separados por coma (p. ej. `status=open,in_progress`).
 - Query param `assignment_status`: `pending` | `accepted` — restringe a las
   órdenes donde **la membresía del llamador** tiene una asignación con ese
   estado (p. ej. `assignment_status=pending` = «recibidas, sin aceptar aún»).
@@ -49,10 +54,10 @@ de usuario), §5.6 (aceptación/rechazo), §16.1, §16.8, §20.1, §20.3.
 
 | # | Decisión |
 |---|---|
-| **B1** | `status` admite **lista separada por coma** de valores de `OrderStatus` (`requested`, `open`, `assigned`, `in_progress`, `completed`, `cancelled`). Un valor inválido o vacío → 422 (no filtrar «a medias» ni ignorar en silencio). |
+| **B1** | `status` admite **lista separada por coma** de valores de `OrderStatus` (`requested`, `open`, `in_progress`, `completed`, `cancelled`; enmienda BE-2: sin `assigned`). Un valor inválido o vacío → 422 (no filtrar «a medias» ni ignorar en silencio). |
 | **B2** | `assignment_status` admite **solo** `pending` | `accepted`: son los dos estados que otorgan visibilidad (§2.12); `rejected`/`revoked` no exponen la orden y por lo tanto no son filtros legítimos → 422. |
 | **B3** | Semántica de `assignment_status`: «la membresía del llamador tiene, en alguna job de la orden, una asignación con ese estado». En órdenes del propio espacio aplica igual (puede haber asignación interna); si el llamador no tiene asignación con ese estado, la orden **no** entra en el resultado aunque sea visible de otro modo. |
-| **B4** | La portada F2 usará `status=open,assigned,in_progress` para «órdenes abiertas» y `assignment_status=pending` para «recibidas sin aceptar»; la elección de qué cuenta como «abierta» (y el caso `requested`) se cierra en la spec F2, no acá. |
+| **B4** | La portada F2 usará `status=open,in_progress` para «órdenes abiertas» y `assignment_status=pending` para «recibidas sin aceptar»; la elección de qué cuenta como «abierta» (y el caso `requested`) se cierra en la spec F2, no acá. |
 | **B5** | Sin eventos de audit log nuevos: la operación es de solo lectura (§12 exige registro de acciones, no de consultas). |
 
 ## 2. Modelo de datos
@@ -96,7 +101,7 @@ empresa, **404 recurso de otra empresa** (no se filtra existencia ajena).
 | 3 | `status` con valor desconocido (`status=foo`) | 422 con `detail` que lista los valores válidos |
 | 4 | `status` vacío (`status=`) | 422 |
 | 5 | `assignment_status=rejected` (u otro fuera de `pending`/`accepted`) | 422 |
-| 6 | Miembros con `status=open,assigned,in_progress` | 200 solo con órdenes de esos estados; `completed`/`cancelled` ausentes |
+| 6 | Miembros con `status=open,in_progress` | 200 solo con órdenes de esos estados; `completed`/`cancelled` ausentes |
 | 7 | `assignment_status=pending` | 200 solo con órdenes donde el llamador tiene asignación `pending`; las que solo tiene `accepted` (o ninguna) ausentes |
 | 8 | `status=open` + `assignment_status=pending` | intersección AND: órdenes `open` **y** con mi asignación `pending` |
 | 9 | Profesional con asignación en orden de **otra** empresa, filtro `assignment_status=pending` | 200 con esa orden (visibilidad §2.12 intacta); órdenes de otras empresas jamás aparecen |
@@ -126,7 +131,7 @@ Ninguno nuevo (B5).
 ## 10. Criterios de aceptación
 
 - **AC-BE1.1** Dada una sesión válida, cuando se consulta con
-  `status=open,assigned,in_progress`, entonces 200 y ninguna orden fuera de
+  `status=open,in_progress`, entonces 200 y ninguna orden fuera de
   esos estados (§20.1).
 - **AC-BE1.2** Dada una sesión válida, cuando se consulta con
   `assignment_status=pending`, entonces 200 y solo órdenes donde el llamador
@@ -150,7 +155,7 @@ Ninguno nuevo (B5).
   otra `accepted`): cumple `assignment_status` si **alguna** coincide (B3).
 - Orden del propio espacio **sin** ninguna asignación del llamador: excluida
   con `assignment_status=...` (B3), incluida con solo `status=...`.
-- `status` con espacios (`open, assigned`): se recortan los espacios antes de
+- `status` con espacios (`open, in_progress`): se recortan los espacios antes de
   validar; sin espacios se valida tal cual.
 - Más de 100 órdenes visibles: se mantiene el corte actual (`take: 100`) y el
   orden `createdAt desc` — documentado, sin paginación nueva (§1.1).

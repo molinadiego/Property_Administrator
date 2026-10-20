@@ -121,7 +121,7 @@ anulables. Ninguna migración borra historial (§1.1.8).
 | Enum | Cambio | Motivo |
 |---|---|---|
 | `JobStatus` | se agregan `'accepted'` \| `'incomplete'` | §20.2 distingue «Aceptado», «En curso» e «Incompleto» como estados con transiciones propias («Incompleto → En curso» requiere autorización del responsable). Sin `incomplete` no existe el estado que exige §6.2. Valores finales: `pending` \| `accepted` \| `in_progress` \| `incomplete` \| `done` \| `not_realized`. «Asignado/esperando respuesta» de §20.2 sigue representándose por el job `pending` + la asignación `pending` (convención de la Etapa 2). |
-| `OrderStatus` | se agrega `'in_progress'` | §20.1 «Aceptada → En curso». Valores finales: `requested` \| `open` \| `assigned` \| `in_progress` \| `completed` \| `cancelled`. Mapeo: `open` ≈ Borrador/Enviada, `assigned` ≈ Aceptada, `completed` = Cerrada (§6.4), `cancelled` = Cancelada. `rejected` **no** se agrega (rechazo de orden fuera de alcance, ver §1). |
+| `OrderStatus` | se agrega `'in_progress'` | §20.1 «Aceptada → En curso». Valores finales (enmienda BE-2, 20/10/2026 — se retiró `assigned`): `requested` \| `open` \| `in_progress` \| `completed` \| `cancelled`. Mapeo: `open` ≈ Borrador/Enviada, `in_progress` = En curso, `completed` = Cerrada (§6.4), `cancelled` = Cancelada; «Aceptada» vive en la asignación aceptada (§20.3, enmienda 17/10/2026). `rejected` **no** se agrega (rechazo de orden fuera de alcance, ver §1). |
 | `AssignmentStatus` | se agrega `'revoked'` | §20.3: cada asignación queda Propuesta/Aceptada/Rechazada/**Revocada**; una revocada no se reactiva. Valores finales: `pending` \| `accepted` \| `rejected` \| `revoked`. |
 
 Enums nuevos:
@@ -295,7 +295,7 @@ recurso; la resolución completa está en §5.
 | Método | Ruta | Descripción | Permiso | Éxito |
 |---|---|---|---|---|
 | POST | `/companies/:id/orders/:orderId/close` | Cierra la orden: exige **todos** los jobs en `done` o `not_realized` (§6.4); setea `closed_by`/`closed_at` | miembro empresa dueña (originadora) | 204 / 403 / 404 / 409 |
-| POST | `/companies/:id/orders/:orderId/cancel` | Cancela la orden completa; body `{ reason }` obligatorio; solo si **ningún** job comenzó (`started_at` nulo en todos) y `status ∈ {open, assigned}` (§20.1); revoca asignaciones activas (§16.6) | miembro empresa dueña | 204 / 403 / 404 / 409 / 422 |
+| POST | `/companies/:id/orders/:orderId/cancel` | Cancela la orden completa; body `{ reason }` obligatorio; solo si **ningún** job comenzó (`started_at` nulo en todos) y `status = open` (§20.1; enmienda BE-2: sin `assigned`); revoca asignaciones activas (§16.6) | miembro empresa dueña | 204 / 403 / 404 / 409 / 422 |
 
 ### 4.4 Archivos (§7.1, §16.5)
 
@@ -396,7 +396,7 @@ Tests con Testcontainers + PostgreSQL real (+ `s3rver` en proceso para los de ar
 | 24 | Empresa dueña: `close` con asignación rechazada/revocada pero jobs terminales | 204 (la asignación histórica no bloquea, §6.4) |
 | 25 | Empresa **no** dueña con asignación activa: `close` | 403 (§6.4 solo originador) |
 | 26 | Empresa sin relación: `close`/`cancel` | 404 (§16.8) |
-| 27 | Empresa dueña: `cancel` con motivo, ningún job con `started_at`, orden `open`/`assigned` | 204, `cancelled` + motivo, asignaciones activas `revoked`, audit (§20.1) |
+| 27 | Empresa dueña: `cancel` con motivo, ningún job con `started_at`, orden `open` | 204, `cancelled` + motivo, asignaciones activas `revoked`, audit (§20.1) |
 | 28 | Empresa dueña: `cancel` con algún job ya comenzado (o orden `in_progress`) | 409 (§20.1: una vez realizado trabajo no se cancela) |
 | 29 | Empresa dueña: `cancel` **sin** motivo | 422 (§20.1) |
 | 30 | Upload a orden/trabajo por miembro dueño o asignado activo | 201, bytes en el storage, fila en `file_objects`, `file.uploaded` en audit (§7.1) |
@@ -488,7 +488,7 @@ marca una decisión técnica aprobada por el dueño (§1 y «Decisiones resuelta
 
 - **AC-3.1** Dado un job `accepted` y su profesional asignado activo, cuando ejecuta `start`,
   entonces 204, el job pasa a `in_progress`, se fija `started_at`, la orden pasa a `in_progress`
-  si estaba `assigned`, y quedan evento `started` + `job.started` en audit.
+  si estaba `open`, y quedan evento `started` + `job.started` en audit.
 - **AC-3.2** Dado un profesional asignado, cuando registra un avance con mensaje, entonces 201
   y un `job_event` `progress_note` con `actor_user_id` y `created_at` (§6.1); el audit log **no**
   recibe entradas por avances libres (§7).
@@ -534,7 +534,7 @@ marca una decisión técnica aprobada por el dueño (§1 y «Decisiones resuelta
 - **AC-3.14** Dada una orden de la empresa A, cuando la cierra una empresa B con asignación
   activa, entonces 403; sin relación, 404 (§6.4, §16.8).
 - **AC-3.15** Dada una orden sin ningún trabajo realizado (`started_at` nulo en todos) en
-  estado `open`/`assigned`, cuando su empresa dueña la cancela con motivo, entonces 204,
+  estado `open`, cuando su empresa dueña la cancela con motivo, entonces 204,
   `cancelled` con motivo y responsable, asignaciones activas `revoked`, `order.cancelled` en
   audit (§20.1).
 - **AC-3.16** Dada una orden con **algún** trabajo realizado (o en `in_progress`), cuando se

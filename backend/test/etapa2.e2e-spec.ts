@@ -536,7 +536,7 @@ suite('etapa 2: matriz de permisos y flujos (e2e)', () => {
     expect(list.length).toBeGreaterThanOrEqual(2);
     for (const row of list) {
       expect(Object.keys(row).sort()).toEqual(['createdAt', 'id', 'status', 'title']);
-      expect(['requested', 'open', 'assigned', 'completed', 'cancelled']).toContain(row.status);
+      expect(['requested', 'open', 'in_progress', 'completed', 'cancelled']).toContain(row.status);
     }
   });
 

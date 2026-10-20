@@ -2966,7 +2966,7 @@ export interface operations {
     OrdersController_list: {
         parameters: {
             query?: {
-                /** @description Estado(s) de orden separados por coma (§20.1); admite requested, open, assigned, in_progress, completed, cancelled */
+                /** @description Estado(s) de orden separados por coma (§20.1); admite requested, open, in_progress, completed, cancelled */
                 status?: string;
                 /** @description Restringe a órdenes con una asignación del llamador en ese estado (§5.6, §2.12); solo pending|accepted */
                 assignment_status?: "pending" | "accepted";

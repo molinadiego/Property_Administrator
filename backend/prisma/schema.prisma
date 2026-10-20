@@ -67,7 +67,6 @@ enum OrderOrigin {
 enum OrderStatus {
   requested
   open
-  assigned
   in_progress
   completed
   cancelled

@@ -15,7 +15,6 @@ describe('request state machine (§9, matriz #28)', () => {
   it('adds an approved additional_work job only to a non-terminal order (§20.1)', () => {
     expect(canApproveAdditionalWork('requested')).toBe(true);
     expect(canApproveAdditionalWork('open')).toBe(true);
-    expect(canApproveAdditionalWork('assigned')).toBe(true);
     expect(canApproveAdditionalWork('in_progress')).toBe(true);
     expect(canApproveAdditionalWork('completed')).toBe(false);
     expect(canApproveAdditionalWork('cancelled')).toBe(false);

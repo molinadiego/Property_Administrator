@@ -11,11 +11,10 @@
 import type { Prisma } from '../../generated/prisma/client';
 import type { OrderStatusValue } from './job-rules';
 
-/** Order states accepted by the `status` filter (§20.1 / BE-1 B1). */
+/** Order states accepted by the `status` filter (§20.1 / BE-1 B1; BE-2 R1: `assigned` was retired). */
 export const ORDER_STATUS_VALUES: readonly OrderStatusValue[] = [
   'requested',
   'open',
-  'assigned',
   'in_progress',
   'completed',
   'cancelled',

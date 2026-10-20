@@ -194,7 +194,7 @@ Registro separado de `users`. No tiene `password_hash` ni `locale`: no inicia se
 | `PropertyOccupancy` | `occupied` \| `vacant` | §4.3 |
 | `PropertyTenantKind` | `owner` \| `tenant` | §4.2/§4.3 |
 | `OrderOrigin` | `management` \| `contractor` \| `own_business` | §5.1 |
-| `OrderStatus` | `requested` \| `open` \| `assigned` \| `completed` \| `cancelled` | `requested` = pedido de cuenta limitada sin convertir (§4.3, §5.1). `completed`/`cancelled` mínimos; lógica de cierre en Etapa 3/§6.4. |
+| `OrderStatus` | `requested` \| `open` \| `completed` \| `cancelled` | `requested` = pedido de cuenta limitada sin convertir (§4.3, §5.1). `completed`/`cancelled` mínimos; lógica de cierre en Etapa 3/§6.4. `assigned` se retiró en BE-2 (20/10/2026). |
 | `JobStatus` | `pending` \| `in_progress` \| `done` \| `not_realized` | Seguimiento completo (§6) es Etapa 3; aquí se usa `pending` y se respeta que cada job avanza por separado (§5.5). |
 | `AssignmentStatus` | `pending` \| `accepted` \| `rejected` | §5.6 |
 | `NotificationType` | `order_created` \| `order_assigned` \| `assignment_requested` \| `assignment_accepted` \| `assignment_rejected` \| `job_added` | ver §7 |

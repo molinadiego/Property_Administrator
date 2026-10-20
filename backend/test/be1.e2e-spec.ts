@@ -233,18 +233,10 @@ suite('BE-1: filtros de órdenes (e2e)', () => {
         .expect(201)
     ).body.id as string;
 
-    // ---- Fixture orders of company A (all six §20.1 states + assignments) ----
+    // ---- Fixture orders of company A (the reachable §20.1 states + assignments).
+    // BE-2 retired `assigned`: no fixture sets it and no direct SQL is used.
     const open = await createOrder('ownerA', companies.A, props.propA, 'BE1 orden abierta');
     orders.openA = open.orderId;
-
-    // `assigned` is unreachable through the API (state machine note in the
-    // implementation report): the fixture sets it via direct SQL, as done in
-    // the etapa-6 suite for its own tables.
-    const assigned = await createOrder('ownerA', companies.A, props.propA, 'BE1 orden assigned');
-    orders.assignedA = assigned.orderId;
-    await pg.query(`UPDATE orders SET status = 'assigned', updated_at = now() WHERE id = $1`, [
-      orders.assignedA,
-    ]);
 
     const inProgress = await createOrder('ownerA', companies.A, props.propA, 'BE1 orden en curso');
     orders.inProgressA = inProgress.orderId;
@@ -292,18 +284,41 @@ suite('BE-1: filtros de órdenes (e2e)', () => {
       .send({})
       .expect(204);
 
-    // Pending assignment on a non-open order: proves the AND narrows by status.
-    const assignedPending = await createOrder(
+    // Pending assignment on a non-open order (in_progress): proves the AND
+    // narrows by status. Built via API — start moves the order to
+    // in_progress, the second job keeps a pending assignment (BE-2 §8).
+    const inProgressPending = await createOrder(
       'ownerA',
       companies.A,
       props.propA,
-      'BE1 orden assigned pending B',
+      'BE1 orden en curso pendiente B',
     );
-    orders.assignedPendingA = assignedPending.orderId;
-    await assignToOwnerB(companies.A, assignedPending.orderId, assignedPending.jobId);
-    await pg.query(`UPDATE orders SET status = 'assigned', updated_at = now() WHERE id = $1`, [
-      orders.assignedPendingA,
-    ]);
+    orders.inProgressPendingA = inProgressPending.orderId;
+    const startedAssignId = await assignToOwnerB(
+      companies.A,
+      inProgressPending.orderId,
+      inProgressPending.jobId,
+    );
+    await agents.ownerB
+      .post(`${API}/companies/${companies.B}/assignments/${startedAssignId}/accept`)
+      .send({})
+      .expect(204);
+    await agents.ownerB
+      .post(`${API}/companies/${companies.B}/jobs/${inProgressPending.jobId}/start`)
+      .send({})
+      .expect(204);
+    const pendingJob = await agents.ownerA
+      .post(`${API}/companies/${companies.A}/orders/${inProgressPending.orderId}/jobs`)
+      .send({
+        title: 'BE1 trabajo extra pendiente en curso',
+        description: 'Segundo trabajo con asignación pendiente de B (BE-1/BE-2).',
+      })
+      .expect(201);
+    await assignToOwnerB(
+      companies.A,
+      inProgressPending.orderId,
+      (pendingJob.body as { id: string }).id,
+    );
 
     // §11: one order, two jobs, mixed assignments of the same caller.
     const mixed = await createOrder('ownerA', companies.A, props.propA, 'BE1 orden mixta B');
@@ -357,6 +372,8 @@ suite('BE-1: filtros de órdenes (e2e)', () => {
       await http()
         .get(`${API}/companies/${companies.A}/orders?assignment_status=pending`)
         .expect(401);
+      // BE-2 §6 #1: auth precedes validation even for the retired value.
+      await http().get(`${API}/companies/${companies.A}/orders?status=assigned`).expect(401);
     });
 
     it('#2 espacio de otra empresa con filtro válido → 404 (el guard ni llega a los filtros)', async () => {
@@ -364,6 +381,8 @@ suite('BE-1: filtros de órdenes (e2e)', () => {
       await agents.memberA
         .get(`${API}/companies/${companies.B}/orders?assignment_status=pending`)
         .expect(404);
+      // BE-2 §6 #2: foreign space answers 404, never 422, for `assigned`.
+      await agents.ownerB.get(`${API}/companies/${companies.A}/orders?status=assigned`).expect(404);
     });
 
     it('#3 status=foo → 422 con detail que lista los valores válidos', async () => {
@@ -391,19 +410,18 @@ suite('BE-1: filtros de órdenes (e2e)', () => {
         .expect(422);
     });
 
-    it('#6 status=open,assigned,in_progress → 200 solo con esos estados (AC-BE1.1)', async () => {
+    it('#6 status=open,in_progress → 200 solo con esos estados (AC-BE1.1)', async () => {
       const res = await agents.memberA
-        .get(`${API}/companies/${companies.A}/orders?status=open,assigned,in_progress`)
+        .get(`${API}/companies/${companies.A}/orders?status=open,in_progress`)
         .expect(200);
       const ids = idsOf(res.body);
       expect(ids).toContain(orders.openA);
-      expect(ids).toContain(orders.assignedA);
-      expect(ids).toContain(orders.assignedPendingA);
+      expect(ids).toContain(orders.inProgressPendingA);
       expect(ids).toContain(orders.inProgressA);
       expect(ids).not.toContain(orders.completedA);
       expect(ids).not.toContain(orders.cancelledA);
       for (const status of statusesOf(res.body)) {
-        expect(['open', 'assigned', 'in_progress']).toContain(status);
+        expect(['open', 'in_progress']).toContain(status);
       }
     });
 
@@ -413,7 +431,7 @@ suite('BE-1: filtros de órdenes (e2e)', () => {
         .expect(200);
       const ids = idsOf(res.body);
       expect(ids).toContain(orders.pendingA);
-      expect(ids).toContain(orders.assignedPendingA);
+      expect(ids).toContain(orders.inProgressPendingA);
       expect(ids).toContain(orders.mixedA);
       // Only-accepted, no-assignment and rejected stay out.
       expect(ids).not.toContain(orders.acceptedA);
@@ -430,7 +448,7 @@ suite('BE-1: filtros de órdenes (e2e)', () => {
       expect(ids).toContain(orders.pendingA);
       expect(ids).toContain(orders.mixedA);
       // Narrowed by each side: pending but not open / open but not pending.
-      expect(ids).not.toContain(orders.assignedPendingA);
+      expect(ids).not.toContain(orders.inProgressPendingA);
       expect(ids).not.toContain(orders.acceptedA);
       expect(ids).not.toContain(orders.ownB);
       for (const status of statusesOf(res.body)) expect(status).toBe('open');
@@ -454,8 +472,7 @@ suite('BE-1: filtros de órdenes (e2e)', () => {
       const ids = idsOf(res.body);
       for (const key of [
         'openA',
-        'assignedA',
-        'assignedPendingA',
+        'inProgressPendingA',
         'inProgressA',
         'completedA',
         'cancelledA',
@@ -528,17 +545,44 @@ suite('BE-1: filtros de órdenes (e2e)', () => {
     it('status con espacios alrededor de los valores se recorta antes de validar', async () => {
       const res = await agents.ownerA
         .get(`${API}/companies/${companies.A}/orders`)
-        .query({ status: 'open, assigned' })
+        .query({ status: 'open, in_progress' })
         .expect(200);
       const ids = idsOf(res.body);
       expect(ids).toContain(orders.openA);
-      expect(ids).toContain(orders.assignedA);
-      expect(ids).not.toContain(orders.inProgressA);
+      expect(ids).toContain(orders.inProgressA);
       expect(ids).not.toContain(orders.completedA);
+      expect(ids).not.toContain(orders.cancelledA);
     });
 
     it('parámetro no declarado (foo=1) → 422 (forbidNonWhitelisted global)', async () => {
       await agents.ownerA.get(`${API}/companies/${companies.A}/orders?foo=1`).expect(422);
+    });
+  });
+
+  describe('BE-2: estado `assigned` retirado (AC-BE2.1–AC-BE2.4)', () => {
+    it('status=assigned → 422 con los5 valores válidos, solo o dentro de una lista (AC-BE2.2/AC-BE2.3)', async () => {
+      const single = await agents.ownerA
+        .get(`${API}/companies/${companies.A}/orders?status=assigned`)
+        .expect(422);
+      const detail = String((single.body as { detail?: string }).detail ?? '');
+      expect(detail).toContain('status');
+      expect(detail).toContain('in_progress');
+      expect(detail).not.toContain('assigned');
+      const mixed = await agents.ownerA
+        .get(`${API}/companies/${companies.A}/orders?status=open,assigned`)
+        .expect(422);
+      const mixedDetail = String((mixed.body as { detail?: string }).detail ?? '');
+      expect(mixedDetail).toContain('in_progress');
+      expect(mixedDetail).not.toContain('assigned');
+    });
+
+    it('ninguna fila queda con status `assigned` tras los flujos de la suite (AC-BE2.1)', async () => {
+      const res = await pg.query(`SELECT DISTINCT status::text AS status FROM orders`);
+      const statuses = res.rows.map((row) => row.status as string);
+      expect(statuses).not.toContain('assigned');
+      for (const status of statuses) {
+        expect(['requested', 'open', 'in_progress', 'completed', 'cancelled']).toContain(status);
+      }
     });
   });
 });

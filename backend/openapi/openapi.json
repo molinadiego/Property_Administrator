@@ -1094,9 +1094,9 @@
             "name": "status",
             "required": false,
             "in": "query",
-            "description": "Estado(s) de orden separados por coma (§20.1); admite requested, open, assigned, in_progress, completed, cancelled",
+            "description": "Estado(s) de orden separados por coma (§20.1); admite requested, open, in_progress, completed, cancelled",
             "schema": {
-              "example": "open,assigned,in_progress",
+              "example": "open,in_progress",
               "type": "string"
             }
           },

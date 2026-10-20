@@ -45,9 +45,8 @@ describe('job state machine (§20.2)', () => {
 });
 
 describe('order effects (§20.1)', () => {
-  it('moves an open/assigned order to in_progress when a job starts', () => {
+  it('moves an open order to in_progress when a job starts', () => {
     expect(orderStatusAfterJobStart('open')).toBe('in_progress');
-    expect(orderStatusAfterJobStart('assigned')).toBe('in_progress');
   });
 
   it('never reopens or rewrites a completed/cancelled order', () => {
@@ -67,7 +66,6 @@ describe('close precondition (§6.4)', () => {
   it('closes only when every job is done or not_realized', () => {
     expect(canCloseOrder('open', terminal)).toBe(true);
     expect(canCloseOrder('in_progress', terminal)).toBe(true);
-    expect(canCloseOrder('assigned', terminal)).toBe(true);
   });
 
   it('refuses while any job is not terminal', () => {
@@ -86,10 +84,9 @@ describe('close precondition (§6.4)', () => {
 });
 
 describe('cancel precondition (§20.1)', () => {
-  it('cancels from open/assigned while no job has started', () => {
+  it('cancels from open while no job has started', () => {
     const untouched = [{ startedAt: null }, { startedAt: null }];
     expect(canCancelOrder('open', untouched)).toBe(true);
-    expect(canCancelOrder('assigned', untouched)).toBe(true);
   });
 
   it('refuses once any job has a started_at', () => {

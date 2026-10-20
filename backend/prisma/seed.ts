@@ -45,7 +45,7 @@ const CR_1 = '77777777-7777-4777-8777-777777777701'; // Gestión ↔ T_2 (client
 
 const O_1 = '88888888-8888-4888-8888-888888888801'; // requested (by T_1)
 const O_2 = '88888888-8888-4888-8888-888888888802'; // open
-const O_3 = '88888888-8888-4888-8888-888888888803'; // assigned
+const O_3 = '88888888-8888-4888-8888-888888888803'; // in_progress (job J_4 running)
 
 const J_1 = '99999999-9999-4999-8999-999999999901'; // O_1 job 1
 const J_2 = '99999999-9999-4999-8999-999999999902'; // O_2 job 1
@@ -269,7 +269,7 @@ async function main(): Promise<void> {
             description: 'El A/C de la sala no enfría.',
             origin: 'management',
             originatorId: U_ANA,
-            status: 'assigned',
+            status: 'in_progress',
           },
         ],
       }),
