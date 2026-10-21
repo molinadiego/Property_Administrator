@@ -92,6 +92,8 @@ interface ServeOptions {
   me?: MeResponseDto;
   openOrders?: OrderViewDto[];
   pendingOrders?: OrderViewDto[];
+  /** Unfiltered list (F4-D6: notifications resolve assignments through it). */
+  allOrders?: OrderViewDto[];
   notifications?: NotificationListViewDto[];
   accept?: Response;
   reject?: Response;
@@ -115,6 +117,8 @@ function serveDashboard(options: ServeOptions = {}) {
       return jsonResponse(200, pages ?? []);
     }
     if (isOpenOrders(call)) return jsonResponse(200, options.openOrders ?? []);
+    // F4-D6: the unfiltered list feeds notification → order resolution.
+    if (isOrders(call)) return jsonResponse(200, options.allOrders ?? []);
     if (isNotifications(call)) {
       notifCalls += 1;
       const pages = options.notifications ?? [];
@@ -220,6 +224,8 @@ describe('dashboard screen (spec F2)', () => {
         return jsonResponse(200, [orderFixture({ title: 'Recuperada' })]);
       }
       if (isPendingOrders(call)) return jsonResponse(200, []);
+      // F4-D6: unfiltered list for notification resolution (empty here).
+      if (isOrders(call)) return jsonResponse(200, []);
       if (isNotifications(call)) return jsonResponse(200, { data: [], nextCursor: null });
       throw new Error(`Unexpected request: ${call.method} ${call.url}`);
     });
@@ -456,6 +462,35 @@ describe('dashboard screen (spec F2)', () => {
     await user.click(await screen.findByRole('button', { name: 'Cargar más' }));
     expect(await screen.findByText('Segunda página')).toBeVisible();
     expect(apiCalls(isNotifications).some((call) => call.url.includes('cursor=cur-1'))).toBe(true);
+  });
+
+  it('links notifications to their order and keeps unresolved ones plain (AC-F4.11)', async () => {
+    serveDashboard({
+      notifications: [
+        {
+          data: [
+            notifFixture({ id: 'n-1', title: 'Orden creada', entityType: 'order', entityId: 'o-9' }),
+            notifFixture({ id: 'n-2', title: 'Te asignaron un trabajo' }), // assignment a-1
+            notifFixture({ id: 'n-3', entityId: 'a-zzz', title: 'Asignación lejana' }),
+          ],
+          nextCursor: null,
+        },
+      ],
+      // Loaded orders resolve the assignment id (F4-D6: no GET /assignments/{id}).
+      allOrders: [pendingOrder()],
+    });
+    renderDashboard();
+
+    expect(await screen.findByRole('link', { name: 'Orden creada' })).toHaveAttribute(
+      'href',
+      '/app/orders/o-9',
+    );
+    expect(screen.getByRole('link', { name: 'Te asignaron un trabajo' })).toHaveAttribute(
+      'href',
+      '/app/orders/o-p',
+    );
+    // Not in the loaded set → plain text, never a guessed route (spec F4 §2.4).
+    expect(screen.getByText('Asignación lejana').closest('a')).toBeNull();
   });
 
   it('offers the Miembros shortcut to owners only (AC-F2.9)', async () => {

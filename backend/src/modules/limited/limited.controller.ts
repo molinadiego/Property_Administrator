@@ -10,6 +10,7 @@ import { AuthContext, CompanyAccess } from '../../common/request-context';
 import { LimitedAccessService } from './limited.service';
 import { CreateRequestDto } from './dto/create-request.dto';
 import {
+  ConvertOrderViewDto,
   LimitedOrderViewDto,
   LimitedPropertyViewDto,
   LimitedRequestViewDto,
@@ -67,7 +68,7 @@ export class LimitedController {
   @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @ApiParam({ name: 'orderId', description: 'Identificador de la orden requested' })
   @ApiOperation({ summary: 'Convierte un pedido requested en orden real (§5.1, AC-4.5)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Orden convertida (open)' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Orden convertida (open)', type: ConvertOrderViewDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Orden inexistente (404)' })
   @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'No está requested (422)' })
   convert(

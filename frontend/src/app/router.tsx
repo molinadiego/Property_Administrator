@@ -21,6 +21,9 @@ import { LimitedInvoicePage } from '@/pages/limited/limited-invoice-page';
 import { LimitedPortalPage } from '@/pages/limited/limited-portal-page';
 import { LoginPage } from '@/pages/login-page';
 import { NotFoundPage } from '@/pages/not-found-page';
+import { OrderDetailPage } from '@/pages/orders/order-detail-page';
+import { OrderNewPage } from '@/pages/orders/order-new-page';
+import { OrdersPage } from '@/pages/orders/orders-page';
 import { RegisterPage } from '@/pages/register-page';
 import { ResetPasswordPage } from '@/pages/reset-password-page';
 import { RootRoute } from '@/pages/root-route';
@@ -37,7 +40,8 @@ import { MembersPage } from '@/pages/settings/members-page';
  *   auto-redirect with a single space;
  * - `/app/*`: authenticated shell; the index route is the F2 dashboard, Ajustes
  *   opens on its first real panel, Miembros (F1-D7), `/app/catalogs` on its
- *   first section, Propiedades (F3-D3); the rest keeps the F0-D6 placeholders.
+ *   first section, Propiedades (F3-D3), Órdenes + detalle (F4); the rest keeps
+ *   the F0-D6 placeholders.
  */
 export const appRoutes: RouteObject[] = [
   {
@@ -105,7 +109,9 @@ export const appRoutes: RouteObject[] = [
     ),
     children: [
       { index: true, element: <DashboardPage /> },
-      { path: 'orders', element: <ComingSoonStage labelKey="orders" stage="F4" /> },
+      { path: 'orders', element: <OrdersPage /> },
+      { path: 'orders/new', element: <OrderNewPage /> },
+      { path: 'orders/:orderId', element: <OrderDetailPage /> },
       {
         path: 'catalogs',
         element: <CatalogsLayout />,

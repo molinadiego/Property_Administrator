@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   AssignmentStatus,
+  JobEventType,
   JobStatus,
   OrderOrigin,
   OrderStatus,
@@ -129,4 +130,84 @@ export class OrderViewDto {
 
   @ApiProperty({ format: 'date-time' })
   createdAt: string;
+}
+
+/** Minimal job shape returned when adding a job to a compound order (§5.5). */
+export class JobCreatedViewDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ format: 'uuid' })
+  orderId: string;
+
+  @ApiProperty()
+  title: string;
+
+  @ApiProperty()
+  sortOrder: number;
+
+  @ApiProperty({ enum: JobStatus, description: 'Estado del trabajo (§20.2)' })
+  status: JobStatus;
+}
+
+/** Minimal assignment shape returned when assigning a job (§5.6). */
+export class AssignmentCreatedViewDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ format: 'uuid' })
+  jobId: string;
+
+  @ApiProperty({ enum: AssignmentStatus, description: 'Siempre pending al crear (§20.3)' })
+  status: AssignmentStatus;
+}
+
+/** Result of reassigning a job (§5.7/§20.3): both rows stay in history. */
+export class ReassignmentViewDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ format: 'uuid' })
+  jobId: string;
+
+  @ApiProperty({ enum: AssignmentStatus, description: 'Nueva asignación, siempre pending' })
+  status: AssignmentStatus;
+
+  @ApiProperty({ format: 'uuid', description: 'Asignación anterior que quedó como historial' })
+  previousAssignmentId: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'Asignación que quedó revocada si la anterior estaba activa',
+  })
+  revokedAssignmentId: string | null;
+}
+
+/** Progress event appended by the assigned professional (§6.1). */
+export class JobEventViewDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ format: 'uuid' })
+  jobId: string;
+
+  @ApiProperty({ enum: JobEventType })
+  type: JobEventType;
+
+  @ApiProperty()
+  message: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: string;
+}
+
+/** Result of converting a limited-access request into a sent order (§20.1). */
+export class ConvertOrderViewDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ enum: OrderStatus, description: 'Siempre open tras convertir' })
+  status: OrderStatus;
 }

@@ -8,6 +8,7 @@ import dashboard from './locales/es/dashboard.json';
 import errors from './locales/es/errors.json';
 import limited from './locales/es/limited.json';
 import nav from './locales/es/nav.json';
+import orders from './locales/es/orders.json';
 import spaces from './locales/es/spaces.json';
 import theme from './locales/es/theme.json';
 
@@ -38,6 +39,7 @@ void i18n.use(initReactI18next).init({
       dashboard,
       catalogs,
       limited,
+      orders,
     },
   },
   interpolation: { escapeValue: false },

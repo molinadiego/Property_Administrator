@@ -21,7 +21,7 @@ describe('route guards', () => {
       throw new Error(`Unexpected request: ${call.method} ${call.url}`);
     });
     const user = userEvent.setup();
-    const { router } = renderApp(['/app/orders']);
+    const { router } = renderApp(['/app/billing']);
 
     expect(await screen.findByLabelText('Correo electrónico')).toBeInTheDocument();
     expect(currentPath(router)).toBe('/login');
@@ -30,12 +30,12 @@ describe('route guards', () => {
     await user.type(screen.getByLabelText('Contraseña'), 'DevDemo123!');
     await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
 
-    // No active space yet → picker, remembering /app/orders.
+    // No active space yet → picker, remembering a still-pending section.
     expect(await screen.findByText('Elige un espacio')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Taller Carla' }));
 
-    expect(await screen.findByText('Disponible en la etapa F4.')).toBeInTheDocument();
-    expect(currentPath(router)).toBe('/app/orders');
+    expect(await screen.findByText('Disponible en la etapa F7.')).toBeInTheDocument();
+    expect(currentPath(router)).toBe('/app/billing');
   });
 
   it('shows the session error screen (with retry) on network failure, not login (AC-F0.4)', async () => {

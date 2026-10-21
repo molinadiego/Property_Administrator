@@ -1157,7 +1157,14 @@
         },
         "responses": {
           "201": {
-            "description": "Orden creada con su primer trabajo"
+            "description": "Orden creada con su primer trabajo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderViewDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Espacio o propiedad inexistente (404)"
@@ -1253,7 +1260,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Detalle"
+            "description": "Detalle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderViewDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Orden inexistente o ajena (404)"
@@ -1296,7 +1310,14 @@
         },
         "responses": {
           "200": {
-            "description": "Orden actualizada"
+            "description": "Orden actualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "No la gestiona este espacio (403)"
@@ -1344,7 +1365,14 @@
         },
         "responses": {
           "201": {
-            "description": "Trabajo agregado"
+            "description": "Trabajo agregado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCreatedViewDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Orden inexistente o ajena (404)"
@@ -1389,7 +1417,14 @@
         },
         "responses": {
           "201": {
-            "description": "Asignación creada (pending)"
+            "description": "Asignación creada (pending)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentCreatedViewDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Orden, trabajo o asignado inexistente (404)"
@@ -1523,7 +1558,14 @@
         },
         "responses": {
           "201": {
-            "description": "Nueva asignación creada"
+            "description": "Nueva asignación creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReassignmentViewDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Asignación o asignado inexistente (404)"
@@ -1612,7 +1654,14 @@
         },
         "responses": {
           "201": {
-            "description": "Avance registrado en job_events"
+            "description": "Avance registrado en job_events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobEventViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "No es tu trabajo (403)"
@@ -2222,7 +2271,14 @@
         ],
         "responses": {
           "201": {
-            "description": "Orden convertida (open)"
+            "description": "Orden convertida (open)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertOrderViewDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Orden inexistente (404)"
@@ -5801,6 +5857,44 @@
           "description"
         ]
       },
+      "JobCreatedViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "in_progress",
+              "incomplete",
+              "done",
+              "not_realized"
+            ],
+            "description": "Estado del trabajo (§20.2)"
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "title",
+          "sortOrder",
+          "status"
+        ]
+      },
       "CreateAssignmentDto": {
         "type": "object",
         "properties": {
@@ -5818,6 +5912,34 @@
           "assigneeMembershipId"
         ]
       },
+      "AssignmentCreatedViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected",
+              "revoked"
+            ],
+            "description": "Siempre pending al crear (§20.3)"
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "status"
+        ]
+      },
       "RejectAssignmentDto": {
         "type": "object",
         "properties": {
@@ -5826,6 +5948,47 @@
             "example": "No tengo disponibilidad esta semana."
           }
         }
+      },
+      "ReassignmentViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected",
+              "revoked"
+            ],
+            "description": "Nueva asignación, siempre pending"
+          },
+          "previousAssignmentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Asignación anterior que quedó como historial"
+          },
+          "revokedAssignmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Asignación que quedó revocada si la anterior estaba activa"
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "status",
+          "previousAssignmentId",
+          "revokedAssignmentId"
+        ]
       },
       "JobProgressDto": {
         "type": "object",
@@ -5838,6 +6001,44 @@
         },
         "required": [
           "message"
+        ]
+      },
+      "JobEventViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "progress_note",
+              "started",
+              "completed",
+              "incomplete",
+              "resumed",
+              "not_realized"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "type",
+          "message",
+          "createdAt"
         ]
       },
       "CompleteJobDto": {
@@ -6112,6 +6313,30 @@
         "required": [
           "id",
           "title",
+          "status"
+        ]
+      },
+      "ConvertOrderViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "open",
+              "in_progress",
+              "completed",
+              "cancelled"
+            ],
+            "description": "Siempre open tras convertir"
+          }
+        },
+        "required": [
+          "id",
           "status"
         ]
       },

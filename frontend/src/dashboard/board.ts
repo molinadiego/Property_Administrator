@@ -89,3 +89,26 @@ export function spaceNotifications(
 export function unreadNotificationCount(notifications: NotificationViewDto[]): number {
   return notifications.filter((n) => n.readAt === null).length;
 }
+
+/**
+ * Navigation target of a notification (spec F4-D6, AC-F4.11): `order` points
+ * at its own detail; `assignment` is resolved by scanning the loaded orders
+ * for that assignment id (there is no `GET /assignments/{id}` and the server's
+ * `link` is still null). When the assignment is not in the loaded set, the
+ * item stays plain text — never a guessed route (spec F4 §2.4).
+ */
+export function notificationOrderPath(
+  notification: NotificationViewDto,
+  orders: readonly OrderViewDto[] | undefined,
+): string | null {
+  if (notification.entityType === 'order') return `/app/orders/${notification.entityId}`;
+  if (notification.entityType !== 'assignment') return null;
+  for (const order of orders ?? []) {
+    for (const job of order.jobs) {
+      if (job.assignments.some((assignment) => assignment.id === notification.entityId)) {
+        return `/app/orders/${order.id}`;
+      }
+    }
+  }
+  return null;
+}

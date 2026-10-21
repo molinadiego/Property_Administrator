@@ -96,7 +96,7 @@ Jerarquía de documentos para el frontend: `proyect.md` > `docs/stack.md` (§6 F
 
 **Criterio de salida:** una orden recorre su vida completa desde la UI hasta cierre; cada botón de transición está respaldado por un test; el detalle oculta lo que el rol no debe ver (y el servidor lo niega igual).
 
-**Entregable:** `docs/especificacion/frontend/etapa-f4.md`.
+**Entregable:** `docs/especificacion/frontend/etapa-f4.md` (**aprobada e implementada el 20/10/2026**; ver §11: huecos backend reportados — `parentOrderId` no escribible y discrepancia 403/404 de `addJob`).
 
 ---
 

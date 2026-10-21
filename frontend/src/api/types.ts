@@ -62,6 +62,17 @@ export type LimitedInvoiceViewDto = components['schemas']['LimitedInvoiceViewDto
 export type LimitedInvoiceDetailViewDto = components['schemas']['LimitedInvoiceDetailViewDto'];
 export type CreateRequestDto = components['schemas']['CreateRequestDto'];
 
+/** F4 (spec F4-D1, Option A): typed responses for orders, jobs and assignments. */
+export type JobViewDto = components['schemas']['JobViewDto'];
+export type AssignmentViewDto = components['schemas']['AssignmentViewDto'];
+export type CreateOrderDto = components['schemas']['CreateOrderDto'];
+export type UpdateOrderDto = components['schemas']['UpdateOrderDto'];
+export type AddJobDto = components['schemas']['AddJobDto'];
+export type CreateAssignmentDto = components['schemas']['CreateAssignmentDto'];
+export type JobStatus = JobViewDto['status'];
+export type AssignmentStatus = AssignmentViewDto['status'];
+export type OrderOrigin = OrderViewDto['origin'];
+
 /** Occupancy of a property ficha (§4.2) and tenant kind (§4.3). */
 export type PropertyOccupancy = PropertyViewDto['occupancy'];
 export type PropertyTenantKind = PropertyTenantViewDto['kind'];

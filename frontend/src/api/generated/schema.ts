@@ -2054,19 +2054,75 @@ export interface components {
             /** @example El triturador está quemado; reemplazar por equivalente. */
             description: string;
         };
+        JobCreatedViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            orderId: string;
+            title: string;
+            sortOrder: number;
+            /**
+             * @description Estado del trabajo (§20.2)
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "in_progress" | "incomplete" | "done" | "not_realized";
+        };
         CreateAssignmentDto: {
             /** @description Trabajo a asignar */
             jobId: string;
             /** @description Membresía del asignado (rol activo) */
             assigneeMembershipId: string;
         };
+        AssignmentCreatedViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            jobId: string;
+            /**
+             * @description Siempre pending al crear (§20.3)
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "rejected" | "revoked";
+        };
         RejectAssignmentDto: {
             /** @example No tengo disponibilidad esta semana. */
             reason?: string;
         };
+        ReassignmentViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            jobId: string;
+            /**
+             * @description Nueva asignación, siempre pending
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "rejected" | "revoked";
+            /**
+             * Format: uuid
+             * @description Asignación anterior que quedó como historial
+             */
+            previousAssignmentId: string;
+            /**
+             * Format: uuid
+             * @description Asignación que quedó revocada si la anterior estaba activa
+             */
+            revokedAssignmentId: string | null;
+        };
         JobProgressDto: {
             /** @description Avance a registrar (§6.1) */
             message: string;
+        };
+        JobEventViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            jobId: string;
+            /** @enum {string} */
+            type: "progress_note" | "started" | "completed" | "incomplete" | "resumed" | "not_realized";
+            message: string;
+            /** Format: date-time */
+            createdAt: string;
         };
         CompleteJobDto: {
             /** @description Resultado del trabajo (§6.1) */
@@ -2160,6 +2216,15 @@ export interface components {
             title: string;
             /**
              * @description Siempre `requested` (§20.1)
+             * @enum {string}
+             */
+            status: "requested" | "open" | "in_progress" | "completed" | "cancelled";
+        };
+        ConvertOrderViewDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Siempre open tras convertir
              * @enum {string}
              */
             status: "requested" | "open" | "in_progress" | "completed" | "cancelled";
@@ -3583,7 +3648,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["OrderViewDto"];
+                };
             };
             /** @description Espacio o propiedad inexistente (404) */
             404: {
@@ -3620,7 +3687,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["OrderViewDto"];
+                };
             };
             /** @description Orden inexistente o ajena (404) */
             404: {
@@ -3654,7 +3723,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["OrderViewDto"];
+                };
             };
             /** @description No la gestiona este espacio (403) */
             403: {
@@ -3695,7 +3766,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["JobCreatedViewDto"];
+                };
             };
             /** @description Orden inexistente o ajena (404) */
             404: {
@@ -3729,7 +3802,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AssignmentCreatedViewDto"];
+                };
             };
             /** @description Orden, trabajo o asignado inexistente (404) */
             404: {
@@ -3848,7 +3923,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ReassignmentViewDto"];
+                };
             };
             /** @description Asignación o asignado inexistente (404) */
             404: {
@@ -3933,7 +4010,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["JobEventViewDto"];
+                };
             };
             /** @description No es tu trabajo (403) */
             403: {
@@ -4530,7 +4609,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ConvertOrderViewDto"];
+                };
             };
             /** @description Orden inexistente (404) */
             404: {

@@ -20,7 +20,13 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddJobDto } from './dto/add-job.dto';
 import { OrdersQueryDto } from './dto/orders.query.dto';
-import { OrderViewDto } from './dto/orders-responses.dto';
+import {
+  AssignmentCreatedViewDto,
+  JobCreatedViewDto,
+  JobEventViewDto,
+  OrderViewDto,
+  ReassignmentViewDto,
+} from './dto/orders-responses.dto';
 import { CreateAssignmentDto, RejectAssignmentDto } from './dto/create-assignment.dto';
 import {
   CancelOrderDto,
@@ -39,7 +45,11 @@ export class OrdersController {
   @Post('companies/:id/orders')
   @UseGuards(CompanyAccessGuard)
   @ApiOperation({ summary: 'Crea una orden vinculada a una propiedad (§5.1)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Orden creada con su primer trabajo' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Orden creada con su primer trabajo',
+    type: OrderViewDto,
+  })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Espacio o propiedad inexistente (404)' })
   @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'Datos inválidos (422)' })
   create(
@@ -67,7 +77,7 @@ export class OrdersController {
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'orderId', description: 'Identificador de la orden' })
   @ApiOperation({ summary: 'Detalle de la orden; el profesional ve solo sus trabajos (§2.3)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Detalle' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Detalle', type: OrderViewDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Orden inexistente o ajena (404)' })
   getDetail(
     @CurrentCompany() access: CompanyAccess,
@@ -81,7 +91,7 @@ export class OrdersController {
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'orderId', description: 'Identificador de la orden' })
   @ApiOperation({ summary: 'Edita instrucciones/acceso de la orden gestionada (§4.4, §5.8)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Orden actualizada' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Orden actualizada', type: OrderViewDto })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'No la gestiona este espacio (403)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Orden inexistente o ajena (404)' })
   update(
@@ -97,7 +107,7 @@ export class OrdersController {
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'orderId', description: 'Identificador de la orden' })
   @ApiOperation({ summary: 'Agrega un trabajo a una orden compuesta (§5.5)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Trabajo agregado' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Trabajo agregado', type: JobCreatedViewDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Orden inexistente o ajena (404)' })
   addJob(
     @CurrentCompany() access: CompanyAccess,
@@ -112,7 +122,11 @@ export class OrdersController {
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'orderId', description: 'Identificador de la orden' })
   @ApiOperation({ summary: 'Asigna un trabajo a un contratista o profesional (§5.6)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Asignación creada (pending)' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Asignación creada (pending)',
+    type: AssignmentCreatedViewDto,
+  })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Ya tiene asignación activa (409)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Orden, trabajo o asignado inexistente (404)' })
   assign(
@@ -161,7 +175,7 @@ export class OrdersController {
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'assignId', description: 'Identificador de la asignación previa' })
   @ApiOperation({ summary: 'Reasigna el trabajo conservando el historial (§5.7)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Nueva asignación creada' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Nueva asignación creada', type: ReassignmentViewDto })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Trabajo en curso u otra restricción de estado (409)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Asignación o asignado inexistente (404)' })
   reassign(
@@ -198,7 +212,11 @@ export class OrdersController {
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'jobId', description: 'Identificador del trabajo' })
   @ApiOperation({ summary: 'Registra un avance del trabajo (§6.1)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Avance registrado en job_events' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Avance registrado en job_events',
+    type: JobEventViewDto,
+  })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'No es tu trabajo (403)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Trabajo inexistente o fuera de alcance (404)' })
   @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'Mensaje vacío o inválido (422)' })

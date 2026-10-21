@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ClipboardList, FolderTree, ReceiptText, Users } from 'lucide-react';
+import { ClipboardList, FilePlus2, FolderTree, ReceiptText, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import {
   ORDER_STATUS_KEYS,
+  notificationOrderPath,
   pendingAssignmentRows,
   spaceNotifications,
   spaceOrders,
@@ -39,6 +40,7 @@ import {
   usePendingOrders,
   useRejectAssignment,
 } from '@/dashboard/queries';
+import { useOrders } from '@/orders/queries';
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -78,7 +80,7 @@ function EmptyBox({ text }: { text: string }) {
 
 /** Open orders of the space (F2-D1): status per BE-2 R5, urgent mark (§14.2). */
 function OpenOrdersCard({ companyId, className }: { companyId: string; className?: string }) {
-  const { t } = useTranslation(['dashboard', 'common']);
+  const { t } = useTranslation(['dashboard', 'orders', 'common']);
   const orders = useOpenOrders(companyId);
   // Only the active space's orders render (§2.4); the cap check uses that set.
   const rows = spaceOrders(orders.data, companyId);
@@ -113,20 +115,23 @@ function OpenOrdersCard({ companyId, className }: { companyId: string; className
         ) : (
           <ul className="grid gap-2">
             {rows.map((order) => (
-              <li
-                key={order.id}
-                className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-border bg-background p-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">{order.title}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(order.createdAt)}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {order.urgent ? (
-                    <Badge variant="destructive">{t('openOrders.urgent')}</Badge>
-                  ) : null}
-                  <Badge variant="secondary">{t(ORDER_STATUS_KEYS[order.status])}</Badge>
-                </div>
+              <li key={order.id}>
+                <Link
+                  to={`/app/orders/${order.id}`}
+                  aria-label={t('orders:list.openAria', { title: order.title })}
+                  className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 transition-colors hover:bg-accent/60 focus-visible:outline-2 focus-visible:outline-ring"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{order.title}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(order.createdAt)}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {order.urgent ? (
+                      <Badge variant="destructive">{t('openOrders.urgent')}</Badge>
+                    ) : null}
+                    <Badge variant="secondary">{t(ORDER_STATUS_KEYS[order.status])}</Badge>
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>
@@ -384,6 +389,8 @@ function NotificationsCard({ companyId, className }: { companyId: string; classN
   const { t } = useTranslation(['dashboard', 'common']);
   const notifications = useNotifications();
   const markRead = useMarkNotificationRead();
+  // Loaded orders resolve `assignment` notifications to their order (F4-D6).
+  const orders = useOrders(companyId, {});
 
   const loadedPages = notifications.data?.pages;
   // Only this space's notifications render or count (§2.4, F2-D5).
@@ -415,41 +422,50 @@ function NotificationsCard({ companyId, className }: { companyId: string; classN
           <EmptyBox text={t('notifications.empty')} />
         ) : (
           <ul className="grid gap-2">
-            {rows.map((notification) => (
-              <li
-                key={notification.id}
-                className="rounded-lg border border-border bg-background p-3"
-              >
-                <p
-                  className={
-                    notification.readAt
-                      ? 'text-sm text-foreground'
-                      : 'text-sm font-medium text-foreground'
-                  }
+            {rows.map((notification) => {
+              // F4-D6: order notifications open their detail; assignment ones
+              // resolve through the loaded orders, or stay plain text.
+              const path = notificationOrderPath(notification, orders.data);
+              const titleClass = notification.readAt
+                ? 'text-sm text-foreground'
+                : 'text-sm font-medium text-foreground';
+              return (
+                <li
+                  key={notification.id}
+                  className="rounded-lg border border-border bg-background p-3"
                 >
-                  {notification.title}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{notification.body}</p>
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    {formatDate(notification.createdAt)}
-                  </span>
-                  {notification.readAt ? (
-                    <Badge variant="secondary">{t('notifications.readState')}</Badge>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={markRead.isPending}
-                      aria-label={t('notifications.markReadAria', { title: notification.title })}
-                      onClick={() => markRead.mutate(notification.id)}
+                  {path ? (
+                    <Link
+                      to={path}
+                      className={`${titleClass} inline-block hover:underline focus-visible:outline-2 focus-visible:outline-ring`}
                     >
-                      {t('notifications.markRead')}
-                    </Button>
+                      {notification.title}
+                    </Link>
+                  ) : (
+                    <p className={titleClass}>{notification.title}</p>
                   )}
-                </div>
-              </li>
-            ))}
+                  <p className="mt-0.5 text-xs text-muted-foreground">{notification.body}</p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(notification.createdAt)}
+                    </span>
+                    {notification.readAt ? (
+                      <Badge variant="secondary">{t('notifications.readState')}</Badge>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={markRead.isPending}
+                        aria-label={t('notifications.markReadAria', { title: notification.title })}
+                        onClick={() => markRead.mutate(notification.id)}
+                      >
+                        {t('notifications.markRead')}
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
         {loadedPages && loadedPages.length > 0 ? (
@@ -477,6 +493,7 @@ function Shortcuts() {
 
   const tiles = [
     { to: '/app/orders', label: t('nav:orders'), icon: ClipboardList },
+    { to: '/app/orders/new', label: t('shortcuts.createOrder'), icon: FilePlus2 },
     { to: '/app/catalogs', label: t('nav:catalogs'), icon: FolderTree },
     { to: '/app/billing', label: t('nav:billing'), icon: ReceiptText },
     ...(active?.role === 'owner'

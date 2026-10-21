@@ -58,7 +58,8 @@
     "limitNote": "El contador cubre las notificaciones cargadas; usa «Cargar más» para ampliar el conjunto."
   },
   "shortcuts": {
-    "title": "Accesos rápidos"
+    "title": "Accesos rápidos",
+    "createOrder": "Crear orden"
   },
   "actionFailed": "No se pudo completar la acción."
 }

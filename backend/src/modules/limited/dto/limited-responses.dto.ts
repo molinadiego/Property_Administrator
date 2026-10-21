@@ -54,3 +54,12 @@ export class LimitedPropertyViewDto {
   @ApiProperty()
   state: string;
 }
+
+/** Result of converting a requested order into a real one (§20.1, §5.1). */
+export class ConvertOrderViewDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ enum: OrderStatus, description: 'Siempre open tras convertir' })
+  status: OrderStatus;
+}
