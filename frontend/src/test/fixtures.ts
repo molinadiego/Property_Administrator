@@ -1,4 +1,9 @@
-import type { CompanyMemberDto, InvitationViewDto, MeResponseDto } from '@/api/types';
+import type {
+  CompanyMemberDto,
+  InvitationViewDto,
+  MeResponseDto,
+  PropertyViewDto,
+} from '@/api/types';
 
 const joinedAt = '2026-01-15T10:30:00.000Z';
 
@@ -76,4 +81,29 @@ export const LOGIN_USER = {
   id: ME_TWO_SPACES.id,
   email: ME_TWO_SPACES.email,
   name: ME_TWO_SPACES.name,
+};
+
+/** Property ficha (spec F3 §4.2) for the catalog screens. */
+export const PROPERTY_P1: PropertyViewDto = {
+  id: 'p-1',
+  owner: {
+    name: 'Dueño Demo',
+    phone: null,
+    email: null,
+    address: null,
+    city: null,
+    state: null,
+    postalCode: null,
+  },
+  addressLine: 'Calle Falsa 123',
+  city: 'Springfield',
+  state: 'IL',
+  postalCode: null,
+  occupancy: 'occupied',
+  community: { name: null, accessCode: null },
+  entryInstructions: null,
+  allowUnattendedEntry: false,
+  petsInfo: null,
+  otherInstructions: null,
+  createdAt: '2026-10-01T10:00:00.000Z',
 };

@@ -1,0 +1,74 @@
+{
+  "title": "Espacio de acceso limitado",
+  "invalid": {
+    "title": "Este enlace ya no es válido",
+    "description": "El enlace expiró o fue revocado. Pide uno nuevo a tu profesional o a la administradora."
+  },
+  "orders": {
+    "title": "Mis órdenes",
+    "empty": "Aún no tienes órdenes registradas.",
+    "error": "No pudimos cargar tus órdenes.",
+    "count_one": "{{count}} orden",
+    "count_other": "{{count}} órdenes"
+  },
+  "status": {
+    "requested": "Borrador",
+    "open": "Enviada",
+    "in_progress": "En curso",
+    "completed": "Cerrada",
+    "cancelled": "Cancelada"
+  },
+  "request": {
+    "title": "Pedir trabajo",
+    "description": "Cuéntanos qué necesitas; la empresa revisará tu pedido.",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Fuga bajo el lavadero",
+    "titleRequired": "Indica un título para el pedido.",
+    "titleTooLong": "El título puede tener hasta 300 caracteres.",
+    "descriptionLabel": "Descripción",
+    "descriptionPlaceholder": "Apenas sale agua, ya está mojando el piso.",
+    "descriptionRequired": "Describe el trabajo que necesitas.",
+    "descriptionTooLong": "La descripción puede tener hasta 5000 caracteres.",
+    "propertyLabel": "Propiedad",
+    "propertyRequired": "Elige la propiedad del trabajo.",
+    "propertyOption": "{{address}} ({{city}})",
+    "noPropertiesTitle": "Sin propiedades vinculadas",
+    "noProperties": "Tu profesional aún no tiene propiedades vinculadas a tu relación; comunícale tu pedido para que registre la orden.",
+    "submit": "Enviar pedido",
+    "submitting": "Enviando…",
+    "created": "Pedido registrado. La empresa lo revisará y lo convertirá en una orden."
+  },
+  "invoices": {
+    "title": "Facturas",
+    "empty": "No tienes facturas enviadas.",
+    "error": "No pudimos cargar tus facturas.",
+    "count_one": "{{count}} factura",
+    "count_other": "{{count}} facturas",
+    "number": "Factura N.º {{number}}",
+    "order": "Orden: {{title}}",
+    "orderLabel": "Orden",
+    "due": "Vence: {{date}}",
+    "dueLabel": "Vence",
+    "openAria": "Ver factura N.º {{number}}",
+    "total": "Total",
+    "paid": "Pagado",
+    "balance": "Saldo",
+    "detailTitle": "Detalle de la factura",
+    "detailError": "No pudimos cargar la factura.",
+    "lines": "Renglones",
+    "lineJob": "Trabajo: {{title}}",
+    "payments": "Pagos",
+    "paymentRow": "{{date}} · {{amount}}",
+    "downloadPdf": "Descargar PDF",
+    "back": "Volver a mis facturas",
+    "status": {
+      "draft": "Borrador",
+      "issued": "Emitida",
+      "partially_paid": "Parcialmente pagada",
+      "paid": "Pagada",
+      "overdue": "Vencida",
+      "voided": "Anulada"
+    }
+  },
+  "error": "La acción no se pudo completar."
+}

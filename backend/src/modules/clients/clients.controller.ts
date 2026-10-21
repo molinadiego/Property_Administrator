@@ -6,6 +6,7 @@ import { CompanyAccessGuard } from '../../common/guards/company-access.guard';
 import { AuthContext, CompanyAccess } from '../../common/request-context';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
+import { ClientCreateResultViewDto, ClientViewDto } from './dto/clients-responses.dto';
 
 @ApiTags('clients')
 @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
@@ -16,7 +17,7 @@ export class ClientsController {
   @Post('companies/:id/clients')
   @UseGuards(CompanyAccessGuard)
   @ApiOperation({ summary: 'Registra un cliente propio (empresa own_business, §2.3)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Cliente registrado' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Cliente registrado', type: ClientCreateResultViewDto })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'No es negocio propio (403)' })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Email ya registrado (409)' })
   create(
@@ -30,7 +31,7 @@ export class ClientsController {
   @Get('companies/:id/clients')
   @UseGuards(CompanyAccessGuard)
   @ApiOperation({ summary: 'Lista de clientes propios' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Lista de clientes' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Lista de clientes', type: [ClientViewDto] })
   @HttpCode(HttpStatus.OK)
   list(@CurrentCompany() access: CompanyAccess) {
     return this.clientsService.list(access);

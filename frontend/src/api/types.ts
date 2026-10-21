@@ -40,3 +40,33 @@ export type OrderStatus = OrderViewDto['status'];
 export type NotificationViewDto = components['schemas']['NotificationViewDto'];
 export type NotificationListViewDto = components['schemas']['NotificationListViewDto'];
 
+/** F3 (spec F3-D1/F3-D2, Option A): typed responses for catalogs and the limited portal. */
+export type PropertyViewDto = components['schemas']['PropertyViewDto'];
+export type PropertyDetailViewDto = components['schemas']['PropertyDetailViewDto'];
+export type PropertyTenantViewDto = components['schemas']['PropertyTenantViewDto'];
+export type CreatePropertyDto = components['schemas']['CreatePropertyDto'];
+export type UpdatePropertyDto = components['schemas']['UpdatePropertyDto'];
+export type CreatePropertyTenantDto = components['schemas']['CreatePropertyTenantDto'];
+export type UpdateTenantDto = components['schemas']['UpdateTenantDto'];
+export type TenantAccessResultViewDto = components['schemas']['TenantAccessResultViewDto'];
+export type ClientViewDto = components['schemas']['ClientViewDto'];
+export type ClientCreateResultViewDto = components['schemas']['ClientCreateResultViewDto'];
+export type CreateClientDto = components['schemas']['CreateClientDto'];
+export type CommercialRelationViewDto = components['schemas']['CommercialRelationViewDto'];
+export type CreateCommercialRelationDto = components['schemas']['CreateCommercialRelationDto'];
+export type UpdateCommercialRelationDto = components['schemas']['UpdateCommercialRelationDto'];
+export type LimitedOrderViewDto = components['schemas']['LimitedOrderViewDto'];
+export type LimitedPropertyViewDto = components['schemas']['LimitedPropertyViewDto'];
+export type LimitedRequestViewDto = components['schemas']['LimitedRequestViewDto'];
+export type LimitedInvoiceViewDto = components['schemas']['LimitedInvoiceViewDto'];
+export type LimitedInvoiceDetailViewDto = components['schemas']['LimitedInvoiceDetailViewDto'];
+export type CreateRequestDto = components['schemas']['CreateRequestDto'];
+
+/** Occupancy of a property ficha (§4.2) and tenant kind (§4.3). */
+export type PropertyOccupancy = PropertyViewDto['occupancy'];
+export type PropertyTenantKind = PropertyTenantViewDto['kind'];
+/** Emergency-policy override of a commercial relation (§8.6). */
+export type EmergencyPolicyValue = CommercialRelationViewDto['emergencyPolicy'];
+/** Derived invoice status of the limited portal (etapa-5). */
+export type LimitedInvoiceStatus = LimitedInvoiceViewDto['status'];
+

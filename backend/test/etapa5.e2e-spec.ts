@@ -1442,6 +1442,20 @@ suite('etapa 5: matriz de facturación y pagos (e2e)', () => {
       .expect(404);
   });
 
+  it('#52b el portal del cliente lista las propiedades de SUS órdenes (F3-D2, §4.3)', async () => {
+    // Roberto's orders live on propC; his token targets those and never the
+    // properties of other clients or companies (§4.3).
+    const res = await http()
+      .get(`${API}/limited/${fixtures.tokenRoberto}/properties`)
+      .expect(200);
+    const ids = (res.body as Array<{ id: string }>).map((p) => p.id);
+    expect(ids).toContain(props.propC);
+    expect(ids).not.toContain(props.propA);
+    for (const row of res.body as Array<Record<string, unknown>>) {
+      expect(Object.keys(row).sort()).toEqual(['addressLine', 'city', 'id', 'state']);
+    }
+  });
+
   it('#53 el correo invoice.issued llega al cliente con email y se omite sin email (D10, §14.1)', async () => {
     const before = emailService.captured.filter((m) => m.subject.includes('Factura N.º')).length;
     const order = await clientOrder(fixtures.relRoberto, true);

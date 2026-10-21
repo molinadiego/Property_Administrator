@@ -9,6 +9,11 @@ import { Public } from '../../common/decorators/public.decorator';
 import { AuthContext, CompanyAccess } from '../../common/request-context';
 import { LimitedAccessService } from './limited.service';
 import { CreateRequestDto } from './dto/create-request.dto';
+import {
+  LimitedOrderViewDto,
+  LimitedPropertyViewDto,
+  LimitedRequestViewDto,
+} from './dto/limited-responses.dto';
 
 @ApiTags('limited-access')
 @Controller()
@@ -20,10 +25,27 @@ export class LimitedController {
   @Get('limited/:token/orders')
   @ApiParam({ name: 'token', description: 'Token opaco de acceso limitado' })
   @ApiOperation({ summary: 'Órdenes de la vivienda/relación, solo estado (§4.3)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Órdenes visibles para la cuenta limitada' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Órdenes visibles para la cuenta limitada', type: [LimitedOrderViewDto] })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Token inválido, revocado o expirado (401)' })
   listOrders(@CurrentLimited() limited: LimitedAccess) {
     return this.limitedService.listOrders(limited.tenantId);
+  }
+
+  @Public()
+  @UseGuards(LimitedAccessGuard)
+  @Get('limited/:token/properties')
+  @ApiParam({ name: 'token', description: 'Token opaco de acceso limitado' })
+  @ApiOperation({
+    summary: 'Propiedades que la cuenta limitada puede referenciar en un pedido (F3-D2)',
+    description:
+      'Vivienda propia del token, o para cliente propio las propiedades de sus ' +
+      'propias órdenes — nunca otra propiedad o relación (§4.3). Lista vacía ' +
+      'cuando aún no hay órdenes asociadas.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Propiedades de la cuenta (puede ser vacía)', type: [LimitedPropertyViewDto] })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Token inválido, revocado o expirado (401)' })
+  listProperties(@CurrentLimited() limited: LimitedAccess) {
+    return this.limitedService.listProperties(limited.tenantId);
   }
 
   @Public()
@@ -32,7 +54,7 @@ export class LimitedController {
   @HttpCode(HttpStatus.CREATED)
   @ApiParam({ name: 'token', description: 'Token opaco de acceso limitado' })
   @ApiOperation({ summary: 'Pide un trabajo; se crea una orden requested (§5.1)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Pedido registrado (status requested)' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Pedido registrado (status requested)', type: LimitedRequestViewDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Token inválido, revocado o expirado (401)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Propiedad inexistente (404)' })
   @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'Sin propiedad referenciada (422)' })

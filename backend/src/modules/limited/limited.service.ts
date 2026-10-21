@@ -59,6 +59,55 @@ export class LimitedAccessService {
   }
 
   /**
+   * Properties the account may reference in a request (frontend spec F3-D2):
+   * its own housing, or — for a client tenant — the properties of its own
+   * orders. Never another property or relation (§4.3). Empty when a client
+   * has no orders yet: the portal then shows guidance instead of a picker.
+   */
+  async listProperties(tenantId: string) {
+    const propertyLinks = await this.prisma.propertyTenant.findMany({
+      where: { tenantId },
+      include: { property: true },
+    });
+    // Mirrors resolveTarget: a property-linked account acts on its housing.
+    if (propertyLinks.length > 0) {
+      return propertyLinks.map((link) => ({
+        id: link.propertyId,
+        addressLine: link.property.addressLine,
+        city: link.property.city,
+        state: link.property.state,
+      }));
+    }
+
+    const clientLinks = await this.prisma.clientRelationship.findMany({
+      where: { tenantId },
+      select: { id: true },
+    });
+    if (clientLinks.length === 0) return [];
+
+    const orderProperties = await this.prisma.order.findMany({
+      where: { clientRelationshipId: { in: clientLinks.map((link) => link.id) } },
+      select: { propertyId: true },
+      distinct: ['propertyId'],
+    });
+    const propertyIds = orderProperties
+      .map((row) => row.propertyId)
+      .filter((id): id is string => id !== null);
+    if (propertyIds.length === 0) return [];
+
+    const properties = await this.prisma.property.findMany({
+      where: { id: { in: propertyIds } },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    return properties.map((property) => ({
+      id: property.id,
+      addressLine: property.addressLine,
+      city: property.city,
+      state: property.state,
+    }));
+  }
+
+  /**
    * Places a work request (§5.1): becomes an order with status `requested`
    * that a company user must convert. Property tenants request on their
    * property; client tenants must reference one of their professional's

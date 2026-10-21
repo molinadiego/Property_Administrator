@@ -795,7 +795,14 @@
         },
         "responses": {
           "201": {
-            "description": "Propiedad creada"
+            "description": "Propiedad creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "No es miembro (403)"
@@ -825,7 +832,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de propiedades"
+            "description": "Lista de propiedades",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropertyViewDto"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Lista las propiedades del espacio",
@@ -857,7 +874,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Detalle"
+            "description": "Detalle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyDetailViewDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Propiedad inexistente (404)"
@@ -900,7 +924,14 @@
         },
         "responses": {
           "200": {
-            "description": "Actualizada"
+            "description": "Actualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "No es la administradora (403)"
@@ -948,7 +979,14 @@
         },
         "responses": {
           "201": {
-            "description": "Tenant creado y vinculado"
+            "description": "Tenant creado y vinculado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantAccessResultViewDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Propiedad inexistente (404)"
@@ -999,7 +1037,14 @@
         },
         "responses": {
           "200": {
-            "description": "Actualizado"
+            "description": "Actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantUpdateResultViewDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Inquilino inexistente (404)"
@@ -1035,7 +1080,14 @@
         },
         "responses": {
           "201": {
-            "description": "Cliente registrado"
+            "description": "Cliente registrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientCreateResultViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "No es negocio propio (403)"
@@ -1062,7 +1114,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de clientes"
+            "description": "Lista de clientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientViewDto"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Lista de clientes propios",
@@ -2029,13 +2091,60 @@
         ],
         "responses": {
           "200": {
-            "description": "Órdenes visibles para la cuenta limitada"
+            "description": "Órdenes visibles para la cuenta limitada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LimitedOrderViewDto"
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Token inválido, revocado o expirado (401)"
           }
         },
         "summary": "Órdenes de la vivienda/relación, solo estado (§4.3)",
+        "tags": [
+          "limited-access"
+        ]
+      }
+    },
+    "/api/v1/limited/{token}/properties": {
+      "get": {
+        "description": "Vivienda propia del token, o para cliente propio las propiedades de sus propias órdenes — nunca otra propiedad o relación (§4.3). Lista vacía cuando aún no hay órdenes asociadas.",
+        "operationId": "LimitedController_listProperties",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "Token opaco de acceso limitado",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Propiedades de la cuenta (puede ser vacía)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LimitedPropertyViewDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido, revocado o expirado (401)"
+          }
+        },
+        "summary": "Propiedades que la cuenta limitada puede referenciar en un pedido (F3-D2)",
         "tags": [
           "limited-access"
         ]
@@ -2065,7 +2174,14 @@
         },
         "responses": {
           "201": {
-            "description": "Pedido registrado (status requested)"
+            "description": "Pedido registrado (status requested)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LimitedRequestViewDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Token inválido, revocado o expirado (401)"
@@ -2566,7 +2682,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de relaciones"
+            "description": "Lista de relaciones",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CommercialRelationViewDto"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Relaciones comerciales de la empresa con su override (§8.6)",
@@ -2597,7 +2723,14 @@
         },
         "responses": {
           "201": {
-            "description": "Relación creada"
+            "description": "Relación creada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommercialRelationViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "Rol sin permiso (403)"
@@ -2651,7 +2784,14 @@
         },
         "responses": {
           "200": {
-            "description": "Relación actualizada"
+            "description": "Relación actualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommercialRelationViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "Rol sin permiso (403)"
@@ -3491,18 +3631,21 @@
             "in": "path",
             "description": "Token opaco de acceso limitado",
             "schema": {}
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Identificador del espacio (empresa)",
-            "schema": {}
           }
         ],
         "responses": {
           "200": {
-            "description": "Facturas del tenant (sin borradores)"
+            "description": "Facturas del tenant (sin borradores)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LimitedInvoiceViewDto"
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Token inválido, revocado o expirado (401)"
@@ -3533,18 +3676,18 @@
             "in": "path",
             "description": "Token opaco de acceso limitado",
             "schema": {}
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Identificador del espacio (empresa)",
-            "schema": {}
           }
         ],
         "responses": {
           "200": {
-            "description": "Factura del tenant"
+            "description": "Factura del tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LimitedInvoiceDetailViewDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Token inválido (401)"
@@ -3577,13 +3720,6 @@
             "required": true,
             "in": "path",
             "description": "Token opaco de acceso limitado",
-            "schema": {}
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Identificador del espacio (empresa)",
             "schema": {}
           }
         ],
@@ -4799,6 +4935,242 @@
           "state"
         ]
       },
+      "PropertyOwnerViewDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PropertyCommunityViewDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "accessCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Código de acceso a la comunidad (§4.2, acceso restringido)"
+          }
+        }
+      },
+      "PropertyViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/PropertyOwnerViewDto"
+          },
+          "addressLine": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "occupancy": {
+            "type": "string",
+            "enum": [
+              "occupied",
+              "vacant"
+            ],
+            "description": "Ocupación (§4.2)"
+          },
+          "community": {
+            "$ref": "#/components/schemas/PropertyCommunityViewDto"
+          },
+          "entryInstructions": {
+            "type": "string",
+            "nullable": true
+          },
+          "allowUnattendedEntry": {
+            "type": "boolean",
+            "description": "Autorización para ingresar sin inquilino presente (§4.2)"
+          },
+          "petsInfo": {
+            "type": "string",
+            "nullable": true
+          },
+          "otherInstructions": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "owner",
+          "addressLine",
+          "city",
+          "state",
+          "occupancy",
+          "community",
+          "allowUnattendedEntry",
+          "createdAt"
+        ]
+      },
+      "PropertyTenantViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id del tenant de la cuenta"
+          },
+          "linkId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id del vínculo propiedad↔inquilino"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "tenant"
+            ],
+            "description": "owner o tenant (§4.3)"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phones": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "availability": {
+            "type": "string",
+            "nullable": true,
+            "description": "Franjas disponibles para la visita"
+          }
+        },
+        "required": [
+          "id",
+          "linkId",
+          "kind",
+          "name",
+          "phones"
+        ]
+      },
+      "PropertyDetailViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/PropertyOwnerViewDto"
+          },
+          "addressLine": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "occupancy": {
+            "type": "string",
+            "enum": [
+              "occupied",
+              "vacant"
+            ],
+            "description": "Ocupación (§4.2)"
+          },
+          "community": {
+            "$ref": "#/components/schemas/PropertyCommunityViewDto"
+          },
+          "entryInstructions": {
+            "type": "string",
+            "nullable": true
+          },
+          "allowUnattendedEntry": {
+            "type": "boolean",
+            "description": "Autorización para ingresar sin inquilino presente (§4.2)"
+          },
+          "petsInfo": {
+            "type": "string",
+            "nullable": true
+          },
+          "otherInstructions": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tenants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyTenantViewDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "owner",
+          "addressLine",
+          "city",
+          "state",
+          "occupancy",
+          "community",
+          "allowUnattendedEntry",
+          "createdAt",
+          "tenants"
+        ]
+      },
       "UpdatePropertyDto": {
         "type": "object",
         "properties": {
@@ -4910,6 +5282,31 @@
           "name"
         ]
       },
+      "TenantAccessResultViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "accessIssued": {
+            "type": "boolean",
+            "description": "Se envió el enlace de acceso limitado por correo (§4.3)"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "accessIssued"
+        ]
+      },
       "UpdateTenantDto": {
         "type": "object",
         "properties": {
@@ -4933,6 +5330,29 @@
             "type": "string"
           }
         }
+      },
+      "TenantUpdateResultViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phones": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phones"
+        ]
       },
       "CreateClientDto": {
         "type": "object",
@@ -4963,6 +5383,75 @@
         },
         "required": [
           "name"
+        ]
+      },
+      "ClientCreateResultViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "relationshipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "accessIssued": {
+            "type": "boolean",
+            "description": "Se envió el enlace de acceso limitado por correo (§4.3)"
+          }
+        },
+        "required": [
+          "id",
+          "relationshipId",
+          "name",
+          "accessIssued"
+        ]
+      },
+      "ClientViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id del tenant del cliente"
+          },
+          "relationshipId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id de la relación comercial con el cliente"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phones": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "relationshipId",
+          "name",
+          "phones",
+          "createdAt"
         ]
       },
       "CreateOrderDto": {
@@ -5519,6 +6008,63 @@
           "preferences"
         ]
       },
+      "LimitedOrderViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "open",
+              "in_progress",
+              "completed",
+              "cancelled"
+            ],
+            "description": "Estado de la orden (§20.1)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "createdAt"
+        ]
+      },
+      "LimitedPropertyViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "addressLine": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "addressLine",
+          "city",
+          "state"
+        ]
+      },
       "CreateRequestDto": {
         "type": "object",
         "properties": {
@@ -5538,6 +6084,34 @@
         "required": [
           "title",
           "description"
+        ]
+      },
+      "LimitedRequestViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "open",
+              "in_progress",
+              "completed",
+              "cancelled"
+            ],
+            "description": "Siempre `requested` (§20.1)"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status"
         ]
       },
       "UploadFileDto": {
@@ -5598,6 +6172,68 @@
           }
         }
       },
+      "CommercialRelationViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string",
+            "nullable": true,
+            "description": "Nombre comercial de la relación"
+          },
+          "counterpartyCompanyId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "counterpartyCompanyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "clientRelationshipId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "clientName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cliente propio de la relación"
+          },
+          "emergencyPolicy": {
+            "type": "string",
+            "enum": [
+              "prior_authorization",
+              "resolve_without_authorization",
+              "emergency_amount"
+            ],
+            "description": "Override de política de emergencia (§8.6)"
+          },
+          "emergencyExtraAmount": {
+            "type": "string",
+            "nullable": true,
+            "description": "Importe del override en formato decimal string (§12)"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Cierre de la relación: no admite órdenes nuevas (§2.4)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "emergencyPolicy",
+          "createdAt"
+        ]
+      },
       "CreateCommercialRelationDto": {
         "type": "object",
         "properties": {
@@ -5634,11 +6270,13 @@
         "type": "object",
         "properties": {
           "label": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Nombre comercial de la relación"
           },
           "emergencyPolicy": {
             "type": "string",
+            "nullable": true,
             "description": "Override de política de emergencia; null = no sobrescribe (§8.6)",
             "enum": [
               "prior_authorization",
@@ -5647,7 +6285,8 @@
             ]
           },
           "emergencyExtraAmount": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Importe del override (null lo limpia)"
           },
           "ended": {
@@ -5900,6 +6539,418 @@
         },
         "required": [
           "resolution"
+        ]
+      },
+      "InvoiceIssuerViewDto": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "companyId",
+          "name"
+        ]
+      },
+      "InvoiceRecipientViewDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "company",
+              "tenant"
+            ]
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "InvoicePaymentViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "charge",
+              "refund"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "recorded",
+              "duplicate_suspect",
+              "duplicate_confirmed"
+            ],
+            "description": "Solo `recorded` cuenta para el saldo (D6)"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Importe en formato decimal string (§12)"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "check",
+              "transfer",
+              "card",
+              "other"
+            ],
+            "nullable": true
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "duplicateOfId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "reconciledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "registeredByCompanyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Empresa que registró el pago"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "amount",
+          "paidAt",
+          "registeredByCompanyId",
+          "createdAt"
+        ]
+      },
+      "LimitedInvoiceViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderTitle": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "issued",
+              "partially_paid",
+              "paid",
+              "overdue",
+              "voided"
+            ],
+            "description": "Estado base derivado con pagos y vencimiento (etapa-5)"
+          },
+          "number": {
+            "type": "number",
+            "nullable": true,
+            "description": "Número secuencial asignado al emitir (D2)"
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "subtotal": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string (§12)"
+          },
+          "taxRate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tasa en formato string (§12)"
+          },
+          "taxTotal": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string (§12)"
+          },
+          "total": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string (§12)"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "paidNet": {
+            "type": "string",
+            "description": "Pagos netos (charges − refunds válidos), decimal string"
+          },
+          "balance": {
+            "type": "string",
+            "nullable": true,
+            "description": "Saldo restante, decimal string"
+          },
+          "issuer": {
+            "$ref": "#/components/schemas/InvoiceIssuerViewDto"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/InvoiceRecipientViewDto"
+          },
+          "voidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "voidReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoicePaymentViewDto"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "orderTitle",
+          "status",
+          "paidNet",
+          "issuer",
+          "recipient",
+          "payments",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "InvoiceLineViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobTitle": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "material",
+              "labor",
+              "tool_rental",
+              "travel",
+              "other"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Importe en formato decimal string (§12)"
+          },
+          "taxable": {
+            "type": "boolean",
+            "description": "Línea gravable por defecto; el emisor la quita (§11.6)"
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "jobTitle",
+          "kind",
+          "description",
+          "amount",
+          "taxable"
+        ]
+      },
+      "LimitedInvoiceDetailViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderTitle": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "issued",
+              "partially_paid",
+              "paid",
+              "overdue",
+              "voided"
+            ],
+            "description": "Estado base derivado con pagos y vencimiento (etapa-5)"
+          },
+          "number": {
+            "type": "number",
+            "nullable": true,
+            "description": "Número secuencial asignado al emitir (D2)"
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "subtotal": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string (§12)"
+          },
+          "taxRate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tasa en formato string (§12)"
+          },
+          "taxTotal": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string (§12)"
+          },
+          "total": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string (§12)"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "paidNet": {
+            "type": "string",
+            "description": "Pagos netos (charges − refunds válidos), decimal string"
+          },
+          "balance": {
+            "type": "string",
+            "nullable": true,
+            "description": "Saldo restante, decimal string"
+          },
+          "issuer": {
+            "$ref": "#/components/schemas/InvoiceIssuerViewDto"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/InvoiceRecipientViewDto"
+          },
+          "voidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "voidReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoicePaymentViewDto"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineViewDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "orderTitle",
+          "status",
+          "paidNet",
+          "issuer",
+          "recipient",
+          "payments",
+          "createdAt",
+          "updatedAt",
+          "lines"
         ]
       },
       "CreateAuthorizationRequestDto": {

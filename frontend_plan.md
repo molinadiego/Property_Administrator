@@ -81,7 +81,7 @@ Jerarquía de documentos para el frontend: `proyect.md` > `docs/stack.md` (§6 F
 
 **Criterio de salida:** el portal limitado ve exactamente lo que la spec backend permite (404/403 consistentes con la API); CRUD completo con estados de carga/vacío/error.
 
-**Entregable:** `docs/especificacion/frontend/etapa-f3.md`.
+**Entregable:** `docs/especificacion/frontend/etapa-f3.md` (**aprobada e implementada el 20/10/2026**).
 
 ---
 

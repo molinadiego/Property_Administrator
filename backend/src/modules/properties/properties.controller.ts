@@ -18,6 +18,12 @@ import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { CreatePropertyTenantDto } from './dto/create-property-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
+import {
+  PropertyDetailViewDto,
+  PropertyViewDto,
+  TenantAccessResultViewDto,
+  TenantUpdateResultViewDto,
+} from './dto/properties-responses.dto';
 
 @ApiTags('properties')
 @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
@@ -28,7 +34,7 @@ export class PropertiesController {
   @Post('companies/:id/properties')
   @UseGuards(CompanyAccessGuard)
   @ApiOperation({ summary: 'Crea la ficha de una propiedad (mínima o completa, §5.1)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Propiedad creada' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Propiedad creada', type: PropertyViewDto })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'No es miembro (403)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Espacio inexistente (404)' })
   @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'Datos inválidos (422)' })
@@ -43,7 +49,7 @@ export class PropertiesController {
   @Get('companies/:id/properties')
   @UseGuards(CompanyAccessGuard)
   @ApiOperation({ summary: 'Lista las propiedades del espacio' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Lista de propiedades' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Lista de propiedades', type: [PropertyViewDto] })
   list(@CurrentCompany() access: CompanyAccess) {
     return this.propertiesService.list(access);
   }
@@ -52,7 +58,7 @@ export class PropertiesController {
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'propId', description: 'Identificador de la propiedad' })
   @ApiOperation({ summary: 'Detalle de la propiedad con sus inquilinos' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Detalle' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Detalle', type: PropertyDetailViewDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Propiedad inexistente (404)' })
   getDetail(@CurrentCompany() access: CompanyAccess, @Param('propId') propId: string) {
     return this.propertiesService.getDetail(access, propId);
@@ -62,7 +68,7 @@ export class PropertiesController {
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'propId', description: 'Identificador de la propiedad' })
   @ApiOperation({ summary: 'Edita los datos oficiales (solo administradora, §4.4)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Actualizada' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Actualizada', type: PropertyViewDto })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'No es la administradora (403)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Propiedad inexistente (404)' })
   update(
@@ -78,7 +84,7 @@ export class PropertiesController {
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'propId', description: 'Identificador de la propiedad' })
   @ApiOperation({ summary: 'Registra un inquilino o propietario y lo vincula a la propiedad' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Tenant creado y vinculado' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Tenant creado y vinculado', type: TenantAccessResultViewDto })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Email ya registrado (409)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Propiedad inexistente (404)' })
   @ApiResponse({ status: HttpStatus.UNPROCESSABLE_ENTITY, description: 'Vacante con inquilino (422)' })
@@ -95,7 +101,7 @@ export class PropertiesController {
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'tenantId', description: 'Identificador del inquilino' })
   @ApiOperation({ summary: 'Edita los datos operativos del inquilino (§4.4)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Actualizado' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Actualizado', type: TenantUpdateResultViewDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Inquilino inexistente (404)' })
   updateTenant(
     @CurrentCompany() access: CompanyAccess,

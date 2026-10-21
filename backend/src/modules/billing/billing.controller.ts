@@ -30,6 +30,10 @@ import { PatchInvoiceDto } from './dto/patch-invoice.dto';
 import { PutInvoiceLinesDto } from './dto/put-lines.dto';
 import { ReconcilePaymentDto } from './dto/reconcile-payment.dto';
 import { VoidInvoiceDto } from './dto/void-invoice.dto';
+import {
+  LimitedInvoiceDetailViewDto,
+  LimitedInvoiceViewDto,
+} from './dto/billing-limited-responses.dto';
 
 /**
  * Invoices, payments and accounting downloads (spec etapa-5.md §4). Every
@@ -37,7 +41,6 @@ import { VoidInvoiceDto } from './dto/void-invoice.dto';
  * under `/limited/:token/…` are read-only (P3, D13).
  */
 @ApiTags('billing')
-@ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
 @Controller()
 export class BillingController {
   constructor(private readonly billingService: BillingService) {}
@@ -47,6 +50,7 @@ export class BillingController {
   // =========================================================================
 
   @Get('companies/:id/invoices')
+  @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @UseGuards(CompanyAccessGuard)
   @ApiOperation({ summary: 'Facturas emitidas y recibidas por la empresa (§11.3)' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Página de facturas con cursor' })
@@ -56,6 +60,7 @@ export class BillingController {
   }
 
   @Post('companies/:id/invoices')
+  @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @UseGuards(CompanyAccessGuard)
   @ApiOperation({ summary: 'Crea borrador de una orden facturable (D1a/D1b, §11.1, §11.4)' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Borrador creado (sin número ni total)' })
@@ -70,6 +75,7 @@ export class BillingController {
   }
 
   @Get('companies/:id/invoices/:invId')
+  @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'invId', description: 'Identificador de la factura' })
   @ApiOperation({ summary: 'Detalle de factura: renglones, pagos, saldo y estado (§20.4)' })
@@ -80,6 +86,7 @@ export class BillingController {
   }
 
   @Patch('companies/:id/invoices/:invId')
+  @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'invId', description: 'Identificador de la factura' })
   @ApiOperation({ summary: 'Edita notas/vencimiento de un borrador (§11.5)' })
@@ -97,6 +104,7 @@ export class BillingController {
   }
 
   @Put('companies/:id/invoices/:invId/lines')
+  @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'invId', description: 'Identificador de la factura' })
   @ApiOperation({ summary: 'Reemplaza los renglones del borrador (§11.1, §11.4)' })
@@ -114,6 +122,7 @@ export class BillingController {
   }
 
   @Post('companies/:id/invoices/:invId/emit')
+  @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @UseGuards(CompanyAccessGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiParam({ name: 'invId', description: 'Identificador de la factura' })
@@ -131,6 +140,7 @@ export class BillingController {
   }
 
   @Get('companies/:id/invoices/:invId/pdf')
+  @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'invId', description: 'Identificador de la factura' })
   @ApiOperation({ summary: 'PDF de la factura emitida o anulada (§11.1, §11.6)' })
@@ -143,6 +153,7 @@ export class BillingController {
   }
 
   @Post('companies/:id/invoices/:invId/void')
+  @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @UseGuards(CompanyAccessGuard)
   @RequireRole('owner')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -165,6 +176,7 @@ export class BillingController {
   // =========================================================================
 
   @Post('companies/:id/invoices/:invId/payments')
+  @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'invId', description: 'Identificador de la factura' })
   @ApiOperation({ summary: 'Registra pago o devolución; posible duplicado queda en sospecha (§11.1, D6, P5)' })
@@ -182,6 +194,7 @@ export class BillingController {
   }
 
   @Post('companies/:id/payments/:paymentId/reconcile')
+  @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @UseGuards(CompanyAccessGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiParam({ name: 'paymentId', description: 'Identificador del pago' })
@@ -203,6 +216,7 @@ export class BillingController {
   // =========================================================================
 
   @Get('companies/:id/accounting-exports')
+  @ApiParam({ name: 'id', description: 'Identificador del espacio (empresa)' })
   @UseGuards(CompanyAccessGuard)
   @ApiOperation({ summary: 'Registros contables propios en PDF o Excel (§3.5, §16.10)' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Archivo descargable; audit accounting.exported' })
@@ -224,7 +238,7 @@ export class BillingController {
   @Get('limited/:token/invoices')
   @ApiParam({ name: 'token', description: 'Token opaco de acceso limitado' })
   @ApiOperation({ summary: 'Facturas emitidas al cliente propio, solo lectura (P3, D13)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Facturas del tenant (sin borradores)' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Facturas del tenant (sin borradores)', type: [LimitedInvoiceViewDto] })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Token inválido, revocado o expirado (401)' })
   listLimited(@CurrentLimited() limited: LimitedAccess) {
     return this.billingService.listLimitedInvoices(limited.tenantId);
@@ -236,7 +250,7 @@ export class BillingController {
   @ApiParam({ name: 'token', description: 'Token opaco de acceso limitado' })
   @ApiParam({ name: 'invId', description: 'Identificador de la factura' })
   @ApiOperation({ summary: 'Detalle de una factura del cliente (renglones, pagos, saldo)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Factura del tenant' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Factura del tenant', type: LimitedInvoiceDetailViewDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Token inválido (401)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Factura de otro tenant o borrador (404)' })
   getLimited(@CurrentLimited() limited: LimitedAccess, @Param('invId') invId: string) {

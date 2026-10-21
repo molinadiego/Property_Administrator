@@ -17,6 +17,7 @@ import { EconomicSettingsService } from './economic-settings.service';
 import { UpdateEconomicSettingsDto } from './dto/update-economic-settings.dto';
 import { CreateCommercialRelationDto } from './dto/create-commercial-relation.dto';
 import { UpdateCommercialRelationDto } from './dto/update-commercial-relation.dto';
+import { CommercialRelationViewDto } from './dto/commercial-relations-responses.dto';
 import { UpdateOrderEconomicPolicyDto } from './dto/update-order-economic-policy.dto';
 
 @ApiTags('economic-settings')
@@ -59,7 +60,7 @@ export class EconomicSettingsController {
   @Get('companies/:id/commercial-relations')
   @UseGuards(CompanyAccessGuard)
   @ApiOperation({ summary: 'Relaciones comerciales de la empresa con su override (§8.6)' })
-  @ApiResponse({ status: 200, description: 'Lista de relaciones' })
+  @ApiResponse({ status: 200, description: 'Lista de relaciones', type: [CommercialRelationViewDto] })
   listRelations(@CurrentCompany() access: CompanyAccess) {
     return this.economicSettingsService.listRelations(access);
   }
@@ -68,7 +69,7 @@ export class EconomicSettingsController {
   @UseGuards(CompanyAccessGuard)
   @RequireRole('owner')
   @ApiOperation({ summary: 'Crea una relación comercial con su contraparte (§8.6, decisión 4)' })
-  @ApiResponse({ status: 201, description: 'Relación creada' })
+  @ApiResponse({ status: 201, description: 'Relación creada', type: CommercialRelationViewDto })
   @ApiResponse({ status: 403, description: 'Rol sin permiso (403)' })
   @ApiResponse({ status: 404, description: 'Contraparte inexistente (404)' })
   @ApiResponse({ status: 409, description: 'Relación duplicada (409)' })
@@ -86,7 +87,7 @@ export class EconomicSettingsController {
   @RequireRole('owner')
   @ApiParam({ name: 'relationId', description: 'Identificador de la relación' })
   @ApiOperation({ summary: 'Edita override/etiqueta o finaliza una relación (§2.4, §4.7)' })
-  @ApiResponse({ status: 200, description: 'Relación actualizada' })
+  @ApiResponse({ status: 200, description: 'Relación actualizada', type: CommercialRelationViewDto })
   @ApiResponse({ status: 403, description: 'Rol sin permiso (403)' })
   @ApiResponse({ status: 404, description: 'Relación inexistente o ajena (404)' })
   @ApiResponse({ status: 422, description: 'Datos inválidos (422)' })

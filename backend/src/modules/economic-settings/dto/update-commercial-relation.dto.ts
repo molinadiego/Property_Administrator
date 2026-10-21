@@ -10,13 +10,19 @@ import { EmergencyPolicyValue } from '../spending-rules';
  * #50/#52). Explicit `null` clears the override. Only `owner` (decision 7).
  */
 export class UpdateCommercialRelationDto {
-  @ApiPropertyOptional({ description: 'Nombre comercial de la relación' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    description: 'Nombre comercial de la relación',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(120)
   label?: string | null;
 
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description: 'Override de política de emergencia; null = no sobrescribe (§8.6)',
     enum: EMERGENCY_POLICIES,
   })
@@ -24,7 +30,11 @@ export class UpdateCommercialRelationDto {
   @IsIn(EMERGENCY_POLICIES)
   emergencyPolicy?: EmergencyPolicyValue | null;
 
-  @ApiPropertyOptional({ description: 'Importe del override (null lo limpia)' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    description: 'Importe del override (null lo limpia)',
+  })
   @IsOptional()
   @IsMoneyAmount()
   emergencyExtraAmount?: string | null;

@@ -554,6 +554,28 @@ suite('etapa 2: matriz de permisos y flujos (e2e)', () => {
     expect(ids).not.toContain(orders.O2);
   });
 
+  it('#12b las cuentas limitadas listan solo las propiedades que pueden referenciar (F3-D2)', async () => {
+    // Ana is linked to her housing (P1): the only property her token targets.
+    const anaRes = await request(app.getHttpServer())
+      .get(`${API}/limited/${limitedTokens.ana}/properties`)
+      .expect(200);
+    expect((anaRes.body as Array<{ id: string }>).map((p) => p.id)).toEqual([props.P1]);
+    for (const row of anaRes.body as Array<Record<string, unknown>>) {
+      expect(Object.keys(row).sort()).toEqual(['addressLine', 'city', 'id', 'state']);
+    }
+
+    // Roberto (client without orders yet) gets an empty list — never the
+    // properties of his professional (§4.3).
+    const robertoRes = await request(app.getHttpServer())
+      .get(`${API}/limited/${limitedTokens.roberto}/properties`)
+      .expect(200);
+    expect(robertoRes.body).toEqual([]);
+
+    await request(app.getHttpServer())
+      .get(`${API}/limited/not-a-real-token/properties`)
+      .expect(401);
+  });
+
   it('#13 cuenta limitada no crea órdenes directamente (sin sesión de empresa)', async () => {
     // The limited token never grants access to company routes (§5.1).
     await http()

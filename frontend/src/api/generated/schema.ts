@@ -711,6 +711,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/limited/{token}/properties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Propiedades que la cuenta limitada puede referenciar en un pedido (F3-D2)
+         * @description Vivienda propia del token, o para cliente propio las propiedades de sus propias órdenes — nunca otra propiedad o relación (§4.3). Lista vacía cuando aún no hay órdenes asociadas.
+         */
+        get: operations["LimitedController_listProperties"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/limited/{token}/requests": {
         parameters: {
             query?: never;
@@ -1701,6 +1721,87 @@ export interface components {
             petsInfo?: string;
             otherInstructions?: string;
         };
+        PropertyOwnerViewDto: {
+            name?: string | null;
+            phone?: string | null;
+            email?: string | null;
+            address?: string | null;
+            city?: string | null;
+            state?: string | null;
+            postalCode?: string | null;
+        };
+        PropertyCommunityViewDto: {
+            name?: string | null;
+            /** @description Código de acceso a la comunidad (§4.2, acceso restringido) */
+            accessCode?: string | null;
+        };
+        PropertyViewDto: {
+            /** Format: uuid */
+            id: string;
+            owner: components["schemas"]["PropertyOwnerViewDto"];
+            addressLine: string;
+            city: string;
+            state: string;
+            postalCode?: string | null;
+            /**
+             * @description Ocupación (§4.2)
+             * @enum {string}
+             */
+            occupancy: "occupied" | "vacant";
+            community: components["schemas"]["PropertyCommunityViewDto"];
+            entryInstructions?: string | null;
+            /** @description Autorización para ingresar sin inquilino presente (§4.2) */
+            allowUnattendedEntry: boolean;
+            petsInfo?: string | null;
+            otherInstructions?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        PropertyTenantViewDto: {
+            /**
+             * Format: uuid
+             * @description Id del tenant de la cuenta
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description Id del vínculo propiedad↔inquilino
+             */
+            linkId: string;
+            /**
+             * @description owner o tenant (§4.3)
+             * @enum {string}
+             */
+            kind: "owner" | "tenant";
+            name: string;
+            phones: string[];
+            address?: string | null;
+            /** @description Franjas disponibles para la visita */
+            availability?: string | null;
+        };
+        PropertyDetailViewDto: {
+            /** Format: uuid */
+            id: string;
+            owner: components["schemas"]["PropertyOwnerViewDto"];
+            addressLine: string;
+            city: string;
+            state: string;
+            postalCode?: string | null;
+            /**
+             * @description Ocupación (§4.2)
+             * @enum {string}
+             */
+            occupancy: "occupied" | "vacant";
+            community: components["schemas"]["PropertyCommunityViewDto"];
+            entryInstructions?: string | null;
+            /** @description Autorización para ingresar sin inquilino presente (§4.2) */
+            allowUnattendedEntry: boolean;
+            petsInfo?: string | null;
+            otherInstructions?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            tenants: components["schemas"]["PropertyTenantViewDto"][];
+        };
         UpdatePropertyDto: {
             /** @example 123 Sunset Ave */
             addressLine?: string;
@@ -1751,6 +1852,14 @@ export interface components {
             /** @description Email para entregar el token de acceso limitado */
             email?: string;
         };
+        TenantAccessResultViewDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email?: string | null;
+            /** @description Se envió el enlace de acceso limitado por correo (§4.3) */
+            accessIssued: boolean;
+        };
         UpdateTenantDto: {
             /** @example Ana López */
             name?: string;
@@ -1762,6 +1871,12 @@ export interface components {
             phones?: string[];
             address?: string;
             availability?: string;
+        };
+        TenantUpdateResultViewDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            phones: string[];
         };
         CreateClientDto: {
             /** @example Roberto Díaz */
@@ -1776,6 +1891,33 @@ export interface components {
             phones?: string[];
             address?: string;
             availability?: string;
+        };
+        ClientCreateResultViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            relationshipId: string;
+            name: string;
+            email?: string | null;
+            /** @description Se envió el enlace de acceso limitado por correo (§4.3) */
+            accessIssued: boolean;
+        };
+        ClientViewDto: {
+            /**
+             * Format: uuid
+             * @description Id del tenant del cliente
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description Id de la relación comercial con el cliente
+             */
+            relationshipId: string;
+            name: string;
+            email?: string | null;
+            phones: string[];
+            /** Format: date-time */
+            createdAt: string;
         };
         CreateOrderDto: {
             /** @description Propiedad vinculada (obligatoria, §5.1) */
@@ -1985,6 +2127,25 @@ export interface components {
         UpdateNotificationPreferencesDto: {
             preferences: components["schemas"]["NotificationPreferenceEntryDto"][];
         };
+        LimitedOrderViewDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /**
+             * @description Estado de la orden (§20.1)
+             * @enum {string}
+             */
+            status: "requested" | "open" | "in_progress" | "completed" | "cancelled";
+            /** Format: date-time */
+            createdAt: string;
+        };
+        LimitedPropertyViewDto: {
+            /** Format: uuid */
+            id: string;
+            addressLine: string;
+            city: string;
+            state: string;
+        };
         CreateRequestDto: {
             /** @example Fuga bajo el lavadero */
             title: string;
@@ -1992,6 +2153,16 @@ export interface components {
             description: string;
             /** @description Propiedad del trabajo (obligatoria para clientes propios) */
             propertyId?: string;
+        };
+        LimitedRequestViewDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /**
+             * @description Siempre `requested` (§20.1)
+             * @enum {string}
+             */
+            status: "requested" | "open" | "in_progress" | "completed" | "cancelled";
         };
         UploadFileDto: {
             /**
@@ -2025,6 +2196,33 @@ export interface components {
              */
             emergencyExtraAmount?: Record<string, never>;
         };
+        CommercialRelationViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description Nombre comercial de la relación */
+            label?: string | null;
+            /** Format: uuid */
+            counterpartyCompanyId?: string | null;
+            counterpartyCompanyName?: string | null;
+            /** Format: uuid */
+            clientRelationshipId?: string | null;
+            /** @description Cliente propio de la relación */
+            clientName?: string | null;
+            /**
+             * @description Override de política de emergencia (§8.6)
+             * @enum {string}
+             */
+            emergencyPolicy: "prior_authorization" | "resolve_without_authorization" | "emergency_amount";
+            /** @description Importe del override en formato decimal string (§12) */
+            emergencyExtraAmount?: string | null;
+            /**
+             * Format: date-time
+             * @description Cierre de la relación: no admite órdenes nuevas (§2.4)
+             */
+            endedAt?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
         CreateCommercialRelationDto: {
             /** @description Contraparte empresa (exclusivo con clientRelationshipId) */
             counterpartyCompanyId?: string;
@@ -2048,14 +2246,14 @@ export interface components {
         };
         UpdateCommercialRelationDto: {
             /** @description Nombre comercial de la relación */
-            label?: Record<string, never>;
+            label?: string | null;
             /**
              * @description Override de política de emergencia; null = no sobrescribe (§8.6)
-             * @enum {string}
+             * @enum {string|null}
              */
-            emergencyPolicy?: "prior_authorization" | "resolve_without_authorization" | "emergency_amount";
+            emergencyPolicy?: "prior_authorization" | "resolve_without_authorization" | "emergency_amount" | null;
             /** @description Importe del override (null lo limpia) */
-            emergencyExtraAmount?: Record<string, never>;
+            emergencyExtraAmount?: string | null;
             /** @description Finaliza la relación: no admite órdenes nuevas (§2.4) */
             ended?: boolean;
         };
@@ -2176,6 +2374,147 @@ export interface components {
              * @enum {string}
              */
             resolution: "same" | "distinct";
+        };
+        InvoiceIssuerViewDto: {
+            /** Format: uuid */
+            companyId: string;
+            name: string;
+        };
+        InvoiceRecipientViewDto: {
+            /** @enum {string} */
+            kind: "company" | "tenant";
+            /** Format: uuid */
+            companyId?: string | null;
+            /** Format: uuid */
+            tenantId?: string | null;
+            name?: string | null;
+        };
+        InvoicePaymentViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "charge" | "refund";
+            /**
+             * @description Solo `recorded` cuenta para el saldo (D6)
+             * @enum {string}
+             */
+            status: "recorded" | "duplicate_suspect" | "duplicate_confirmed";
+            /** @description Importe en formato decimal string (§12) */
+            amount: string;
+            /** Format: date */
+            paidAt: string;
+            /** @enum {string|null} */
+            method?: "cash" | "check" | "transfer" | "card" | "other" | null;
+            reference?: string | null;
+            notes?: string | null;
+            /** Format: uuid */
+            duplicateOfId?: string | null;
+            /** Format: date-time */
+            reconciledAt?: string | null;
+            /**
+             * Format: uuid
+             * @description Empresa que registró el pago
+             */
+            registeredByCompanyId: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        LimitedInvoiceViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            orderId: string;
+            orderTitle: string;
+            /**
+             * @description Estado base derivado con pagos y vencimiento (etapa-5)
+             * @enum {string}
+             */
+            status: "draft" | "issued" | "partially_paid" | "paid" | "overdue" | "voided";
+            /** @description Número secuencial asignado al emitir (D2) */
+            number?: number | null;
+            /** Format: date */
+            issueDate?: string | null;
+            /** Format: date */
+            dueDate?: string | null;
+            /** @description Decimal string (§12) */
+            subtotal?: string | null;
+            /** @description Tasa en formato string (§12) */
+            taxRate?: string | null;
+            /** @description Decimal string (§12) */
+            taxTotal?: string | null;
+            /** @description Decimal string (§12) */
+            total?: string | null;
+            notes?: string | null;
+            /** @description Pagos netos (charges − refunds válidos), decimal string */
+            paidNet: string;
+            /** @description Saldo restante, decimal string */
+            balance?: string | null;
+            issuer: components["schemas"]["InvoiceIssuerViewDto"];
+            recipient: components["schemas"]["InvoiceRecipientViewDto"];
+            /** Format: date-time */
+            voidedAt?: string | null;
+            voidReason?: string | null;
+            payments: components["schemas"]["InvoicePaymentViewDto"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        InvoiceLineViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            jobId: string;
+            jobTitle: string;
+            /** @enum {string} */
+            kind: "material" | "labor" | "tool_rental" | "travel" | "other";
+            description: string;
+            /** @description Importe en formato decimal string (§12) */
+            amount: string;
+            /** @description Línea gravable por defecto; el emisor la quita (§11.6) */
+            taxable: boolean;
+        };
+        LimitedInvoiceDetailViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            orderId: string;
+            orderTitle: string;
+            /**
+             * @description Estado base derivado con pagos y vencimiento (etapa-5)
+             * @enum {string}
+             */
+            status: "draft" | "issued" | "partially_paid" | "paid" | "overdue" | "voided";
+            /** @description Número secuencial asignado al emitir (D2) */
+            number?: number | null;
+            /** Format: date */
+            issueDate?: string | null;
+            /** Format: date */
+            dueDate?: string | null;
+            /** @description Decimal string (§12) */
+            subtotal?: string | null;
+            /** @description Tasa en formato string (§12) */
+            taxRate?: string | null;
+            /** @description Decimal string (§12) */
+            taxTotal?: string | null;
+            /** @description Decimal string (§12) */
+            total?: string | null;
+            notes?: string | null;
+            /** @description Pagos netos (charges − refunds válidos), decimal string */
+            paidNet: string;
+            /** @description Saldo restante, decimal string */
+            balance?: string | null;
+            issuer: components["schemas"]["InvoiceIssuerViewDto"];
+            recipient: components["schemas"]["InvoiceRecipientViewDto"];
+            /** Format: date-time */
+            voidedAt?: string | null;
+            voidReason?: string | null;
+            payments: components["schemas"]["InvoicePaymentViewDto"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            lines: components["schemas"]["InvoiceLineViewDto"][];
         };
         CreateAuthorizationRequestDto: {
             /**
@@ -2909,7 +3248,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PropertyViewDto"][];
+                };
             };
         };
     };
@@ -2934,7 +3275,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PropertyViewDto"];
+                };
             };
             /** @description No es miembro (403) */
             403: {
@@ -2978,7 +3321,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PropertyDetailViewDto"];
+                };
             };
             /** @description Propiedad inexistente (404) */
             404: {
@@ -3012,7 +3357,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PropertyViewDto"];
+                };
             };
             /** @description No es la administradora (403) */
             403: {
@@ -3053,7 +3400,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["TenantAccessResultViewDto"];
+                };
             };
             /** @description Propiedad inexistente (404) */
             404: {
@@ -3101,7 +3450,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["TenantUpdateResultViewDto"];
+                };
             };
             /** @description Inquilino inexistente (404) */
             404: {
@@ -3129,7 +3480,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ClientViewDto"][];
+                };
             };
         };
     };
@@ -3154,7 +3507,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ClientCreateResultViewDto"];
+                };
             };
             /** @description No es negocio propio (403) */
             403: {
@@ -4065,7 +4420,39 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
+                content: {
+                    "application/json": components["schemas"]["LimitedOrderViewDto"][];
+                };
+            };
+            /** @description Token inválido, revocado o expirado (401) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
                 content?: never;
+            };
+        };
+    };
+    LimitedController_listProperties: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Token opaco de acceso limitado */
+                token: unknown;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Propiedades de la cuenta (puede ser vacía) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LimitedPropertyViewDto"][];
+                };
             };
             /** @description Token inválido, revocado o expirado (401) */
             401: {
@@ -4097,7 +4484,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["LimitedRequestViewDto"];
+                };
             };
             /** @description Token inválido, revocado o expirado (401) */
             401: {
@@ -4609,7 +4998,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["CommercialRelationViewDto"][];
+                };
             };
         };
     };
@@ -4634,7 +5025,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["CommercialRelationViewDto"];
+                };
             };
             /** @description Rol sin permiso (403) */
             403: {
@@ -4689,7 +5082,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["CommercialRelationViewDto"];
+                };
             };
             /** @description Rol sin permiso (403) */
             403: {
@@ -5437,8 +5832,6 @@ export interface operations {
             path: {
                 /** @description Token opaco de acceso limitado */
                 token: unknown;
-                /** @description Identificador del espacio (empresa) */
-                id: unknown;
             };
             cookie?: never;
         };
@@ -5449,7 +5842,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["LimitedInvoiceViewDto"][];
+                };
             };
             /** @description Token inválido, revocado o expirado (401) */
             401: {
@@ -5469,8 +5864,6 @@ export interface operations {
                 invId: string;
                 /** @description Token opaco de acceso limitado */
                 token: unknown;
-                /** @description Identificador del espacio (empresa) */
-                id: unknown;
             };
             cookie?: never;
         };
@@ -5481,7 +5874,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["LimitedInvoiceDetailViewDto"];
+                };
             };
             /** @description Token inválido (401) */
             401: {
@@ -5508,8 +5903,6 @@ export interface operations {
                 invId: string;
                 /** @description Token opaco de acceso limitado */
                 token: unknown;
-                /** @description Identificador del espacio (empresa) */
-                id: unknown;
             };
             cookie?: never;
         };
