@@ -17,11 +17,12 @@ export class PatchInvoiceDto {
   dueDate?: string;
 
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description:
       'Tasa de impuesto de esta factura en % (0–100, ≤ 3 decimales); default la del perfil fiscal. ' +
       'null limpia el ajuste (etapa-7.md D3, destination-based)',
     example: '8.375',
-    nullable: true,
   })
   @IsOptional()
   @IsTaxRate()

@@ -47,6 +47,8 @@ export class CreateOrderDto {
   accessEntryInstructions?: string;
 
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description: 'Límite de gasto de la orden; null explícito = «sin límite» (§8.4)',
     example: '250.00',
   })

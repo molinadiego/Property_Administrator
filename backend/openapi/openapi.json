@@ -4633,10 +4633,10 @@
             "description": "Dirección fiscal (se muestra en el PDF); cadena vacía la borra"
           },
           "defaultTaxRate": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Tasa de impuesto por defecto en % (0–100, ≤ 3 decimales); null la borra",
-            "example": "8.375",
-            "nullable": true
+            "example": "8.375"
           },
           "taxExempt": {
             "type": "boolean",
@@ -5486,7 +5486,8 @@
             "description": "Instrucciones de entrada de esta visita (§5.8)"
           },
           "spendingLimit": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Límite de gasto de la orden; null explícito = «sin límite» (§8.4)",
             "example": "250.00"
           },
@@ -6152,7 +6153,8 @@
         "type": "object",
         "properties": {
           "defaultSpendingLimit": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Límite general de gasto; null = «sin límite económico» (§8.4)",
             "example": "250.00"
           },
@@ -6166,7 +6168,8 @@
             ]
           },
           "emergencyExtraAmount": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Importe adicional pre-autorizado para la política emergency_amount (§8.6)",
             "example": "150.00"
           }
@@ -6299,7 +6302,8 @@
         "type": "object",
         "properties": {
           "spendingLimit": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Límite de gasto de la orden; null = «sin límite económico» (§8.4)",
             "example": "250.00"
           },
@@ -6308,12 +6312,14 @@
             "description": "Activa el margen comercial (≤ 20 %, §8.5)"
           },
           "marginPercent": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Porcentaje de margen (0–20); null lo limpia (§8.5)",
             "example": "20"
           },
           "commercialRelationId": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Relación comercial que gobierna la orden (§8.6); null la desvincula"
           }
         }
@@ -6406,10 +6412,10 @@
             "description": "Fecha de vencimiento (YYYY-MM-DD); default emisión + 30 días (D3)"
           },
           "taxRate": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Tasa de impuesto de esta factura en % (0–100, ≤ 3 decimales); default la del perfil fiscal. null limpia el ajuste (etapa-7.md D3, destination-based)",
-            "example": "8.375",
-            "nullable": true
+            "example": "8.375"
           }
         }
       },

@@ -16,6 +16,8 @@ export const EMERGENCY_POLICIES = [
  */
 export class UpdateEconomicSettingsDto {
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description: 'Límite general de gasto; null = «sin límite económico» (§8.4)',
     example: '250.00',
   })
@@ -29,6 +31,8 @@ export class UpdateEconomicSettingsDto {
   emergencyPolicy?: EmergencyPolicyValue;
 
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description: 'Importe adicional pre-autorizado para la política emergency_amount (§8.6)',
     example: '150.00',
   })

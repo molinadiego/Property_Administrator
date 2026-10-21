@@ -10,6 +10,8 @@ import { IsMoneyAmount } from '../../../common/dto/money';
  */
 export class UpdateOrderEconomicPolicyDto {
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description: 'Límite de gasto de la orden; null = «sin límite económico» (§8.4)',
     example: '250.00',
   })
@@ -22,12 +24,19 @@ export class UpdateOrderEconomicPolicyDto {
   @IsBoolean()
   marginEnabled?: boolean;
 
-  @ApiPropertyOptional({ description: 'Porcentaje de margen (0–20); null lo limpia (§8.5)', example: '20' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    description: 'Porcentaje de margen (0–20); null lo limpia (§8.5)',
+    example: '20',
+  })
   @IsOptional()
   @IsMoneyAmount()
   marginPercent?: string | null;
 
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description: 'Relación comercial que gobierna la orden (§8.6); null la desvincula',
   })
   @IsOptional()

@@ -1586,7 +1586,7 @@ export interface components {
              * @description Tasa de impuesto por defecto en % (0–100, ≤ 3 decimales); null la borra
              * @example 8.375
              */
-            defaultTaxRate?: Record<string, never> | null;
+            defaultTaxRate?: string | null;
             /** @description Empresa exenta: el impuesto se congela en 0.00 (etapa-7.md D2) */
             taxExempt?: boolean;
         };
@@ -1938,7 +1938,7 @@ export interface components {
              * @description Límite de gasto de la orden; null explícito = «sin límite» (§8.4)
              * @example 250.00
              */
-            spendingLimit?: Record<string, never>;
+            spendingLimit?: string | null;
             /**
              * @description Aplica el límite general de la empresa si no se envía uno (default true, §8.4)
              * @default true
@@ -2184,7 +2184,7 @@ export interface components {
              * @description Límite general de gasto; null = «sin límite económico» (§8.4)
              * @example 250.00
              */
-            defaultSpendingLimit?: Record<string, never>;
+            defaultSpendingLimit?: string | null;
             /**
              * @description Política general de emergencia (§8.6)
              * @enum {string}
@@ -2194,7 +2194,7 @@ export interface components {
              * @description Importe adicional pre-autorizado para la política emergency_amount (§8.6)
              * @example 150.00
              */
-            emergencyExtraAmount?: Record<string, never>;
+            emergencyExtraAmount?: string | null;
         };
         CommercialRelationViewDto: {
             /** Format: uuid */
@@ -2262,16 +2262,16 @@ export interface components {
              * @description Límite de gasto de la orden; null = «sin límite económico» (§8.4)
              * @example 250.00
              */
-            spendingLimit?: Record<string, never>;
+            spendingLimit?: string | null;
             /** @description Activa el margen comercial (≤ 20 %, §8.5) */
             marginEnabled?: boolean;
             /**
              * @description Porcentaje de margen (0–20); null lo limpia (§8.5)
              * @example 20
              */
-            marginPercent?: Record<string, never>;
+            marginPercent?: string | null;
             /** @description Relación comercial que gobierna la orden (§8.6); null la desvincula */
-            commercialRelationId?: Record<string, never>;
+            commercialRelationId?: string | null;
         };
         CostItemDto: {
             /**
@@ -2314,7 +2314,7 @@ export interface components {
              * @description Tasa de impuesto de esta factura en % (0–100, ≤ 3 decimales); default la del perfil fiscal. null limpia el ajuste (etapa-7.md D3, destination-based)
              * @example 8.375
              */
-            taxRate?: Record<string, never> | null;
+            taxRate?: string | null;
         };
         InvoiceLineDto: {
             /** @description Trabajo de la orden del que proviene el renglón (§11.1) */

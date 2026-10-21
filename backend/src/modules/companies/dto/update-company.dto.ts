@@ -26,9 +26,10 @@ export class UpdateCompanyDto {
   taxAddress?: string;
 
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description: 'Tasa de impuesto por defecto en % (0–100, ≤ 3 decimales); null la borra',
     example: '8.375',
-    nullable: true,
   })
   @IsOptional()
   @IsTaxRate()
