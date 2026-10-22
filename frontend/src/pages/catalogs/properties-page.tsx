@@ -56,7 +56,7 @@ export function PropertiesPage() {
         ) : rows.length === 0 ? (
           <EmptyBox text={t('catalogs:properties.empty')} />
         ) : (
-          <ul className="grid gap-2">
+          <ul className="grid grid-cols-1 gap-2">
             {rows.map((property) => (
               <li key={property.id}>
                 <Link

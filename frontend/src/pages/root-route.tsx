@@ -24,7 +24,7 @@ function SpacePicker({
     <div className="mx-auto w-full max-w-2xl">
       <h1 className="text-xl font-semibold text-foreground">{t('picker.title')}</h1>
       <p className="mt-1 text-sm text-muted-foreground">{t('picker.subtitle')}</p>
-      <ul className="mt-4 grid gap-3">
+      <ul className="mt-4 grid grid-cols-1 gap-3">
         {memberships.map((membership) => (
           <li key={membership.companyId}>
             <button

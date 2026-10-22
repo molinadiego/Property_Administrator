@@ -236,7 +236,7 @@ function InvitationsSection({ companyId }: { companyId: string }) {
       ) : invitations.error ? (
         <ErrorBanner error={invitations.error} fallback={t('spaces:members.loadFailed')} />
       ) : (
-        <ul className="grid gap-2">
+        <ul className="grid grid-cols-1 gap-2">
           {(invitations.data?.data ?? []).map((invitation: InvitationViewDto) => (
             <li
               key={invitation.id}
@@ -325,7 +325,7 @@ function MembersPanel({ companyId }: { companyId: string }) {
         </p>
       ) : (
         <>
-          <ul className="grid gap-2">
+          <ul className="grid grid-cols-1 gap-2">
             {rows.map((member) => {
               const isLastOwner = ownerCount === 1 && member.role === 'owner';
               return (

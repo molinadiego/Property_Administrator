@@ -274,7 +274,7 @@ export function OrderDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid gap-2 text-sm">
+            <dl className="grid grid-cols-1 gap-2 text-sm">
               {accessRows.map((row) => (
                 <div key={row.key} className="grid grid-cols-1 gap-0.5 sm:grid-cols-[10rem_1fr]">
                   <dt className="font-medium text-muted-foreground">{row.label}</dt>
@@ -298,7 +298,7 @@ export function OrderDetailPage() {
           ) : null}
         </CardHeader>
         <CardContent className="space-y-4">
-          <ul className="grid gap-3">
+          <ul className="grid grid-cols-1 gap-3">
             {jobs.map((job, index) => {
               const planForJob = plan.jobs[job.id];
               const mine = myActiveAssignment(job, myMembershipIds);
@@ -333,7 +333,7 @@ export function OrderDetailPage() {
                       <h4 className="text-xs font-semibold uppercase text-muted-foreground">
                         {t('orders:detail.assignmentsTitle')}
                       </h4>
-                      <ul className="mt-1 grid gap-1">
+                      <ul className="mt-1 grid grid-cols-1 gap-1">
                         {job.assignments.map((assignment) => {
                           const assigneeName = nameFor(assignment.assigneeMembershipId);
                           return (

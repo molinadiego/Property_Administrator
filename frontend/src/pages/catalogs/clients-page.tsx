@@ -264,7 +264,7 @@ export function ClientsPage() {
           ) : rows.length === 0 ? (
             <EmptyBox text={t('catalogs:clients.empty')} />
           ) : (
-            <ul className="grid gap-2">
+            <ul className="grid grid-cols-1 gap-2">
               {rows.map((client) => (
                 <li
                   key={client.id}

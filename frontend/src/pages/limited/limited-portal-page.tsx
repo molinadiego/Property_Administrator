@@ -139,7 +139,7 @@ export function LimitedPortalPage() {
           ) : orderRows.length === 0 ? (
             <EmptyBox text={t('limited:orders.empty')} />
           ) : (
-            <ul className="grid gap-2">
+            <ul className="grid grid-cols-1 gap-2">
               {orderRows.map((order) => (
                 <li
                   key={order.id}
@@ -268,7 +268,7 @@ export function LimitedPortalPage() {
                 </Button>
               </>
             ) : (
-              <ul className="grid gap-2">
+              <ul className="grid grid-cols-1 gap-2">
                 {invoiceRows.map((invoice) => (
                   <li key={invoice.id}>
                     <Link

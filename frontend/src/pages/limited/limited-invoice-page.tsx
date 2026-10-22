@@ -116,7 +116,7 @@ export function LimitedInvoicePage() {
             <h3 id="invoice-lines-heading" className="text-base font-semibold text-foreground">
               {t('limited:invoices.lines')}
             </h3>
-            <ul className="grid gap-2">
+            <ul className="grid grid-cols-1 gap-2">
               {data.lines.map((line) => (
                 <li
                   key={line.id}
@@ -146,7 +146,7 @@ export function LimitedInvoicePage() {
               >
                 {t('limited:invoices.payments')}
               </h3>
-              <ul className="grid gap-2">
+              <ul className="grid grid-cols-1 gap-2">
                 {payments.map((payment) => (
                   <li
                     key={payment.id}

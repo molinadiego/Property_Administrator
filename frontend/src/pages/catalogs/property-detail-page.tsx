@@ -628,7 +628,7 @@ export function PropertyDetailPage() {
               {t('catalogs:tenants.empty')}
             </p>
           ) : (
-            <ul className="grid gap-2">
+            <ul className="grid grid-cols-1 gap-2">
               {tenants.map((tenant) => (
                 <li
                   key={tenant.id}
