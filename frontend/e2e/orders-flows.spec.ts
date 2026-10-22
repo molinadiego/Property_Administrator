@@ -98,18 +98,6 @@ async function memberMembershipId(page: Page, companyId: string, email: string):
   return member!.membershipId;
 }
 
-/** The caller's own membership in the space (self-assignment flows). */
-async function myMembershipId(page: Page, companyId: string): Promise<string> {
-  const res = await page.request.get(`${API}/auth/me`);
-  expect(res.ok()).toBe(true);
-  const { memberships } = (await res.json()) as {
-    memberships: Array<{ companyId: string; id: string }>;
-  };
-  const membership = memberships.find((m) => m.companyId === companyId);
-  expect(membership).toBeTruthy();
-  return membership!.id;
-}
-
 interface CreatedOrder {
   orderId: string;
   jobId: string;
@@ -237,11 +225,14 @@ test.describe('F4 orders flows (spec F4 §8)', () => {
     await expect(page.getByText('Propuesta', { exact: true })).toBeVisible();
     await expect(page.getByText('Asignado a: Bob Contratista')).toBeVisible();
 
-    // Bob runs his life-cycle (AC-F4.4). Not his decisions never render.
+    // Bob runs his life-cycle (AC-F4.4). As a member of the owning space he
+    // also sees its decisions (spec F4 §2: inside the responsible company the
+    // contract does not distinguish roles); what matters here are the
+    // assignee actions he is about to drive.
     await login(page, 'bob@demo.test');
     await page.goto(`/app/orders/${orderId}`);
-    await expect(page.getByRole('button', { name: 'Cancelar orden', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Cerrar orden', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Aceptar', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Rechazar', exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: 'Aceptar', exact: true }).click();
     const acceptDialog = page.getByRole('dialog');
@@ -382,14 +373,17 @@ test.describe('F4 orders flows (spec F4 §8)', () => {
       title: `Orden iniciada E2E ${suffix}`,
       description: 'Trabajo ya en curso.',
     });
-    const membershipId = await myMembershipId(page, companyId);
+    const bobMembershipId = await memberMembershipId(page, companyId, 'bob@demo.test');
     const assignmentId = await assignJobApi(
       page,
       companyId,
       started.orderId,
       started.jobId,
-      membershipId,
+      bobMembershipId,
     );
+
+    // Bob (the assignee) accepts and starts the job (§5.6/§6.1).
+    await login(page, 'bob@demo.test');
     expect(
       (
         await page.request.post(`${API}/companies/${companyId}/assignments/${assignmentId}/accept`, {
@@ -403,6 +397,8 @@ test.describe('F4 orders flows (spec F4 §8)', () => {
       })).ok(),
     ).toBe(true);
 
+    // §20.1 state gate: a started job hides the cancel decision (bob also
+    // sees the owning space's decisions, spec F4 §2); the API answers 409.
     await page.goto(`/app/orders/${started.orderId}`);
     await expect(page.getByRole('button', { name: 'Cancelar orden', exact: true })).toHaveCount(0);
     const conflict = await page.request.post(
@@ -427,15 +423,19 @@ test.describe('F4 orders flows (spec F4 §8)', () => {
       title: `Orden incompleta E2E ${suffix}`,
       description: 'Ciclo incompleto, reanudación y cierre compuesto.',
     });
-    // Ana is owner *and* assignee: one session runs the whole flow (§5.6).
-    const membershipId = await myMembershipId(page, companyId);
+    // The job is bob's: the assignee reports incomplete/complete (§6.1–§6.2)
+    // and the owner resumes it (§20.2). Ana never carries a pending
+    // assignment — the F2 portada asserts she has none (dashboard-flows).
+    const bobMembershipId = await memberMembershipId(page, companyId, 'bob@demo.test');
     const assignmentId = await assignJobApi(
       page,
       companyId,
       created.orderId,
       created.jobId,
-      membershipId,
+      bobMembershipId,
     );
+
+    await login(page, 'bob@demo.test');
     expect(
       (
         await page.request.post(`${API}/companies/${companyId}/assignments/${assignmentId}/accept`, {
@@ -461,16 +461,22 @@ test.describe('F4 orders flows (spec F4 §8)', () => {
     await expect(job1.getByText('Incompleto', { exact: true })).toBeVisible();
 
     // the owner resumes with the same professional → «En curso» (§20.2)
+    await login(page, 'ana@demo.test');
+    await page.goto(`/app/orders/${created.orderId}`);
     await page.getByRole('button', { name: 'Reanudar', exact: true }).click();
     await expect(job1.getByText('En curso', { exact: true })).toBeVisible();
 
     // …and the assignee completes it (§6.1)
+    await login(page, 'bob@demo.test');
+    await page.goto(`/app/orders/${created.orderId}`);
     await page.getByRole('button', { name: 'Completar', exact: true }).click();
     dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: 'Completar', exact: true }).click();
     await expect(job1.getByText('Completado', { exact: true })).toBeVisible();
 
-    // Compound: add a second job (§5.5)…
+    // Compound: the owner adds a second job (§5.5)…
+    await login(page, 'ana@demo.test');
+    await page.goto(`/app/orders/${created.orderId}`);
     const job2Title = `Trabajo extra E2E ${suffix}`;
     await page.getByRole('button', { name: 'Agregar trabajo', exact: true }).click();
     dialog = page.getByRole('dialog');

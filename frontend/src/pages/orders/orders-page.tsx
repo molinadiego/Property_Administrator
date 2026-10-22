@@ -131,7 +131,9 @@ export function OrdersPage() {
         ) : rows.length === 0 ? (
           <EmptyBox text={t('orders:list.empty')} />
         ) : (
-          <ul className="grid gap-2">
+          /* grid-cols-1 (minmax(0,1fr)) keeps long nowrap titles inside
+             360px; a plain implicit auto track sizes to min-content. */
+          <ul className="grid grid-cols-1 gap-2">
             {rows.map((order) => {
               const address = addressByProperty.get(order.propertyId);
               return (

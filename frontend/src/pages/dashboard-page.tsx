@@ -113,7 +113,10 @@ function OpenOrdersCard({ companyId, className }: { companyId: string; className
         ) : rows.length === 0 ? (
           <EmptyBox text={t('openOrders.empty')} />
         ) : (
-          <ul className="grid gap-2">
+          /* grid-cols-1 (minmax(0,1fr)) breaks the min-content chain: with a
+             plain `grid` the implicit auto track sizes to the nowrap title
+             and long titles overflow 360px (mobile-first, docs/stack §6). */
+          <ul className="grid grid-cols-1 gap-2">
             {rows.map((order) => (
               <li key={order.id}>
                 <Link
@@ -346,7 +349,7 @@ function PendingCard({
         ) : rows.length === 0 ? (
           <EmptyBox text={t('pending.empty')} />
         ) : (
-          <ul className="grid gap-2">
+          <ul className="grid grid-cols-1 gap-2">
             {rows.map((row) => (
               <li
                 key={row.assignmentId}
@@ -421,7 +424,7 @@ function NotificationsCard({ companyId, className }: { companyId: string; classN
         ) : rows.length === 0 ? (
           <EmptyBox text={t('notifications.empty')} />
         ) : (
-          <ul className="grid gap-2">
+          <ul className="grid grid-cols-1 gap-2">
             {rows.map((notification) => {
               // F4-D6: order notifications open their detail; assignment ones
               // resolve through the loaded orders, or stay plain text.
