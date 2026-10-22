@@ -317,6 +317,21 @@ recurso; la resolución completa está en §5.
 
 Los costos de §7.2–§7.4 no aparecen aún (Etapa 4).
 
+**Enmienda F5 (aprobada por el dueño el 21/10/2026; ver
+`docs/especificacion/frontend/etapa-f5.md`, decisiones F5-D1…F5-D3):**
+
+- **F5-D1**: las respuestas JSON de §4.4 y §4.5 (y el `201` de §4.6) quedan
+  documentadas con DTOs de respuesta + `@ApiResponse({type})`
+  (`files-responses.dto.ts`, `history-responses.dto.ts`) — solo
+  documentación para el cliente generado, sin cambio de comportamiento.
+- **F5-D2**: `GET /history/properties/:propId` añade `scope`
+  (`full`/`shared`/`own_jobs`, el modo que ya resolvía internamente) y
+  `shares[]` (solo para la empresa dueña: `id`, `sharedWithMembershipId`,
+  `note`, `createdAt`, solo activos) para que la UI etiquete la vista y
+  gestione la revocación de §7.5 sin un GET nuevo de shares.
+- **F5-D3**: `GET /me/job-history` añade `property.id` para navegar desde
+  el historial propio al historial de la dirección (§7.2).
+
 ### 4.6 Compartir antecedentes (§7.5)
 
 | Método | Ruta | Descripción | Permiso | Éxito |

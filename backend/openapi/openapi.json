@@ -2326,7 +2326,14 @@
         },
         "responses": {
           "201": {
-            "description": "Archivo guardado"
+            "description": "Archivo guardado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "Sin permiso sobre la orden (403)"
@@ -2368,7 +2375,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Metadata de archivos (los borrados con deleted_at)"
+            "description": "Metadata de archivos (los borrados con deleted_at)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileListViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "Sin permiso sobre la orden (403)"
@@ -2416,7 +2430,14 @@
         },
         "responses": {
           "201": {
-            "description": "Archivo guardado"
+            "description": "Archivo guardado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "Sin permiso sobre el trabajo (403)"
@@ -2534,7 +2555,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Historial con órdenes, jobs y archivos visibles"
+            "description": "Historial con órdenes, jobs y archivos visibles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyHistoryViewDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Propiedad inexistente o sin acceso (404)"
@@ -2560,7 +2588,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Órdenes con jobs y resultados, incl. cerradas"
+            "description": "Órdenes con jobs y resultados, incl. cerradas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagedOrderListViewDto"
+                }
+              }
+            }
           }
         },
         "summary": "Órdenes gestionadas por el espacio: propias y de las que tuvo asignación (§7.3)",
@@ -2593,7 +2628,14 @@
         },
         "responses": {
           "201": {
-            "description": "Share creado"
+            "description": "Share creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedShareViewDto"
+                }
+              }
+            }
           },
           "403": {
             "description": "No es dueña de los antecedentes (403)"
@@ -2655,7 +2697,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Trabajos propios con orden, propiedad, fechas y motivos"
+            "description": "Trabajos propios con orden, propiedad, fechas y motivos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobHistoryListViewDto"
+                }
+              }
+            }
           }
         },
         "summary": "Historial propio de trabajos: solo los tuyos, incluso cerrados (§7.2)",
@@ -6353,6 +6402,433 @@
           }
         }
       },
+      "FileViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Orden a la que pertenece el archivo"
+          },
+          "targetType": {
+            "type": "string",
+            "enum": [
+              "order",
+              "job"
+            ],
+            "description": "Destino: la orden o un trabajo"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id del destino según targetType (orden o trabajo)"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "document"
+            ],
+            "description": "Evidencia: foto o documento (§7.1)"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Nombre saneado del archivo"
+          },
+          "contentType": {
+            "type": "string",
+            "description": "Content type aceptado por la allowlist (etapa-3 §11)"
+          },
+          "sizeBytes": {
+            "type": "number",
+            "description": "Tamaño en bytes (máx. 10 MB, etapa-3 §11)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Retirado lógicamente (§1.1.8); null = activo"
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "targetType",
+          "targetId",
+          "kind",
+          "filename",
+          "contentType",
+          "sizeBytes",
+          "createdAt",
+          "deletedAt"
+        ]
+      },
+      "FileListViewDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileViewDto"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "PropertyHistoryDetailViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "addressLine": {
+            "type": "string",
+            "description": "Dirección de la propiedad (§7.2)"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "addressLine",
+          "city",
+          "state"
+        ]
+      },
+      "HistoryJobViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "in_progress",
+              "incomplete",
+              "done",
+              "not_realized"
+            ],
+            "description": "Estado del trabajo (§20.2)"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "result": {
+            "type": "string",
+            "nullable": true,
+            "description": "Resultado final registrado al completar (§6.1)"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Motivo de incompleto/no realizado (§6.2–§6.3)"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "startedAt",
+          "completedAt",
+          "result",
+          "reason"
+        ]
+      },
+      "HistoryFileViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetType": {
+            "type": "string",
+            "enum": [
+              "order",
+              "job"
+            ]
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "document"
+            ]
+          },
+          "filename": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Retirado lógicamente (§1.1.8); null = activo"
+          }
+        },
+        "required": [
+          "id",
+          "targetType",
+          "targetId",
+          "kind",
+          "filename",
+          "contentType",
+          "sizeBytes",
+          "createdAt",
+          "deletedAt"
+        ]
+      },
+      "PropertyHistoryOrderViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "open",
+              "in_progress",
+              "completed",
+              "cancelled"
+            ],
+            "description": "Estado de la orden (§20.1)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "parentOrderId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Orden de la que surgió esta, si aplica (§20.1)"
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryJobViewDto"
+            }
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryFileViewDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "createdAt",
+          "closedAt",
+          "parentOrderId",
+          "jobs",
+          "files"
+        ]
+      },
+      "PropertyShareViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sharedWithMembershipId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Membresía beneficiaria (§7.5)"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "description": "Motivo / antecedentes relevantes (§7.5)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "sharedWithMembershipId",
+          "note",
+          "createdAt"
+        ]
+      },
+      "PropertyHistoryViewDto": {
+        "type": "object",
+        "properties": {
+          "property": {
+            "$ref": "#/components/schemas/PropertyHistoryDetailViewDto"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "full",
+              "shared",
+              "own_jobs"
+            ],
+            "description": "Modo resuelto por el servidor: full (dueña), shared (share activo) u own_jobs (asignación activa) (§7.2, §7.5)"
+          },
+          "orders": {
+            "description": "Órdenes de la propiedad, orden desc",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyHistoryOrderViewDto"
+            }
+          },
+          "shares": {
+            "description": "Shares activos; solo la empresa dueña recibe filas (F5-D2, §7.5)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyShareViewDto"
+            }
+          }
+        },
+        "required": [
+          "property",
+          "scope",
+          "orders",
+          "shares"
+        ]
+      },
+      "HistoryPropertyRefViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "addressLine": {
+            "type": "string",
+            "description": "Dirección de la propiedad (§7.2)"
+          },
+          "city": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "addressLine",
+          "city"
+        ]
+      },
+      "ManagedOrderViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "open",
+              "in_progress",
+              "completed",
+              "cancelled"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "property": {
+            "$ref": "#/components/schemas/HistoryPropertyRefViewDto"
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryJobViewDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "createdAt",
+          "closedAt",
+          "property",
+          "jobs"
+        ]
+      },
+      "ManagedOrderListViewDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagedOrderViewDto"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "CreateShareDto": {
         "type": "object",
         "properties": {
@@ -6372,6 +6848,152 @@
         "required": [
           "propertyId",
           "sharedWithMembershipId"
+        ]
+      },
+      "CreatedShareViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "propertyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sharedWithMembershipId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Membresía beneficiaria (§7.5)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "propertyId",
+          "sharedWithMembershipId",
+          "createdAt"
+        ]
+      },
+      "JobHistoryOrderViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "open",
+              "in_progress",
+              "completed",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status"
+        ]
+      },
+      "JobHistoryEntryViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "in_progress",
+              "incomplete",
+              "done",
+              "not_realized"
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "result": {
+            "type": "string",
+            "nullable": true,
+            "description": "Resultado final (§6.1)"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Motivo de incompleto/no realizado (§6.2–§6.3)"
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected",
+              "revoked"
+            ],
+            "nullable": true,
+            "description": "Estado de la asignación más reciente de la persona en ese trabajo (§20.3)"
+          },
+          "order": {
+            "$ref": "#/components/schemas/JobHistoryOrderViewDto"
+          },
+          "property": {
+            "description": "Propiedad con id para navegar a su historial (F5-D3, §7.2)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HistoryPropertyRefViewDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "startedAt",
+          "completedAt",
+          "result",
+          "reason",
+          "assignmentStatus",
+          "order",
+          "property"
+        ]
+      },
+      "JobHistoryListViewDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobHistoryEntryViewDto"
+            }
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "UpdateEconomicSettingsDto": {

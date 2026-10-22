@@ -77,7 +77,10 @@ export class HistoryService {
   /**
    * Property history (§7.2): owning company sees everything; an active share
    * sees the shared antecedents; an active assignment without a share sees
-   * **only its own jobs** (matriz #39–#41).
+   * **only its own jobs** (matriz #39–#41). The resolved `scope` and the
+   * owner's active shares travel in the payload (F5-D2, approved 21/10/2026:
+   * frontend spec F5 §2.4 — the UI labels the mode and manages §7.5 shares
+   * from here; there is no separate list endpoint).
    */
   async propertyHistory(access: CompanyAccess, auth: AuthContext, propertyId: string) {
     const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
@@ -112,6 +115,17 @@ export class HistoryService {
     });
     if (scope === 'none') throw new NotFoundException('Propiedad no encontrada.');
 
+    // F5-D2: the owner (scope `full`) also gets the active shares to label
+    // and revoke them (§7.5); any other scope receives an empty list.
+    const shares =
+      scope === 'full'
+        ? await this.prisma.historyShare.findMany({
+            where: { propertyId: property.id, revokedAt: null },
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, sharedWithMembershipId: true, note: true, createdAt: true },
+          })
+        : [];
+
     const ownJobFilter: Prisma.JobWhereInput =
       scope === 'own_jobs'
         ? { assignments: { some: { assigneeMembership: { userId: auth.userId } } } }
@@ -145,6 +159,7 @@ export class HistoryService {
         city: property.city,
         state: property.state,
       },
+      scope,
       orders: orders
         // `own_jobs`: an order with none of the caller's jobs shows nothing.
         .filter((order) => scope !== 'own_jobs' || order.jobs.length > 0)
@@ -165,6 +180,12 @@ export class HistoryService {
             )
             .map(toFileEntry),
         })),
+      shares: shares.map((item) => ({
+        id: item.id,
+        sharedWithMembershipId: item.sharedWithMembershipId,
+        note: item.note,
+        createdAt: item.createdAt.toISOString(),
+      })),
     };
   }
 
@@ -226,7 +247,7 @@ export class HistoryService {
             id: true,
             title: true,
             status: true,
-            property: { select: { addressLine: true, city: true } },
+            property: { select: { id: true, addressLine: true, city: true } },
           },
         },
         jobEvents: {

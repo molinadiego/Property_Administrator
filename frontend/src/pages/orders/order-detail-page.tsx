@@ -12,10 +12,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMe } from '@/auth/session';
 import { useProperties } from '@/catalogs/queries';
-import { ErrorBanner, formatDate } from '@/catalogs/ui';
+import { EmptyBox, ErrorBanner, ListSkeleton, formatDate } from '@/catalogs/ui';
 import { ORDER_STATUS_KEYS } from '@/dashboard/board';
 import { useAcceptAssignment, useRejectAssignment } from '@/dashboard/queries';
 import { allowedOrderActions, myActiveAssignment, type OrderActionPlan } from '@/orders/actions';
+import { groupOrderFiles } from '@/history/files-actions';
+import { FileList, UploadControl } from '@/history/files-ui';
+import { useOrderFiles } from '@/history/queries';
 import {
   useAddJob,
   useAssignJob,
@@ -75,7 +78,7 @@ type OrderActionKind = 'edit' | 'cancel' | 'close' | 'addJob';
  * banner and trigger a refetch so the buttons recalculate (F4 §5/§11).
  */
 export function OrderDetailPage() {
-  const { t } = useTranslation(['orders', 'dashboard', 'common']);
+  const { t } = useTranslation(['orders', 'history', 'dashboard', 'common']);
   const { orderId = '' } = useParams();
   const { activeId, memberships } = useActiveCompany();
   const { data: me } = useMe();
@@ -84,6 +87,7 @@ export function OrderDetailPage() {
   const orderQuery = useOrder(companyId, orderId);
   const members = useMembers(companyId);
   const properties = useProperties(companyId);
+  const files = useOrderFiles(companyId, orderId);
 
   const accept = useAcceptAssignment(companyId);
   const reject = useRejectAssignment(companyId);
@@ -210,6 +214,9 @@ export function OrderDetailPage() {
   // Locals so the dialog callbacks read a narrowed, stable reference.
   const openAssignment = jobAction?.assignment;
 
+  const fileGroups = groupOrderFiles(files.data?.data ?? []);
+  const filesByJob = new Map(fileGroups.jobs.map((group) => [group.jobId, group.files]));
+
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6" role="region" aria-labelledby="order-title">
       <header className="space-y-2">
@@ -224,7 +231,14 @@ export function OrderDetailPage() {
         <p className="text-sm text-muted-foreground">
           {t('orders:detail.createdAt', { date: formatDate(order.createdAt) })}
         </p>
-        {address ? <p className="text-sm text-muted-foreground">{address}</p> : null}
+        {address ? (
+          <Link
+            to={`/app/history/properties/${order.propertyId}`}
+            className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            {address}
+          </Link>
+        ) : null}
         <p className="text-sm text-muted-foreground">{order.description}</p>
         {order.closedAt ? (
           <p className="text-sm text-muted-foreground">
@@ -360,7 +374,24 @@ export function OrderDetailPage() {
                       </ul>
                     </section>
 
-                    <div className="flex flex-wrap gap-2">
+                    <section className="space-y-1.5" aria-label={t('history:files.jobTitle')}>
+                      <h4 className="text-xs font-semibold uppercase text-muted-foreground">
+                        {t('history:files.jobTitle')}
+                      </h4>
+                      {files.isPending ? null : (filesByJob.get(job.id) ?? []).length > 0 ? (
+                        <FileList files={filesByJob.get(job.id) ?? []} companyId={companyId} />
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          {t('history:files.jobEmpty')}
+                        </p>
+                      )}
+                      <UploadControl
+                        companyId={companyId}
+                        target={{ kind: 'job', orderId, jobId: job.id }}
+                      />
+                    </section>
+
+            <div className="flex flex-wrap gap-2">
                       {planForJob.accept && mine ? (
                         <Button
                           size="sm"
@@ -466,6 +497,31 @@ export function OrderDetailPage() {
               );
             })}
           </ul>
+        </CardContent>
+      </Card>
+
+      <Card className="min-w-0" role="region" aria-labelledby="order-files-title">
+        <CardHeader>
+          <CardTitle id="order-files-title" className="text-base">
+            {t('history:files.title')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {files.isPending ? (
+            <ListSkeleton />
+          ) : files.error ? (
+            <div className="space-y-2">
+              <ErrorBanner error={files.error} fallback={t('history:files.loadError')} />
+              <Button variant="outline" size="sm" onClick={() => void files.refetch()}>
+                {t('common:action.retry')}
+              </Button>
+            </div>
+          ) : fileGroups.order.length === 0 ? (
+            <EmptyBox text={t('history:files.empty')} />
+          ) : (
+            <FileList files={fileGroups.order} companyId={companyId} />
+          )}
+          <UploadControl companyId={companyId} target={{ kind: 'order', orderId }} />
         </CardContent>
       </Card>
 

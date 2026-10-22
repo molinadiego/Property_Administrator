@@ -13,6 +13,7 @@
     "count_other": "{{count}} propiedades",
     "capped": "Más de 100 propiedades",
     "openAria": "Ver propiedad: {{address}}",
+    "viewHistory": "Ver historial",
     "occupancy": {
       "occupied": "Ocupada",
       "vacant": "Vacante"

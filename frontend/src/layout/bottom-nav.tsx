@@ -15,7 +15,7 @@ export function BottomNav() {
       aria-label={t('primary')}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background md:hidden"
     >
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-6">
         {NAV_ITEMS.map((item) => (
           <li key={item.to}>
             <NavLink

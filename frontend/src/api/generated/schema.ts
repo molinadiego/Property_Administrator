@@ -2236,6 +2236,158 @@ export interface components {
              */
             kind?: "photo" | "document";
         };
+        FileViewDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description Orden a la que pertenece el archivo
+             */
+            orderId: string;
+            /**
+             * @description Destino: la orden o un trabajo
+             * @enum {string}
+             */
+            targetType: "order" | "job";
+            /**
+             * Format: uuid
+             * @description Id del destino según targetType (orden o trabajo)
+             */
+            targetId: string;
+            /**
+             * @description Evidencia: foto o documento (§7.1)
+             * @enum {string}
+             */
+            kind: "photo" | "document";
+            /** @description Nombre saneado del archivo */
+            filename: string;
+            /** @description Content type aceptado por la allowlist (etapa-3 §11) */
+            contentType: string;
+            /** @description Tamaño en bytes (máx. 10 MB, etapa-3 §11) */
+            sizeBytes: number;
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Retirado lógicamente (§1.1.8); null = activo
+             */
+            deletedAt: string | null;
+        };
+        FileListViewDto: {
+            data: components["schemas"]["FileViewDto"][];
+        };
+        PropertyHistoryDetailViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description Dirección de la propiedad (§7.2) */
+            addressLine: string;
+            city: string;
+            state: string;
+        };
+        HistoryJobViewDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /**
+             * @description Estado del trabajo (§20.2)
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "in_progress" | "incomplete" | "done" | "not_realized";
+            /** Format: date-time */
+            startedAt: string | null;
+            /** Format: date-time */
+            completedAt: string | null;
+            /** @description Resultado final registrado al completar (§6.1) */
+            result: string | null;
+            /** @description Motivo de incompleto/no realizado (§6.2–§6.3) */
+            reason: string | null;
+        };
+        HistoryFileViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            targetType: "order" | "job";
+            /** Format: uuid */
+            targetId: string;
+            /** @enum {string} */
+            kind: "photo" | "document";
+            filename: string;
+            contentType: string;
+            sizeBytes: number;
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Retirado lógicamente (§1.1.8); null = activo
+             */
+            deletedAt: string | null;
+        };
+        PropertyHistoryOrderViewDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /**
+             * @description Estado de la orden (§20.1)
+             * @enum {string}
+             */
+            status: "requested" | "open" | "in_progress" | "completed" | "cancelled";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** @description Orden de la que surgió esta, si aplica (§20.1) */
+            parentOrderId: string | null;
+            jobs: components["schemas"]["HistoryJobViewDto"][];
+            files: components["schemas"]["HistoryFileViewDto"][];
+        };
+        PropertyShareViewDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description Membresía beneficiaria (§7.5)
+             */
+            sharedWithMembershipId: string;
+            /** @description Motivo / antecedentes relevantes (§7.5) */
+            note: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        PropertyHistoryViewDto: {
+            property: components["schemas"]["PropertyHistoryDetailViewDto"];
+            /**
+             * @description Modo resuelto por el servidor: full (dueña), shared (share activo) u own_jobs (asignación activa) (§7.2, §7.5)
+             * @enum {string}
+             */
+            scope: "full" | "shared" | "own_jobs";
+            /** @description Órdenes de la propiedad, orden desc */
+            orders: components["schemas"]["PropertyHistoryOrderViewDto"][];
+            /** @description Shares activos; solo la empresa dueña recibe filas (F5-D2, §7.5) */
+            shares: components["schemas"]["PropertyShareViewDto"][];
+        };
+        HistoryPropertyRefViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description Dirección de la propiedad (§7.2) */
+            addressLine: string;
+            city: string;
+        };
+        ManagedOrderViewDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** @enum {string} */
+            status: "requested" | "open" | "in_progress" | "completed" | "cancelled";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            closedAt: string | null;
+            property: components["schemas"]["HistoryPropertyRefViewDto"];
+            jobs: components["schemas"]["HistoryJobViewDto"][];
+        };
+        ManagedOrderListViewDto: {
+            data: components["schemas"]["ManagedOrderViewDto"][];
+        };
         CreateShareDto: {
             /** @description Propiedad cuyos antecedentes se comparten */
             propertyId: string;
@@ -2243,6 +2395,52 @@ export interface components {
             sharedWithMembershipId: string;
             /** @description Motivo / antecedentes relevantes (§7.5) */
             note?: string;
+        };
+        CreatedShareViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            propertyId: string;
+            /**
+             * Format: uuid
+             * @description Membresía beneficiaria (§7.5)
+             */
+            sharedWithMembershipId: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        JobHistoryOrderViewDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** @enum {string} */
+            status: "requested" | "open" | "in_progress" | "completed" | "cancelled";
+        };
+        JobHistoryEntryViewDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** @enum {string} */
+            status: "pending" | "accepted" | "in_progress" | "incomplete" | "done" | "not_realized";
+            /** Format: date-time */
+            startedAt: string | null;
+            /** Format: date-time */
+            completedAt: string | null;
+            /** @description Resultado final (§6.1) */
+            result: string | null;
+            /** @description Motivo de incompleto/no realizado (§6.2–§6.3) */
+            reason: string | null;
+            /**
+             * @description Estado de la asignación más reciente de la persona en ese trabajo (§20.3)
+             * @enum {string|null}
+             */
+            assignmentStatus: "pending" | "accepted" | "rejected" | "revoked" | null;
+            order: components["schemas"]["JobHistoryOrderViewDto"];
+            /** @description Propiedad con id para navegar a su historial (F5-D3, §7.2) */
+            property: components["schemas"]["HistoryPropertyRefViewDto"];
+        };
+        JobHistoryListViewDto: {
+            data: components["schemas"]["JobHistoryEntryViewDto"][];
         };
         UpdateEconomicSettingsDto: {
             /**
@@ -4648,7 +4846,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["FileListViewDto"];
+                };
             };
             /** @description Sin permiso sobre la orden (403) */
             403: {
@@ -4689,7 +4889,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["FileViewDto"];
+                };
             };
             /** @description Sin permiso sobre la orden (403) */
             403: {
@@ -4744,7 +4946,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["FileViewDto"];
+                };
             };
             /** @description Sin permiso sobre el trabajo (403) */
             403: {
@@ -4869,7 +5073,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PropertyHistoryViewDto"];
+                };
             };
             /** @description Propiedad inexistente o sin acceso (404) */
             404: {
@@ -4897,7 +5103,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ManagedOrderListViewDto"];
+                };
             };
         };
     };
@@ -4922,7 +5130,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["CreatedShareViewDto"];
+                };
             };
             /** @description No es dueña de los antecedentes (403) */
             403: {
@@ -4998,7 +5208,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["JobHistoryListViewDto"];
+                };
             };
         };
     };

@@ -25,6 +25,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CompanyAccessGuard } from '../../common/guards/company-access.guard';
 import { AuthContext, CompanyAccess } from '../../common/request-context';
 import { MAX_FILE_SIZE_BYTES, contentDisposition } from './file-rules';
+import { FileListViewDto, FileViewDto } from './dto/files-responses.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { FilesService } from './files.service';
 
@@ -42,7 +43,7 @@ export class FilesController {
   @ApiConsumes('multipart/form-data')
   @ApiParam({ name: 'orderId', description: 'Identificador de la orden' })
   @ApiOperation({ summary: 'Sube un archivo (foto/documento) a la orden (§7.6)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Archivo guardado' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Archivo guardado', type: FileViewDto })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Sin permiso sobre la orden (403)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Orden inexistente o fuera de alcance (404)' })
   @ApiResponse({ status: HttpStatus.UNSUPPORTED_MEDIA_TYPE, description: 'Tipo fuera de la allowlist (415)' })
@@ -65,7 +66,7 @@ export class FilesController {
   @ApiConsumes('multipart/form-data')
   @ApiParam({ name: 'jobId', description: 'Identificador del trabajo' })
   @ApiOperation({ summary: 'Sube evidencia (foto/documento) al trabajo (§7.1)' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Archivo guardado' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Archivo guardado', type: FileViewDto })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Sin permiso sobre el trabajo (403)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Trabajo inexistente o fuera de alcance (404)' })
   @ApiResponse({ status: HttpStatus.UNSUPPORTED_MEDIA_TYPE, description: 'Tipo fuera de la allowlist (415)' })
@@ -84,7 +85,7 @@ export class FilesController {
   @UseGuards(CompanyAccessGuard)
   @ApiParam({ name: 'orderId', description: 'Identificador de la orden' })
   @ApiOperation({ summary: 'Lista la metadata visible de los archivos de la orden (§4.4)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Metadata de archivos (los borrados con deleted_at)' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Metadata de archivos (los borrados con deleted_at)', type: FileListViewDto })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Sin permiso sobre la orden (403)' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Orden inexistente o fuera de alcance (404)' })
   listOrderFiles(

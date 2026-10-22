@@ -6,6 +6,7 @@ import catalogs from './locales/es/catalogs.json';
 import common from './locales/es/common.json';
 import dashboard from './locales/es/dashboard.json';
 import errors from './locales/es/errors.json';
+import history from './locales/es/history.json';
 import limited from './locales/es/limited.json';
 import nav from './locales/es/nav.json';
 import orders from './locales/es/orders.json';
@@ -40,6 +41,7 @@ void i18n.use(initReactI18next).init({
       catalogs,
       limited,
       orders,
+      history,
     },
   },
   interpolation: { escapeValue: false },

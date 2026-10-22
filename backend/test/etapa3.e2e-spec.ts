@@ -978,6 +978,9 @@ suite('etapa 3: matriz de permisos y flujos (e2e)', () => {
       .get(`${API}/companies/${companies.A}/history/properties/${props.T3}`)
       .expect(200);
     expect(res.body.property.id).toBe(props.T3);
+    // F5-D2: the owner gets the resolved mode and the (empty) share list.
+    expect(res.body.scope).toBe('full');
+    expect(res.body.shares).toHaveLength(0);
     const closed = (res.body.orders as Array<Record<string, any>>).find(
       (o) => o.id === historyOrder.orderId,
     );
@@ -1000,6 +1003,9 @@ suite('etapa 3: matriz de permisos y flujos (e2e)', () => {
     expect(closed).toBeDefined();
     expect(closed!.jobs).toHaveLength(1);
     expect(closed!.jobs[0].id).toBe(historyOrder.jobIds[0]);
+    // F5-D2: assignee without a share is labelled `own_jobs`, never the shares.
+    expect(res.body.scope).toBe('own_jobs');
+    expect(res.body.shares).toHaveLength(0);
   });
 
   it('#41 con share -> 200 con los antecedentes completos, incl. otros profesionales (#48)', async () => {
@@ -1018,10 +1024,20 @@ suite('etapa 3: matriz de permisos y flujos (e2e)', () => {
     const res = await agents.profC
       .get(`${API}/companies/${companies.C}/history/properties/${props.T3}`)
       .expect(200);
+    expect(res.body.scope).toBe('shared');
+    expect(res.body.shares).toHaveLength(0); // owner-only rows (F5-D2)
     const closed = (res.body.orders as Array<Record<string, any>>).find(
       (o) => o.id === historyOrder.orderId,
     );
     expect(closed!.jobs).toHaveLength(2); // incl. profB's job (§7.5)
+
+    // The owner sees the active share with its note (F5-D2).
+    const ownerView = await agents.memberA
+      .get(`${API}/companies/${companies.A}/history/properties/${props.T3}`)
+      .expect(200);
+    expect(ownerView.body.shares).toHaveLength(1);
+    expect(ownerView.body.shares[0].sharedWithMembershipId).toBe(memberships.profC);
+    expect(ownerView.body.shares[0].note).toBe('Peritaje de la unidad.');
 
     // The share also unlocks the download of the antecedent file (§4.4).
     const download = await agents.profC
@@ -1043,6 +1059,7 @@ suite('etapa 3: matriz de permisos y flujos (e2e)', () => {
     expect(mine!.result).toBe('Cambio de cerradura realizado.');
     expect(mine!.order.id).toBe(historyOrder.orderId);
     expect(mine!.property.addressLine).toBe('3 History Rd');
+    expect(mine!.property.id).toBeTruthy(); // F5-D3: navigates to the property history (§7.2)
 
     // profC's personal history keeps the not_realized reason.
     const resC = await agents.profC.get(`${API}/me/job-history`).expect(200);
@@ -1091,6 +1108,13 @@ suite('etapa 3: matriz de permisos y flujos (e2e)', () => {
     await agents.memberA
       .delete(`${API}/companies/${companies.A}/history/shares/${lastShareId}`)
       .expect(204);
+
+    // The revoked share disappears from the owner's list (F5-D2).
+    const ownerView = await agents.memberA
+      .get(`${API}/companies/${companies.A}/history/properties/${props.T3}`)
+      .expect(200);
+    expect(ownerView.body.scope).toBe('full');
+    expect(ownerView.body.shares).toHaveLength(0);
 
     // The former beneficiary loses the shared download (§16.6).
     await agents.profC.get(`${API}/companies/${companies.C}/files/${historyFileId}`).expect(404);

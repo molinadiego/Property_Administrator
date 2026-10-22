@@ -1,0 +1,86 @@
+{
+  "title": "Historial",
+  "tabs": {
+    "label": "Vistas del historial",
+    "space": "Del espacio",
+    "mine": "Mis trabajos"
+  },
+  "space": {
+    "sectionTitle": "Órdenes gestionadas",
+    "hint": "Órdenes propias del espacio y de las que tuvo asignación.",
+    "empty": "El espacio todavía no gestiona órdenes.",
+    "error": "No se pudo cargar el historial del espacio."
+  },
+  "mine": {
+    "sectionTitle": "Mis trabajos",
+    "hint": "Todos tus trabajos, incluso los cerrados y en otros espacios.",
+    "empty": "Todavía no tienes trabajos registrados.",
+    "error": "No se pudo cargar tu historial de trabajos.",
+    "orderAt": "Orden: {{title}}"
+  },
+  "job": {
+    "result": "Resultado",
+    "reason": "Motivo",
+    "started": "Inicio: {{date}}",
+    "completed": "Fin: {{date}}"
+  },
+  "property": {
+    "loading": "Cargando el historial…",
+    "notFoundTitle": "Historial no disponible",
+    "notFoundBody": "Esta dirección no existe o no tienes acceso a su historial.",
+    "backToHistory": "Volver al historial",
+    "error": "No se pudo cargar el historial.",
+    "scope": {
+      "full": "Historial completo",
+      "shared": "Compartido contigo",
+      "ownJobs": "Solo tus trabajos"
+    },
+    "ordersTitle": "Órdenes",
+    "ordersEmpty": "Sin órdenes registradas para esta dirección.",
+    "parentOrder": "Derivada de otra orden"
+  },
+  "share": {
+    "title": "Antecedentes compartidos",
+    "description": "Personas que pueden consultar el historial de esta dirección.",
+    "shareButton": "Compartir historial",
+    "dialogTitle": "Compartir historial",
+    "dialogDescription": "El beneficiario podrá consultar los antecedentes y descargar los archivos de esta dirección.",
+    "memberLabel": "Membresía",
+    "memberPlaceholder": "Selecciona una membresía…",
+    "memberRequired": "Selecciona una membresía.",
+    "noteLabel": "Motivo (opcional)",
+    "notePlaceholder": "Antecedentes relevantes para el beneficiario",
+    "submit": "Compartir",
+    "submitting": "Compartiendo…",
+    "externalMember": "Membresía externa",
+    "sharedAt": "Compartido el {{date}}",
+    "revoke": "Revocar",
+    "revokeTitle": "Revocar acceso",
+    "revokeDescription": "{{name}} dejará de consultar los antecedentes de esta dirección.",
+    "revokeConfirm": "Revocar",
+    "empty": "Sin antecedentes compartidos.",
+    "actionFailed": "La acción no se pudo completar."
+  },
+  "files": {
+    "title": "Archivos",
+    "jobTitle": "Evidencias",
+    "upload": "Subir archivo",
+    "uploading": "Subiendo…",
+    "empty": "Sin archivos todavía.",
+    "jobEmpty": "Sin evidencias todavía.",
+    "loadError": "No se pudo cargar el listado de archivos.",
+    "uploadFailed": "No se pudo subir el archivo.",
+    "retired": "Retirado",
+    "download": "Descargar",
+    "downloadAria": "Descargar {{filename}}",
+    "downloadNoAccess": "No tienes acceso a descargar este archivo.",
+    "downloadFailed": "No se pudo descargar el archivo.",
+    "kindPhoto": "Foto",
+    "kindDocument": "Documento",
+    "validation": {
+      "empty": "El archivo está vacío.",
+      "tooLarge": "El archivo supera el máximo de 10 MB.",
+      "type": "Tipo de archivo no permitido."
+    }
+  }
+}

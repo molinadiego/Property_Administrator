@@ -16,6 +16,8 @@ import { PropertyNewPage } from '@/pages/catalogs/property-new-page';
 import { RelationsPage } from '@/pages/catalogs/relations-page';
 import { DashboardPage } from '@/pages/dashboard-page';
 import { ForgotPasswordPage } from '@/pages/forgot-password-page';
+import { HistoryPage } from '@/pages/history/history-page';
+import { PropertyHistoryPage } from '@/pages/history/property-history-page';
 import { InvitationPage } from '@/pages/invitation-page';
 import { LimitedInvoicePage } from '@/pages/limited/limited-invoice-page';
 import { LimitedPortalPage } from '@/pages/limited/limited-portal-page';
@@ -40,8 +42,8 @@ import { MembersPage } from '@/pages/settings/members-page';
  *   auto-redirect with a single space;
  * - `/app/*`: authenticated shell; the index route is the F2 dashboard, Ajustes
  *   opens on its first real panel, Miembros (F1-D7), `/app/catalogs` on its
- *   first section, Propiedades (F3-D3), Órdenes + detalle (F4); the rest keeps
- *   the F0-D6 placeholders.
+ *   first section, Propiedades (F3-D3), Órdenes + detalle (F4), Historial +
+ *   historial de propiedad (F5); the rest keeps the F0-D6 placeholders.
  */
 export const appRoutes: RouteObject[] = [
   {
@@ -124,6 +126,8 @@ export const appRoutes: RouteObject[] = [
           { path: 'relations', element: <RelationsPage /> },
         ],
       },
+      { path: 'history', element: <HistoryPage /> },
+      { path: 'history/properties/:propertyId', element: <PropertyHistoryPage /> },
       { path: 'billing', element: <ComingSoonStage labelKey="billing" stage="F7" /> },
       { path: 'settings', element: <Navigate to="/app/settings/members" replace /> },
       { path: 'settings/members', element: <MembersPage /> },

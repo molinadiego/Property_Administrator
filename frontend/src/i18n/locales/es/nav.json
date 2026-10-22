@@ -3,6 +3,7 @@
   "dashboard": "Panel",
   "orders": "Órdenes",
   "catalogs": "Catálogos",
+  "history": "Historial",
   "billing": "Facturación",
   "settings": "Ajustes"
 }

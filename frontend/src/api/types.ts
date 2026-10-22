@@ -73,6 +73,25 @@ export type JobStatus = JobViewDto['status'];
 export type AssignmentStatus = AssignmentViewDto['status'];
 export type OrderOrigin = OrderViewDto['origin'];
 
+/** F5 (spec F5-D1…F5-D3, Option A): typed responses for files and history. */
+export type FileViewDto = components['schemas']['FileViewDto'];
+export type FileListViewDto = components['schemas']['FileListViewDto'];
+export type UploadFileDto = components['schemas']['UploadFileDto'];
+export type PropertyHistoryViewDto = components['schemas']['PropertyHistoryViewDto'];
+export type PropertyHistoryScope = PropertyHistoryViewDto['scope'];
+export type PropertyHistoryOrderViewDto = components['schemas']['PropertyHistoryOrderViewDto'];
+export type PropertyShareViewDto = components['schemas']['PropertyShareViewDto'];
+export type CreatedShareViewDto = components['schemas']['CreatedShareViewDto'];
+export type CreateShareDto = components['schemas']['CreateShareDto'];
+export type ManagedOrderListViewDto = components['schemas']['ManagedOrderListViewDto'];
+export type ManagedOrderViewDto = components['schemas']['ManagedOrderViewDto'];
+export type JobHistoryListViewDto = components['schemas']['JobHistoryListViewDto'];
+export type JobHistoryEntryViewDto = components['schemas']['JobHistoryEntryViewDto'];
+export type HistoryJobViewDto = components['schemas']['HistoryJobViewDto'];
+export type HistoryFileViewDto = components['schemas']['HistoryFileViewDto'];
+export type FileKind = FileViewDto['kind'];
+export type FileTargetType = FileViewDto['targetType'];
+
 /** Occupancy of a property ficha (§4.2) and tenant kind (§4.3). */
 export type PropertyOccupancy = PropertyViewDto['occupancy'];
 export type PropertyTenantKind = PropertyTenantViewDto['kind'];

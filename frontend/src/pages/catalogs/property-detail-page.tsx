@@ -508,11 +508,18 @@ export function PropertyDetailPage() {
               {t(`catalogs:properties.occupancy.${property.occupancy}`)}
             </Badge>
           </CardTitle>
-          {canEditOfficial && !editing ? (
-            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-              {t('catalogs:form.edit')}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link to={`/app/history/properties/${property.id}`}>
+                {t('catalogs:properties.viewHistory')}
+              </Link>
             </Button>
-          ) : null}
+            {canEditOfficial && !editing ? (
+              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                {t('catalogs:form.edit')}
+              </Button>
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div aria-live="polite">

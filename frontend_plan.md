@@ -110,7 +110,7 @@ Jerarquía de documentos para el frontend: `proyect.md` > `docs/stack.md` (§6 F
 
 **Criterio de salida:** subida y visualización funcionales en móvil y PC; los permisos de archivo se respetan visiblemente y en servidor; nada se borra (§1.1.8).
 
-**Entregable:** `docs/especificacion/frontend/etapa-f5.md`.
+**Entregable:** `docs/especificacion/frontend/etapa-f5.md` (**spec y decisiones F5-D1…F5-D8 aprobadas por el dueño; implementada el 22/10/2026**, ver cabecera de la spec).
 
 ---
 
